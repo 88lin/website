@@ -120,6 +120,8 @@ scripts/                  字体子集、封面截图、静态文件、预渲染
 
 CJK 不 preload：预加载一百多 KB 是首屏最大的拖累，交给 `font-display: swap` 更划算。
 
+正文那个 104 KB 的 `Noto Sans SC Web` 在 `@font-face` 里把 `local('Noto Sans SC'), local('Noto Sans CJK SC')` 写在 `url()` **前面**，系统里已经装了 Noto 的用户一个字节都不下载。所以线上抓包只看到四个 woff2 是正常的，不是文件坏了——`https://88lin.github.io/website/fonts/NotoSansSC-Regular.woff2` 直接 curl 是 200 `font/woff2`，745 个汉字齐全。
+
 ### 子集化流水线（改了文案就要重跑）
 
 ```bash
