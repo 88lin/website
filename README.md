@@ -185,6 +185,7 @@ node scripts/shots.mjs /workspace/shots               # 目检截图，9 个分�
 node scripts/shots.mjs /workspace/shots --palette=D   # 换配色再来一组
 node scripts/shots.mjs /workspace/shots --reduced
 node scripts/audit.mjs                                # 全量；--skip-lh --skip-links 可快跑
+node scripts/live.mjs /workspace/live                 # 部署后打线上：分区/字体/坏图/4xx/溢出
 ```
 
 沙箱和 CI 都没有 GPU，Playwright 强制 `--use-gl=swiftshader`。
@@ -199,11 +200,13 @@ node scripts/audit.mjs                                # 全量；--skip-lh --ski
 | 4 | 破折号 | 中文里没有孤立的 `—` / `–`（跳过注释与 `palettes.css`） |
 | 5 | 版式纪律 | 每个分区至多 1 个 eyebrow、导航单行、链接不折行 |
 | 6 | reduced-motion | 实时断言：轨道动画停止且位移不变、退回 `overflow-x: auto` + snap、克隆项隐藏、入场元素全部可见 |
-| 7 | 交互与版式 | 花园可点元素 ≥ 40 且**全部是胶囊**、写作区 `/article/` 链接 ≥ 12、两视口 0 溢出、九枚版式指纹互不相同 |
+| 7 | 交互与版式 | 花园可点元素 ≥ 40 且**全部是胶囊**、写作区 `/article/` 链接 ≥ 12、轨道封面无空白滑入、两视口 0 溢出、九枚版式指纹互不相同 |
 | 8 | 外链 | 站外链接全查 + 文章链接抽查 15 条，全部 < 400（5xx / 429 退避重试两次） |
 | 9 | 字体与设计系统 | 两份子集三个断点 0 缺字、总量 ≤ 200 KB、0 处 Inter、0 处硬编码色、0 处 `color-mix()` |
 
-第 7 项是专门为三个曾经真实存在的 bug 加的守卫：花园 41 个链接的 `border-radius` 计算值全是 0px、`#writing` 整区只有 1 个 `<a>`、作品卡片在 1440 视口下右边缘跑到 1969px。
+第 7 项是专门为四个曾经真实存在的 bug 加的守卫：花园 41 个链接的 `border-radius` 计算值全是 0px、`#writing` 整区只有 1 个 `<a>`、作品卡片在 1440 视口下右边缘跑到 1969px，以及轨道封面空白滑入。
+
+最后一条是上线后打线上才发现的：浏览器对 `loading="lazy"` 的**横轴**几乎不做提前量，卡片要滑到视口内约 40% 才开始请求。移动端实测 `gzh.webp` 在 `t=8s`（卡片左边缘 403px，已经露头）时仍然空白，到 `t=15s` 才补上——用户看到的是一张空白卡片滑进来再闪出图。修法是 `Work.tsx` 用 IntersectionObserver 在分区靠近视口（`rootMargin: 600px`）时把整条轨道的图一次性转成 `eager`，而不是给每张图单独判定。`node scripts/probe-lazy.mjs [url]` 可以单独跑这一条。
 
 第 5 项的 eyebrow 判据是「每分区至多 1 个」而不是「全站 ≤ 3」：分区微标签是 `ds-scene-landing.md` 明确要求的系统化元素，当前七个（SELECTED WORK / CASE STUDIES / DIGITAL GARDEN / TWO TRACKS / TOOLBOX / WRITING / GET IN TOUCH）。
 

@@ -497,6 +497,17 @@ for (const vp of [
     const page = await ctx.newPage()
     await page.goto(URL_BASE, { waitUntil: 'load' })
     await page.waitForTimeout(1500)
+
+    // ④ 轨道封面不能空白滑进来。浏览器对 loading="lazy" 的横轴几乎没有提前量，
+    //    卡片要滑到视口内约 40% 才开始请求；Work 里用 IntersectionObserver 在
+    //    分区接近视口时把整条轨道的图转成 eager。这里守住它别被改回去。
+    await page.evaluate(() => document.querySelector('#work')?.scrollIntoView({ block: 'start' }))
+    await page.waitForTimeout(1200)
+    const blank = await page.$$eval('#work img', (n) =>
+      n.filter((e) => e.naturalWidth === 0).map((e) => (e.getAttribute('src') || '?').split('/').pop()),
+    )
+    if (blank.length) probs.push(`${vp.name} 轨道有 ${blank.length} 张封面滑入时仍空白：${blank.join(', ')}`)
+
     await scrollThrough(page)
 
     const m = await page.evaluate(() => {
@@ -555,8 +566,8 @@ for (const vp of [
       if (dup > 0) probs.push(`九个区块版式指纹重复 ${dup} 组：${m.prints.join('\n        ')}`)
       detail =
         `数字花园 ${m.radii.length} 个可点元素全部是胶囊（0 个方角）、` +
-        `写作区 ${m.arts.length} 条文章链接、两视口 0 处横向溢出、` +
-        `${m.prints.length} 个区块版式指纹互不相同`
+        `写作区 ${m.arts.length} 条文章链接、轨道 6 张封面无空白滑入、` +
+        `两视口 0 处横向溢出、${m.prints.length} 个区块版式指纹互不相同`
     }
     await ctx.close()
   }

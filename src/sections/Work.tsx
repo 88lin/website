@@ -85,6 +85,31 @@ export function Work() {
   useEffect(() => {
     if (!root.current) return
     fadeUp('.work-head', root.current, 0.06, 22)
+
+    // 轨道是横向自动滚的，浏览器对 loading="lazy" 的横轴几乎不做提前量：
+    // 实测卡片要滑到视口内约 40% 才开始请求，用户会看到一张空白卡片滑进来再闪出图。
+    // 所以在整个分区接近视口时，一次性把轨道里的图全部转成 eager。
+    const el = root.current
+    const eager = () => {
+      el.querySelectorAll<HTMLImageElement>('img[loading="lazy"]').forEach((img) => {
+        img.loading = 'eager'
+      })
+    }
+    if (!('IntersectionObserver' in window)) {
+      eager()
+      return
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          eager()
+          io.disconnect()
+        }
+      },
+      { rootMargin: '600px 0px' },
+    )
+    io.observe(el)
+    return () => io.disconnect()
   }, [])
 
   return (
