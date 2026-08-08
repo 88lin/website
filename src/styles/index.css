@@ -1,32 +1,66 @@
 @import 'tailwindcss';
 
-/* ============================================================ FONTS */
+/* ============================================================ FONTS
+
+   苹果设备：-apple-system / BlinkMacSystemFont 直接命中系统里的 SF Pro +
+   苹方，一个 webfont 都不会下载（字体回退是逐字符的，拉丁被 SF Pro 接住、
+   汉字被苹方接住，后面的 @font-face 家族永远不会被激活）。
+   Windows / Android 兜底：Inter（拉丁，OFL）+ Noto Sans SC（汉字，OFL）。
+   SF Pro 的许可不允许作为 webfont 分发，这是唯一合法拿到"苹果字体"的方式。
+   全部 font-display: swap，且不 preload —— 首屏用系统字先画出来。          */
 
 @font-face {
-  font-family: 'Smiley Sans';
-  src: url('/fonts/SmileySans-Display.woff2') format('woff2');
-  font-weight: 400 900;
+  font-family: 'Inter';
+  src: url('/fonts/Inter-Regular.woff2') format('woff2');
+  font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: 'Geist';
-  src: url('/fonts/Geist-Medium.woff2') format('woff2');
-  font-weight: 400 600;
+  font-family: 'Inter';
+  src: url('/fonts/Inter-Medium.woff2') format('woff2');
+  font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: 'Geist';
-  src: url('/fonts/Geist-Bold.woff2') format('woff2');
-  font-weight: 700 900;
+  font-family: 'Inter';
+  src: url('/fonts/Inter-SemiBold.woff2') format('woff2');
+  font-weight: 600 900;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: 'Geist Mono';
-  src: url('/fonts/GeistMono-Medium.woff2') format('woff2');
-  font-weight: 400 700;
+  font-family: 'Inter Display';
+  src: url('/fonts/InterDisplay-SemiBold.woff2') format('woff2');
+  font-weight: 500 650;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Inter Display';
+  src: url('/fonts/InterDisplay-Bold.woff2') format('woff2');
+  font-weight: 651 900;
+  font-style: normal;
+  font-display: swap;
+}
+/* 家族名带 Web 后缀，避免和用户本地装的 Noto 打架；local() 优先复用系统副本 */
+@font-face {
+  font-family: 'Noto Sans SC Web';
+  src:
+    local('Noto Sans SC'),
+    local('Noto Sans CJK SC'),
+    url('/fonts/NotoSansSC-Regular.woff2') format('woff2');
+  font-weight: 400 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Noto Sans SC Web';
+  src:
+    local('Noto Sans SC SemiBold'),
+    url('/fonts/NotoSansSC-Semibold.woff2') format('woff2');
+  font-weight: 501 900;
   font-style: normal;
   font-display: swap;
 }
@@ -37,42 +71,82 @@
   --color-paper: #fbf5eb;
   --color-paper-2: #f4eadc;
   --color-ink: #0e1230;
-  --color-ink-60: #0e123099;
+  /* 次级文字：墨色 70% = 6.63:1，比旧的 60%（4.71:1）明显更实 */
+  --color-ink-70: #0e1230c9;
+  --color-ink-80: #0e1230e0;
   --color-cobalt: #1226e8;
   --color-vermilion: #ff3b14;
   --color-vermilion-press: #e02e0a;
   --color-vermilion-deep: #c22a08;
+  /* 钴蓝底上的次级文字：纸色 88% = 6.3:1 */
+  --color-paper-88: #fbf5ebe0;
 
-  --font-display: 'Smiley Sans', 'PingFang SC', 'HarmonyOS Sans SC', 'Microsoft YaHei', sans-serif;
-  --font-sans: 'Geist', -apple-system, 'PingFang SC', 'HarmonyOS Sans SC', 'Microsoft YaHei',
-    'Noto Sans SC', sans-serif;
-  --font-mono: 'Geist Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'PingFang SC', 'HarmonyOS Sans SC',
+    'MiSans', 'Noto Sans SC Web', 'Microsoft YaHei', sans-serif;
+  --font-display:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter Display', 'Inter', 'PingFang SC',
+    'HarmonyOS Sans SC', 'MiSans', 'Noto Sans SC Web', 'Microsoft YaHei', sans-serif;
+  /* 站点不用等宽体：数字统一走 SF Pro / Inter 的表格数字，和苹果官网一致 */
+  --font-mono: var(--font-sans);
 
-  --radius-none: 0px;
+  /* 圆角尺度。980px 是苹果按钮的胶囊半径 */
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-xl: 30px;
+  --radius-2xl: 40px;
+  --radius-3xl: 56px;
+  --radius-full: 980px;
 
-  --text-d1: clamp(3.1rem, 8.2vw, 9.2rem);
-  --text-d1--line-height: 0.93;
-  --text-d1--letter-spacing: -0.035em;
-  --text-d2: clamp(2.25rem, 5.4vw, 5.2rem);
-  --text-d2--line-height: 0.98;
-  --text-d2--letter-spacing: -0.028em;
-  --text-d3: clamp(1.5rem, 2.9vw, 2.6rem);
-  --text-d3--line-height: 1.1;
-  --text-d3--letter-spacing: -0.02em;
-  --text-lead: clamp(1.05rem, 1.35vw, 1.3rem);
-  --text-lead--line-height: 1.72;
-  --text-meta: 0.78rem;
-  --text-meta--line-height: 1.4;
-  --text-meta--letter-spacing: 0.1em;
+  /* 展示级字号 */
+  --text-d1: clamp(2.9rem, 7.6vw, 8.4rem);
+  --text-d1--line-height: 0.96;
+  --text-d1--letter-spacing: -0.032em;
+  --text-d1--font-weight: 600;
+  --text-d2: clamp(2.15rem, 5vw, 4.7rem);
+  --text-d2--line-height: 1.04;
+  --text-d2--letter-spacing: -0.026em;
+  --text-d2--font-weight: 600;
+  --text-d3: clamp(1.5rem, 2.7vw, 2.45rem);
+  --text-d3--line-height: 1.18;
+  --text-d3--letter-spacing: -0.019em;
+  --text-d3--font-weight: 600;
+
+  /* 正文尺度：17px 起，和苹果官网同一档。最小可读字号 14px，绝不再往下走 */
+  --text-xs: 0.875rem;
+  --text-xs--line-height: 1.45;
+  --text-xs--letter-spacing: 0.004em;
+  --text-sm: 0.9375rem;
+  --text-sm--line-height: 1.58;
+  --text-sm--letter-spacing: 0;
+  --text-base: 1.0625rem;
+  --text-base--line-height: 1.62;
+  --text-base--letter-spacing: -0.011em;
+  --text-lg: 1.1875rem;
+  --text-lg--line-height: 1.58;
+  --text-lg--letter-spacing: -0.014em;
+  --text-xl: 1.375rem;
+  --text-xl--line-height: 1.48;
+  --text-xl--letter-spacing: -0.017em;
+  --text-2xl: 1.625rem;
+  --text-2xl--line-height: 1.34;
+  --text-2xl--letter-spacing: -0.02em;
+
+  --text-lead: clamp(1.1875rem, 1.35vw, 1.5rem);
+  --text-lead--line-height: 1.56;
+  --text-lead--letter-spacing: -0.016em;
+  /* 微标签：14px + 中黑 + 克制的字距，不再是 0.34em 的灰色细线 */
+  --text-meta: 0.875rem;
+  --text-meta--line-height: 1.3;
+  --text-meta--letter-spacing: 0.05em;
+  --text-meta--font-weight: 590;
 }
 
 /* ============================================================ BASE */
 
 @layer base {
-  * {
-    border-radius: 0 !important;
-  }
-
   html {
     background: var(--color-paper);
     -webkit-text-size-adjust: 100%;
@@ -83,8 +157,10 @@
     background: var(--color-paper);
     color: var(--color-ink);
     font-family: var(--font-sans);
-    font-size: 1rem;
-    line-height: 1.7;
+    font-size: var(--text-base);
+    line-height: 1.62;
+    letter-spacing: -0.011em;
+    font-weight: 420;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
@@ -142,12 +218,24 @@
 
 @utility display {
   font-family: var(--font-display);
-  font-weight: 400;
+  font-weight: 600;
   text-wrap: balance;
 }
 
+/* 曾经是等宽体。现在是"表格数字 + 中黑"，字形和正文同源，只是数字对齐 */
 @utility mono {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  font-weight: 560;
+}
+
+/* 分区微标签：大写拉丁 + 汉字都靠它，14px / 中黑 / 克制字距 */
+@utility eyebrow {
+  font-size: var(--text-meta);
+  line-height: 1.3;
+  letter-spacing: 0.05em;
+  font-weight: 590;
   font-variant-numeric: tabular-nums;
 }
 
@@ -261,6 +349,12 @@
   z-index: 0;
   pointer-events: none;
   contain: layout paint;
+  /* 画布底色与页面纸底一致，淡入只是为了盖掉首帧尚未渲染的那一瞬 */
+  opacity: 0;
+  transition: opacity 0.7s ease;
+}
+.stage-on #stage {
+  opacity: 1;
 }
 
 .above {
@@ -282,17 +376,6 @@
 }
 .field-paper2 {
   background: var(--color-paper-2);
-}
-
-/* 窄屏不跑素材层（见 useScene 的 1024 门槛），用静态图片补位。
-   羽化范围与 SubjectPlane 着色器里的椭圆遮罩保持一致，两端观感统一 */
-.subject-img {
-  -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 56%, transparent 100%);
-  mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 56%, transparent 100%);
-}
-/* 钴蓝场上的素材用硬边圆窗，等价于宽屏的 .punch 开孔 */
-.subject-porthole {
-  clip-path: circle(49.5% at 50% 50%);
 }
 
 /* 细网格纹理，只在纸底区块的极低透明度出现 */
@@ -328,9 +411,10 @@
 /* 钴蓝色场上打出的一个硬边圆孔，透出画布里的液态金属体 */
 .punch {
   background: var(--color-cobalt);
-  --px: 78.5%;
-  --py: 30%;
-  --pr: clamp(104px, 12.5vw, 168px);
+  /* 默认值只在 JS 接管前出现一瞬；真实位置由 Tracks 反投影晶簇坐标算出 */
+  --px: 76%;
+  --py: 50%;
+  --pr: clamp(150px, 15.5vw, 223px);
   -webkit-mask-image: radial-gradient(
     circle at var(--px) var(--py),
     transparent 0 var(--pr),
@@ -388,6 +472,7 @@
 .panel {
   background: var(--color-paper);
   border: 1px solid color-mix(in srgb, var(--color-ink) 14%, transparent);
+  border-radius: var(--radius-lg);
 }
 
 /* 朱红场上的链接：墨色文字 + 墨色下划线，5.2:1 */

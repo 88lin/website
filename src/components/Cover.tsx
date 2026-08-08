@@ -9,9 +9,9 @@ const SHOTS: Record<string, string> = {
 }
 
 const TYPO: Record<string, { field: string; text: string; ink: string }> = {
-  'cover-wesum': { field: 'bg-cobalt', text: 'text-paper', ink: 'text-paper/55' },
-  'cover-diataxis': { field: 'bg-paper-2', text: 'text-ink', ink: 'text-ink-60' },
-  'cover-video': { field: 'bg-vermilion', text: 'text-ink', ink: 'text-ink/60' },
+  'cover-wesum': { field: 'bg-cobalt', text: 'text-paper', ink: 'text-paper/88' },
+  'cover-diataxis': { field: 'bg-paper-2', text: 'text-ink', ink: 'text-ink-70' },
+  'cover-video': { field: 'bg-vermilion', text: 'text-ink', ink: 'text-ink/78' },
 }
 
 export function Cover({ project }: { project: Project }) {
@@ -20,7 +20,7 @@ export function Cover({ project }: { project: Project }) {
   if (shot) {
     const src = asset(`covers/${shot}.webp`)
     return (
-      <div className="cover-stack relative aspect-[16/10] w-full overflow-hidden bg-[#05060f] isolate">
+      <div className="cover-stack relative aspect-[16/10] w-full overflow-hidden rounded-lg bg-[#05060f] isolate">
         <img
           src={src}
           alt={`${project.name} 界面截图`}
@@ -54,10 +54,10 @@ export function Cover({ project }: { project: Project }) {
 
   const t = TYPO[project.cover] ?? TYPO['cover-diataxis']
   return (
-    <div className={`relative aspect-[16/10] w-full overflow-hidden ${t.field}`}>
+    <div className={`relative aspect-[16/10] w-full overflow-hidden rounded-lg ${t.field}`}>
       <div className="grid-tex absolute inset-0 opacity-60" aria-hidden />
       <div className="absolute inset-0 flex flex-col justify-between p-6">
-        <span className={`mono text-[0.7rem] tracking-[0.18em] ${t.ink}`}>{project.slug}</span>
+        <span className={`mono text-[0.875rem] tracking-[0.06em] ${t.ink}`}>{project.slug}</span>
         <span
           className={`display block max-w-full text-[clamp(2rem,4.4vw,3.2rem)] leading-[0.98] tracking-tight ${t.text}`}
         >

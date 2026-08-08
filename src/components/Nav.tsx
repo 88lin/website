@@ -28,7 +28,7 @@ export function Nav() {
       <nav className="shell flex h-[68px] items-center justify-between gap-6" aria-label="主导航">
         <a href="#top" className="flex items-baseline gap-3 shrink-0">
           <span className="display text-[1.35rem] leading-none tracking-tight">{profile.name}</span>
-          <span className="mono hidden text-[0.7rem] tracking-[0.18em] text-ink-60 sm:inline">
+          <span className="mono hidden text-[0.875rem] tracking-[0.06em] text-ink-70 sm:inline">
             {profile.handle.toUpperCase()}
           </span>
         </a>
@@ -39,7 +39,7 @@ export function Nav() {
               <li key={n.href}>
                 <a
                   href={n.href}
-                  className="mono block px-3 py-2 text-[0.78rem] tracking-[0.1em] text-ink-60 transition-colors hover:text-ink"
+                  className="mono block rounded-full px-3.5 py-2 text-[0.875rem] tracking-[0.05em] text-ink-70 transition-colors hover:bg-ink/6 hover:text-ink"
                 >
                   {n.label}
                 </a>

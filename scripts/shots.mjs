@@ -16,7 +16,10 @@ await mkdir(outDir, { recursive: true })
 // 挂在 /website/ 子路径下（验证 base:'./' 相对路径构建），并开启 gzip
 const { server, url: URL_BASE } = await serveDist({ dist: DIST, port: 4173 })
 
-const browser = await chromium.launch({ args: noWebgl ? ['--disable-gpu', '--disable-webgl'] : [] })
+// 沙箱里没有 GPU：显式走 SwiftShader，否则截图里的画布是空的
+const browser = await chromium.launch({
+  args: noWebgl ? ['--disable-gpu', '--disable-webgl'] : ['--use-gl=swiftshader', '--enable-unsafe-swiftshader'],
+})
 
 const VIEWS = [
   { id: 'desktop', width: 1440, height: 900 },

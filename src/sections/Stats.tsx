@@ -6,7 +6,12 @@ import { useScene } from '../webgl/StageContext'
 export function Stats() {
   const ref = useRef<HTMLElement>(null)
 
-  useScene(ref, { formX: -1.9, formY: 0.55, formScale: 0.92, amp: 0.34, freq: 1.5, twist: 0.9, spin: 0.3, camZ: 6.6, particles: 0.95, exposure: 1.0 })
+  // 这一屏是实色纸底，画布看不见；参数只负责把晶簇从右侧甩到左侧待命
+  useScene(
+    ref,
+    { clusterX: -2.6, clusterY: 0.5, clusterScale: 0.8, spread: 0.9, spin: 0.3, tilt: 0.2, dispersion: 4.2, glow: 0.7, tint: 0.25, camZ: 6.6, exposure: 1.0 },
+    { clusterX: -0.45, clusterY: 0.9, clusterScale: 0.55, spread: 0.75 }
+  )
 
   useEffect(() => {
     const el = ref.current
@@ -35,12 +40,12 @@ export function Stats() {
               >
                 {m.value}
               </dd>
-              <dt className="mt-4 text-[0.95rem] font-medium">{m.label}</dt>
-              <p className="mt-1.5 text-[0.8rem] leading-relaxed text-ink-60">{m.sub}</p>
+              <dt className="mt-4 text-[1rem] font-medium">{m.label}</dt>
+              <p className="mt-1.5 text-[0.875rem] font-medium leading-relaxed text-ink-70">{m.sub}</p>
             </div>
           ))}
         </dl>
-        <p className="mono mt-10 text-[0.7rem] tracking-[0.12em] text-ink-60">
+        <p className="mono mt-10 text-[0.875rem] tracking-[0.05em] text-ink-70">
           数据截至 {META_AS_OF} · 来源 GitHub API 与博客统计
         </p>
       </div>

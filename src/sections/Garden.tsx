@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { garden, gardenIntro, type GardenGroup } from '../content/site'
 import { fadeUp, gsap, prefersReduced, isNarrow } from '../lib/motion'
-import { useScene, useAnchorEl } from '../webgl/StageContext'
-import { asset } from '../lib/asset'
+import { useScene } from '../webgl/StageContext'
 
 const ORDER: GardenGroup[] = ['特效', '工具', '内容', '组件']
 
@@ -34,17 +33,16 @@ export function Garden() {
   const ref = useRef<HTMLElement>(null)
   const viewRef = useRef<HTMLDivElement>(null)
   const planeRef = useRef<HTMLDivElement>(null)
-  const rabbitRef = useRef<HTMLDivElement>(null)
   // 同 Work：初始值必须是预渲染时的确定值，真实视口在水合后测
   const [narrow, setNarrow] = useState(false)
   const [reduced, setReduced] = useState(false)
 
   useScene(
     ref,
-    { formX: -6.4, formY: 2.3, formScale: 1.4, amp: 0.3, freq: 1.1, twist: 0.7, spin: 0.42, camZ: 6.4, particles: 0.4, exposure: 1.0 },
-    { rabbit: 1 }
+    { clusterX: 0.95, clusterY: 0.62, clusterScale: 0.58, spread: 1.05, spin: 0.33, tilt: 0.24, dispersion: 5.0, glow: 0.9, tint: 0.3, camZ: 6.4, exposure: 1.0 },
+    // 窄屏把晶簇顶出标题块，正文不压在晶面上
+    { clusterX: -0.62, clusterY: 2.15, clusterScale: 0.5, spread: 0.8 }
   )
-  useAnchorEl(rabbitRef, 'rabbit', 1.0)
 
   const laid = useMemo(() => {
     const out: { name: string; href: string; group: GardenGroup; x: number; y: number }[] = []
@@ -212,28 +210,14 @@ export function Garden() {
         <div className="grid grid-cols-12 items-end gap-x-6 gap-y-8">
           <div className="col-span-12 max-w-[46ch] lg:col-span-6">
             <h2 className="display text-d2 garden-fade opacity-0">{gardenIntro.headline}</h2>
-            <p className="garden-fade mt-5 text-lead text-ink-60 opacity-0">{gardenIntro.body}</p>
+            <p className="garden-fade mt-5 text-lead text-ink-70 opacity-0">{gardenIntro.body}</p>
           </div>
           <div className="relative col-span-12 lg:col-span-6">
-            <div
-              ref={rabbitRef}
-              aria-hidden
-              className="pointer-events-none absolute bottom-0 right-[8%] hidden aspect-square w-[min(20vw,264px)] lg:block"
-            />
-            {/* 窄屏补位：宽屏这张图由 WebGL 素材层渲染 */}
-            <img
-              src={asset('subjects/rabbit.webp')}
-              alt=""
-              aria-hidden
-              loading="lazy"
-              decoding="async"
-              className="subject-img mb-1 aspect-square w-[min(52vw,240px)] object-cover lg:hidden"
-            />
             <a
               href={gardenIntro.hub}
               target="_blank"
               rel="noopener noreferrer"
-              className="garden-fade inline-link relative pb-1 text-[0.92rem] opacity-0 lg:float-right"
+              className="garden-fade inline-link relative pb-1 text-[1rem] opacity-0 lg:float-right"
             >
               全部 {garden.length} 个页面
             </a>
@@ -248,7 +232,7 @@ export function Garden() {
               <div key={g}>
                 <h3 className="display flex items-baseline gap-3 border-b border-ink/20 pb-2 text-[1.35rem] leading-none tracking-tight">
                   {g}
-                  <span className="mono text-[0.72rem] tracking-[0.14em] text-ink-60">
+                  <span className="mono text-[0.875rem] tracking-[0.06em] text-ink-70">
                     {garden.filter((i) => i.group === g).length}
                   </span>
                 </h3>
@@ -261,10 +245,10 @@ export function Garden() {
                           href={t.href}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className={`flex h-full items-center justify-between gap-2 border border-ink/18 bg-paper px-3 py-3 text-[0.86rem] ${SKIN[g]}`}
+                          className={`flex h-full items-center justify-between gap-2 rounded-sm border border-ink/18 bg-paper px-3.5 py-3 text-[0.9375rem] ${SKIN[g]}`}
                         >
                           <span className="truncate">{t.name}</span>
-                          <span aria-hidden className="mono shrink-0 text-[0.7rem] opacity-60">
+                          <span aria-hidden className="mono shrink-0 text-[0.875rem] opacity-80">
                             &#8599;
                           </span>
                         </a>
@@ -277,7 +261,7 @@ export function Garden() {
         ) : (
           <div
             ref={viewRef}
-            className="drag-plane relative h-[clamp(420px,64vh,660px)] overflow-hidden border border-ink/20 bg-paper-2/70"
+            className="drag-plane relative h-[clamp(420px,64vh,660px)] overflow-hidden rounded-xl border border-ink/20 bg-paper-2/70"
             role="group"
             aria-label="可拖动的作品画布"
           >
@@ -290,11 +274,11 @@ export function Garden() {
               {ORDER.map((g) => (
                 <h3
                   key={g}
-                  className="display pointer-events-none absolute text-[clamp(1.5rem,2.2vw,2rem)] leading-none tracking-tight text-ink/55"
+                  className="display pointer-events-none absolute text-[clamp(1.5rem,2.2vw,2rem)] leading-none tracking-tight text-ink/78"
                   style={{ left: ORIGIN[g][0], top: ORIGIN[g][1], width: CLUSTER_W }}
                 >
                   {g}
-                  <span className="mono ml-3 align-middle text-[0.72rem] tracking-[0.14em]">
+                  <span className="mono ml-3 align-middle text-[0.875rem] tracking-[0.06em]">
                     {garden.filter((i) => i.group === g).length}
                   </span>
                 </h3>
@@ -307,18 +291,18 @@ export function Garden() {
                   rel="noopener noreferrer"
                   data-tx={t.x}
                   data-ty={t.y}
-                  className={`absolute flex items-center justify-between gap-3 border border-ink/18 bg-paper px-4 text-[0.9rem] transition-colors duration-200 ${SKIN[t.group]}`}
+                  className={`absolute flex items-center justify-between gap-3 border border-ink/18 bg-paper px-4 text-[1rem] transition-colors duration-200 ${SKIN[t.group]}`}
                   style={{ left: t.x, top: t.y, width: TILE_W, height: TILE_H }}
                 >
                   <span className="truncate">{t.name}</span>
-                  <span aria-hidden className="mono shrink-0 text-[0.72rem] opacity-60">
+                  <span aria-hidden className="mono shrink-0 text-[0.875rem] opacity-80">
                     &#8599;
                   </span>
                 </a>
               ))}
             </div>
 
-            <p className="mono pointer-events-none absolute bottom-3 right-4 border border-ink/15 bg-paper/85 px-2.5 py-1 text-[0.7rem] tracking-[0.16em] text-ink-60">
+            <p className="mono pointer-events-none absolute bottom-3 right-4 rounded-full border border-ink/15 bg-paper/88 px-3 py-1 text-[0.875rem] tracking-[0.06em] text-ink-70">
               {reduced ? '点选打开' : '按住拖动'}
             </p>
           </div>

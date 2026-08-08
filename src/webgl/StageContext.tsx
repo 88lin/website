@@ -1,9 +1,11 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
-import type { Stage, StageTargets, SubjectKey } from './Stage'
+import type { Stage, StageTargets } from './Stage'
 import { ScrollTrigger, prefersReduced, isTouch } from '../lib/motion'
-import { asset } from '../lib/asset'
 
 const Ctx = createContext<Stage | null>(null)
+
+/** 相机视场角。分区需要把世界坐标反投影成屏幕像素时要用同一个值 */
+export const CLUSTER_FOV = 38
 
 export function useStage() {
   return useContext(Ctx)
@@ -13,10 +15,11 @@ export function useStage() {
  * 当区块进入视口时把场景参数推给 Stage。
  * Stage 内部做临界阻尼插值，所以这里只需给目标值，不必自己写补间。
  */
+export type SceneTargets = Partial<StageTargets> | ((vw: number, vh: number) => Partial<StageTargets>)
+
 export function useScene(
   ref: React.RefObject<HTMLElement | null>,
-  targets: Partial<StageTargets>,
-  subjects?: Partial<Record<'car' | 'robot' | 'cat' | 'rabbit', number>>,
+  targets: SceneTargets,
   narrowTargets?: Partial<StageTargets>
 ) {
   const stage = useStage()
@@ -26,21 +29,15 @@ export function useScene(
     const apply = () => {
       // 窄屏视野只有宽屏的四分之一，同一组世界坐标会退化成边缘上的碎片，
       // 所以允许区块单独给窄屏一套构图。
-      const narrow = window.innerWidth < 1024
-      stage.set(narrow && narrowTargets ? { ...targets, ...narrowTargets } : targets)
-      stage.hideAllSubjects()
-      // 素材只在有横向余量的宽屏出现，窄屏交给主形体
-      if (subjects && window.innerWidth >= 1024) {
-        for (const [k, v] of Object.entries(subjects)) {
-          stage.showSubject(k as 'car', v as number)
-        }
-      }
+      const vw = window.innerWidth
+      const vh = window.innerHeight
+      // 函数形式：世界坐标要跟版面上的某个屏幕位置对齐时，必须按当前宽高比解算
+      const base = typeof targets === 'function' ? targets(vw, vh) : targets
+      stage.set(vw < 1024 && narrowTargets ? { ...base, ...narrowTargets } : base)
     }
     // start 与 end 必须落在同一条视口基准线上。相邻区块满足 A.bottom === B.top，
     // 因此 A 的 end 与 B 的 start 首尾相接、绝不重叠，任意滚动位置上有且只有
-    // 一个区块在控制舞台。若写成 62% / 38% 这种不对称区间，会留下一条 24vh 的
-    // 重叠带；在带内往回滚会重新触发上一区块的 hideAllSubjects()，
-    // 素材（机器人 / 车 / 兔 / 猫）会凭空消失。
+    // 一个区块在控制舞台。
     const st = ScrollTrigger.create({
       trigger: el,
       start: 'top 62%',
@@ -48,48 +45,11 @@ export function useScene(
       onEnter: apply,
       onEnterBack: apply,
     })
-    return () => st.kill()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stage])
-}
-
-/**
- * 把某个 DOM 占位框和一张写实素材绑定：素材始终填进这个框。
- * 版面怎么排，素材就怎么落位，不需要再手调世界坐标。
- */
-export function useAnchorEl(
-  elRef: React.RefObject<HTMLElement | null>,
-  key: SubjectKey,
-  hMul = 1,
-  z = 1.1
-) {
-  const stage = useStage()
-  useEffect(() => {
-    const el = elRef.current
-    if (!el || !stage) return
-    const sync = () => {
-      const r = el.getBoundingClientRect()
-      if (r.width < 1) return
-      stage.anchorSubject(
-        key,
-        (r.left + r.width / 2) / window.innerWidth,
-        (r.top + r.height / 2) / window.innerHeight,
-        (r.height / window.innerHeight) * hMul,
-        z
-      )
-    }
-    const st = ScrollTrigger.create({
-      trigger: el,
-      start: 'top bottom',
-      end: 'bottom top',
-      onUpdate: sync,
-      onRefresh: sync,
-    })
-    sync()
-    window.addEventListener('resize', sync)
+    const onResize = () => st.isActive && apply()
+    window.addEventListener('resize', onResize)
     return () => {
       st.kill()
-      window.removeEventListener('resize', sync)
+      window.removeEventListener('resize', onResize)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stage])
@@ -132,26 +92,11 @@ export function StageProvider({ children }: { children: ReactNode }) {
       }
       const st = s
 
-      const base = asset('')
-      Promise.all([
-        st.loadSubject('car', `${base}subjects/car.webp`, 1.5),
-        st.loadSubject('robot', `${base}subjects/robot.webp`, 1),
-        st.loadSubject('cat', `${base}subjects/cat.webp`, 1),
-        st.loadSubject('rabbit', `${base}subjects/rabbit.webp`, 1),
-      ]).then(() => {
-        if (disposed) return
-        // 开孔里的素材几乎填满圆窗，纸底上漂浮的素材保留柔和渐隐边
-        st.setSubjectFeather('robot', 0.43, 0.53)
-        st.setSubjectFeather('car', 0.42, 0.54)
-        st.setSubjectFeather('cat', 0.3, 0.52)
-        st.setSubjectFeather('rabbit', 0.32, 0.52)
-        // 兜底锚点，真正的落位由各区块的 useAnchorEl 用版面占位框覆盖
-        st.anchorSubject('cat', 0.775, 0.3, 0.36, 1.1)
-        ScrollTrigger.refresh()
-      })
-
       st.start()
+      // 画布底色与页面纸底一致，但仍留一段淡入，避免首帧未渲染时闪一下
+      document.documentElement.classList.add('stage-on')
       setStage(st)
+      ScrollTrigger.refresh()
 
       const onPointer = (e: PointerEvent) => {
         st.setPointer((e.clientX / window.innerWidth) * 2 - 1, (e.clientY / window.innerHeight) * 2 - 1)
@@ -194,6 +139,7 @@ export function StageProvider({ children }: { children: ReactNode }) {
         cic ? cic(handle) : clearTimeout(handle)
       }
       cleanups.forEach((f) => f())
+      document.documentElement.classList.remove('stage-on')
       s?.dispose()
       setStage(null)
     }

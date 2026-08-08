@@ -11,42 +11,42 @@ const canPin = () =>
 
 function Card({ p, n }: { p: Project; n: number }) {
   return (
-    <article className="card panel flex w-[min(82vw,500px)] shrink-0 snap-center flex-col">
+    <article className="card panel flex w-[min(82vw,500px)] shrink-0 snap-center flex-col overflow-hidden">
       <Cover project={p} />
       <div className="flex grow flex-col gap-5 p-6 sm:p-7">
         <div className="flex items-center justify-between gap-4">
-          <span className="mono text-[0.72rem] tracking-[0.16em] text-ink-60">
+          <span className="mono text-[0.875rem] tracking-[0.06em] text-ink-70">
             {String(n).padStart(2, '0')} / {p.kind}
           </span>
-          <span className="mono text-[0.72rem] tracking-[0.16em] text-ink-60">{p.year}</span>
+          <span className="mono text-[0.875rem] tracking-[0.06em] text-ink-70">{p.year}</span>
         </div>
 
         <div>
           <h3 className="display text-[clamp(1.55rem,2.4vw,2.1rem)] leading-none tracking-tight">{p.name}</h3>
-          <p className="mt-2 text-[0.92rem] text-ink-60">{p.cn}</p>
+          <p className="mt-2 text-[1rem] text-ink-70">{p.cn}</p>
         </div>
 
-        <p className="text-[0.95rem] leading-[1.75]">{p.blurb}</p>
+        <p className="text-[1rem] leading-[1.75]">{p.blurb}</p>
 
         <ul className="flex flex-wrap gap-x-2 gap-y-2">
           {p.stack.map((s) => (
-            <li key={s} className="mono border border-ink/18 px-2.5 py-1 text-[0.7rem] tracking-[0.06em] text-ink-60">
+            <li key={s} className="mono rounded-full border border-ink/20 px-3 py-1 text-[0.875rem] tracking-[0.06em] text-ink-70">
               {s}
             </li>
           ))}
         </ul>
 
         <div className="mt-auto flex items-end justify-between gap-4 border-t border-ink/12 pt-5">
-          <p className="mono text-[0.78rem] tabular-nums text-ink-60">
+          <p className="mono text-[0.875rem] tabular-nums text-ink-70">
             {p.stars.toLocaleString('en-US')} Star · {p.forks.toLocaleString('en-US')} Fork
           </p>
           <div className="flex items-center gap-4">
             {p.live && (
-              <a href={p.live} target="_blank" rel="noopener noreferrer" className="inline-link text-[0.88rem]">
+              <a href={p.live} target="_blank" rel="noopener noreferrer" className="inline-link text-[0.9375rem]">
                 在线
               </a>
             )}
-            <a href={p.repo} target="_blank" rel="noopener noreferrer" className="inline-link text-[0.88rem]">
+            <a href={p.repo} target="_blank" rel="noopener noreferrer" className="inline-link text-[0.9375rem]">
               源码
             </a>
           </div>
@@ -60,7 +60,7 @@ function Heading({ hint }: { hint: string }) {
   return (
     <>
       <h2 className="display text-d2">精选作品</h2>
-      <p className="mono mt-4 text-[0.74rem] tracking-[0.14em] text-ink-60">
+      <p className="mono mt-4 text-[0.875rem] tracking-[0.06em] text-ink-70">
         {projects.length} 个原创项目 · {hint}
       </p>
     </>
@@ -74,7 +74,11 @@ export function Work() {
   // 预渲染时先按不钉住输出，水合后再按真实视口切换，避免服务端/客户端标记不一致
   const [pinned, setPinned] = useState(false)
 
-  useScene(ref, { formX: -2.6, formY: -0.25, formScale: 1.05, amp: 0.24, freq: 1.05, twist: 0.55, spin: 0.24, camZ: 7.4, particles: 0.35, exposure: 0.95 })
+  useScene(
+    ref,
+    { clusterX: -3.0, clusterY: 0.9, clusterScale: 0.72, spread: 1.05, spin: 0.17, tilt: 0.14, dispersion: 4.6, glow: 0.85, tint: 0.46, camZ: 7.4, exposure: 0.98 },
+    { clusterX: -0.55, clusterY: -1.15, clusterScale: 0.62, spread: 0.8 }
+  )
 
   useEffect(() => {
     const section = ref.current
@@ -164,15 +168,15 @@ export function Work() {
               href="https://github.com/88lin?tab=repositories&type=source"
               target="_blank"
               rel="noopener noreferrer"
-              className="group flex h-full w-full flex-col justify-between border border-dashed border-ink/30 p-8 transition-colors hover:border-vermilion-deep"
+              className="group flex h-full w-full flex-col justify-between rounded-lg border border-dashed border-ink/30 p-8 transition-colors hover:border-vermilion-deep"
             >
-              <span className="mono text-[0.72rem] tracking-[0.16em] text-ink-60">07 / 更多</span>
+              <span className="mono text-[0.875rem] tracking-[0.06em] text-ink-70">07 / 更多</span>
               <span className="display text-[clamp(1.7rem,3vw,2.4rem)] leading-none tracking-tight">
                 其余 15 个
                 <br />
                 原创仓库
               </span>
-              <span className="mono inline-flex items-center gap-2 text-[0.84rem] text-ink-60 transition-colors group-hover:text-vermilion-deep">
+              <span className="mono inline-flex items-center gap-2 text-[0.9375rem] text-ink-70 transition-colors group-hover:text-vermilion-deep">
                 去 GitHub
                 <span aria-hidden className="transition-transform duration-300 group-hover:translate-x-1">
                   &rarr;

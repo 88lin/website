@@ -15,17 +15,17 @@ type CtaProps = {
 
 /** 全站唯一转化按钮。solid = 朱红底墨字（5.2:1）。 */
 export function Cta({ size = 'md', variant = 'solid', href = CONTACT_HREF, children, className = '' }: CtaProps) {
-  const pad = size === 'lg' ? 'px-9 py-5 text-[1.05rem]' : 'px-6 py-3 text-[0.9rem]'
+  const pad = size === 'lg' ? 'px-8 py-4 text-[1.125rem]' : 'px-5 py-2.5 text-[1.0625rem]'
   const skin =
     variant === 'solid'
       ? 'bg-vermilion text-ink hover:bg-vermilion-press'
       : variant === 'invert'
         ? 'bg-ink text-paper hover:bg-vermilion hover:text-ink'
-        : 'border border-ink text-ink hover:bg-ink hover:text-paper'
+        : 'border border-ink/25 text-ink hover:bg-ink hover:text-paper'
   return (
     <a
       href={href}
-      className={`group inline-flex items-center gap-3 font-semibold tracking-tight transition-colors duration-200 ${pad} ${skin} ${className}`}
+      className={`group inline-flex items-center gap-2.5 rounded-full font-semibold tracking-[-0.014em] transition-colors duration-200 ${pad} ${skin} ${className}`}
     >
       <span>{children ?? CTA_LABEL}</span>
       <span aria-hidden className="mono translate-y-px transition-transform duration-300 group-hover:translate-x-1">
@@ -37,7 +37,7 @@ export function Cta({ size = 'md', variant = 'solid', href = CONTACT_HREF, child
 
 export function Meta({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
-    <span className={`mono text-[0.72rem] uppercase tracking-[0.16em] ${className}`}>{children}</span>
+    <span className={`mono text-[0.875rem] uppercase tracking-[0.06em] ${className}`}>{children}</span>
   )
 }
 

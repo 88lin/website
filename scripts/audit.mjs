@@ -3,7 +3,7 @@
  * 用法：node scripts/audit.mjs [--skip-lh] [--skip-links]
  */
 import { chromium } from 'playwright'
-import { readFile, readdir, writeFile } from 'node:fs/promises'
+import { readFile, readdir, writeFile, stat } from 'node:fs/promises'
 import path from 'node:path'
 import { execFileSync } from 'node:child_process'
 import { serveDist } from './lib/serve.mjs'
@@ -371,7 +371,8 @@ for (const vp of [
 /* === 6. 降级模式截图 ================================================= */
 {
   const SHOTS = process.env.SHOTS_DIR || '/workspace/shots10'
-  const dirs = { reduced: '/workspace/shots-reduced', nowebgl: '/workspace/shots-nowebgl', normal: SHOTS }
+  // 降级两套跟着主目录走：SHOTS_DIR=/workspace/shots15 → shots15-reduced / shots15-nowebgl
+  const dirs = { reduced: `${SHOTS}-reduced`, nowebgl: `${SHOTS}-nowebgl`, normal: SHOTS }
   const missing = []
   for (const [k, d] of Object.entries(dirs)) {
     try {
@@ -520,7 +521,9 @@ if (!SKIP_LH) {
 /* === 7. 人工目检占位 ================================================= */
 pass('7', '1440×900 / 390×844 目检', `18 张截图已生成于 ${process.env.SHOTS_DIR || '/workspace/shots10'}，由人工逐张确认`)
 
-/* === 9. 标题字子集覆盖 =============================================== */
+/* === 9. 中黑字重子集覆盖 ============================================= */
+// 非苹果设备走 Noto Sans SC。Regular 带全站汉字，Semibold 只带「字重 >= 501」
+// 实际用到的那一批；这里复核那一批确实都在子集里，否则会掉回系统字导致字重跳变。
 {
   const wanted = new Set(await readFile(path.join(ROOT, 'scripts', 'display-chars.txt'), 'utf8'))
   const b = await chromium.launch()
@@ -537,7 +540,7 @@ pass('7', '1440×900 / 390×844 目检', `18 张截图已生成于 ${process.env
     const got = await pg.evaluate(() => {
       const out = new Set()
       for (const el of document.querySelectorAll('body *')) {
-        if (!/smiley/i.test(getComputedStyle(el).fontFamily || '')) continue
+        if (parseInt(getComputedStyle(el).fontWeight, 10) < 501) continue
         for (const n of el.childNodes) if (n.nodeType === 3 && n.nodeValue) for (const c of n.nodeValue) out.add(c)
       }
       return [...out].join('')
@@ -546,9 +549,11 @@ pass('7', '1440×900 / 390×844 目检', `18 张截图已生成于 ${process.env
     await pg.close()
   }
   await b.close()
+  const cjk = [...wanted].filter((c) => /[\u4e00-\u9fff]/.test(c)).length
+  const kb = ((await stat(path.join(ROOT, 'public', 'fonts', 'NotoSansSC-Semibold.woff2'))).size / 1024).toFixed(1)
   missing.size
-    ? fail('9', '标题字子集覆盖', `以下字符用得意黑渲染但不在子集里，会掉回系统字：${[...missing].join('')}（重跑 node scripts/display-chars.mjs && python3 scripts/subset-fonts.py）`)
-    : pass('9', '标题字子集覆盖', `得意黑子集 ${wanted.size} 字（含 ${[...wanted].filter((c) => /[\u4e00-\u9fff]/.test(c)).length} 汉字，20.8 KB），三个断点全覆盖`)
+    ? fail('9', '中黑字重子集覆盖', `以下字符以 >=501 字重渲染但不在子集里，会掉回系统字：${[...missing].join('')}（重跑 node scripts/display-chars.mjs && python3 scripts/subset-fonts.py）`)
+    : pass('9', '中黑字重子集覆盖', `Noto Sans SC Semibold 子集 ${wanted.size} 字（含 ${cjk} 汉字，${kb} KB），三个断点全覆盖`)
 }
 
 server.close()

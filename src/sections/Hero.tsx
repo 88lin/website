@@ -10,10 +10,9 @@ export function Hero() {
 
   useScene(
     ref,
-    { formX: 2.62, formY: -0.42, formScale: 1.55, amp: 0.26, freq: 1.0, twist: 0.35, spin: 0.16, camZ: 6.2, particles: 0.55, exposure: 1.05 },
-    undefined,
-    // 窄屏：把主形体沉到右下角空白区，作为一整块光滑的铬合金肩部收住版面
-    { formX: 0.78, formY: -2.2, formScale: 0.9, amp: 0.2, freq: 1.0, twist: 0.4, spin: 0.2 }
+    { clusterX: 2.05, clusterY: -0.15, clusterScale: 0.85, spread: 1.0, spin: 0.13, tilt: 0.05, dispersion: 5.4, glow: 1.0, tint: 0.34, camZ: 6.2, exposure: 1.05 },
+    // 窄屏视野只有宽屏的三分之一，晶簇沉到标题下方的空白里，缩到一半大小
+    { clusterX: 0.14, clusterY: -1.94, clusterScale: 0.54, spread: 0.85, spin: 0.18 }
   )
 
   return (
@@ -25,7 +24,7 @@ export function Hero() {
       {/* 左侧栏的竖排定位标签，桌面端才出现 */}
       <div className="pointer-events-none absolute left-[1.15rem] top-1/2 hidden -translate-y-1/2 2xl:block">
         <span
-          className="mono block whitespace-nowrap text-[0.66rem] tracking-[0.34em] text-ink-60"
+          className="mono block whitespace-nowrap text-[0.875rem] tracking-[0.06em] text-ink-70"
           style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
         >
           AI ENGINEERING &times; CREATIVE FRONTEND
@@ -48,7 +47,7 @@ export function Hero() {
           </h1>
 
           <p
-            className="hero-fade mt-9 max-w-[46ch] text-balance text-lead text-ink-60"
+            className="hero-fade mt-9 max-w-[46ch] text-balance text-lead text-ink-70"
             style={{ animationDelay: '0.42s' }}
           >
             {hero.sub}
@@ -58,7 +57,7 @@ export function Hero() {
             <Cta size="lg">{hero.primaryCta}</Cta>
             <a
               href="#work"
-              className="mono group inline-flex items-center gap-2 border-b-2 border-ink px-1 py-4 text-[0.86rem] tracking-[0.08em] transition-colors hover:border-vermilion-deep hover:text-vermilion-deep"
+              className="group inline-flex items-center gap-2 rounded-full border border-ink/25 px-6 py-4 text-[1.0625rem] font-semibold tracking-[-0.014em] transition-colors hover:border-ink hover:bg-ink hover:text-paper"
             >
               {hero.secondaryCta}
               <span aria-hidden className="transition-transform duration-300 group-hover:translate-y-1">
@@ -68,7 +67,7 @@ export function Hero() {
           </div>
 
           <p
-            className="hero-fade mono mt-14 max-w-[54ch] text-[0.74rem] leading-[1.9] tracking-[0.06em] text-ink-60"
+            className="hero-fade mono mt-14 max-w-[54ch] text-[0.875rem] leading-[1.9] tracking-[0.06em] text-ink-70"
             style={{ animationDelay: '0.66s' }}
           >
             {profile.latinTagline}

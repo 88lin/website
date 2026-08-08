@@ -1,8 +1,12 @@
 /**
- * 从构建产物里精确采集「真正用得意黑（Smiley Sans）渲染」的字符。
- * 得意黑只挂在 .display 上，但子集脚本原先把全站汉字都塞了进去（100 KB）。
- * 这里遍历 DOM，按 computed font-family 判断归属——包含 display:none 的
- * 响应式分支，所以两个断点的文案都能覆盖到。
+ * 采集「真正用中黑及以上字重渲染」的字符。
+ *
+ * 汉字子集拆成两份：常规字重那份必须覆盖全站文案，中黑那份只覆盖标题、
+ * 数字和微标签。判断依据是 computed font-weight —— 站点里 .display 是
+ * 600、.eyebrow 是 590、.mono 是 560，正文是 420，阈值取 501 正好对上
+ * CSS 里 @font-face 的 unicode 分档（400 500 / 501 900）。
+ * 三个断点各跑一遍，把 display:none 的响应式分支也覆盖进去。
+ *
  * 输出：scripts/display-chars.txt
  */
 import { chromium } from 'playwright'
@@ -15,10 +19,9 @@ const { server, url } = await serveDist({ dist: DIST, port: 4207 })
 
 const collect = () => {
   const chars = new Set()
-  const all = document.querySelectorAll('body *')
-  for (const el of all) {
-    const ff = getComputedStyle(el).fontFamily || ''
-    if (!/smiley/i.test(ff)) continue
+  for (const el of document.querySelectorAll('body *')) {
+    const w = parseInt(getComputedStyle(el).fontWeight, 10)
+    if (!(w >= 501)) continue
     for (const n of el.childNodes) {
       if (n.nodeType === 3 && n.nodeValue) for (const c of n.nodeValue) chars.add(c)
     }
@@ -53,4 +56,4 @@ for (const c of SAFE) found.add(c)
 const out = [...found].sort().join('')
 await writeFile(OUT, out, 'utf8')
 const cjk = [...found].filter((c) => /[\u4e00-\u9fff]/.test(c)).length
-console.log(`display 字符集：${found.size} 个（其中汉字 ${cjk}）→ ${OUT}`)
+console.log(`中黑字符集：${found.size} 个（其中汉字 ${cjk}）→ ${OUT}`)

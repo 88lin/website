@@ -1,52 +1,56 @@
 import * as THREE from 'three'
 import { makeBrandEnvironment } from './env'
-import { ChromeForm } from './ChromeForm'
-import { ParticleField } from './ParticleField'
-import { SubjectPlane } from './SubjectPlane'
+import { CrystalCluster } from './Crystals'
+import { Backdrop } from './Backdrop'
 
 export type StageTargets = {
-  formX: number
-  formY: number
-  formZ: number
-  formScale: number
-  amp: number
-  freq: number
-  twist: number
+  /** 晶体星座的世界坐标与整体缩放 */
+  clusterX: number
+  clusterY: number
+  clusterZ: number
+  clusterScale: number
+  /** 星座的疏密：1 是基准，越大越散 */
+  spread: number
+  /** 整组自转速度与倾角 */
   spin: number
+  tilt: number
+  /** 色散强度（IOR 分离幅度），0 会触发 shader 重编译，最低给 0.6 */
+  dispersion: number
+  /** 底板色团的强度与冷暖：0 = 钴蓝主导，1 = 朱红主导 */
+  glow: number
+  tint: number
+  /** 光台半径相对晶簇的倍率。圆窗那一屏要让辉光撑满窗口，就调大它 */
+  aura: number
   camZ: number
   camY: number
-  particles: number
   exposure: number
 }
 
 const DEFAULTS: StageTargets = {
-  formX: 2.35,
-  formY: 0.1,
-  formZ: 0,
-  formScale: 1.65,
-  amp: 0.26,
-  freq: 1.0,
-  twist: 0.0,
+  clusterX: 2.3,
+  clusterY: 0,
+  clusterZ: 0,
+  clusterScale: 1.15,
+  spread: 1,
   spin: 0.16,
+  tilt: 0,
+  dispersion: 5.2,
+  glow: 1,
+  tint: 0.4,
+  aura: 1,
   camZ: 6.2,
   camY: 0,
-  particles: 0.55,
   exposure: 1.05,
 }
 
-export type SubjectKey = 'car' | 'robot' | 'cat' | 'rabbit'
+const _ndc = new THREE.Vector3()
 
 export class Stage {
   private renderer: THREE.WebGLRenderer
   private scene = new THREE.Scene()
   private camera: THREE.PerspectiveCamera
-  private form: ChromeForm
-  private particles: ParticleField
-  private subjects = new Map<SubjectKey, SubjectPlane>()
-  private subjectOpacity: Record<string, number> = {}
-  private subjectTarget: Record<string, number> = {}
-  /** 屏幕空间锚点：sx/sy 为视口比例，h 为占视口高度的比例 */
-  private anchors: Partial<Record<SubjectKey, { sx: number; sy: number; h: number; z: number }>> = {}
+  private cluster: CrystalCluster
+  private backdrop: Backdrop
 
   private target: StageTargets = { ...DEFAULTS }
   private current: StageTargets = { ...DEFAULTS }
@@ -54,50 +58,58 @@ export class Stage {
   private pointerSmooth = { x: 0, y: 0 }
 
   private raf = 0
+  private spinAngle = 0
   private clock = new THREE.Clock()
   private running = false
-  private lowPower: boolean
   private reduced: boolean
+  private minDelta: number
   private ro?: ResizeObserver
   private env: THREE.Texture
 
   constructor(canvas: HTMLCanvasElement, opts: { lowPower: boolean; reduced: boolean }) {
-    this.lowPower = opts.lowPower
     this.reduced = opts.reduced
+    this.minDelta = opts.lowPower ? 1000 / 36 : 0
 
     this.renderer = new THREE.WebGLRenderer({
       canvas,
-      alpha: true,
+      alpha: false,
       antialias: !opts.lowPower,
       powerPreference: 'high-performance',
       stencil: false,
     })
-    const dpr = Math.min(window.devicePixelRatio || 1, opts.lowPower ? 1.5 : 1.75)
+    const dpr = Math.min(window.devicePixelRatio || 1, opts.lowPower ? 1.4 : 1.7)
     this.renderer.setPixelRatio(dpr)
     this.renderer.setSize(window.innerWidth, window.innerHeight, false)
-    this.renderer.setClearColor(0x000000, 0)
+    // 与 --color-paper 完全一致：折射缓冲和首帧都不会出现色差接缝
+    this.renderer.setClearColor(0xfbf5eb, 1)
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping
     this.renderer.toneMappingExposure = DEFAULTS.exposure
     this.renderer.outputColorSpace = THREE.SRGBColorSpace
+    // 折射缓冲降采样：色散要采样三次，全分辨率在集显上直接跪
+    this.renderer.transmissionResolutionScale = opts.lowPower ? 0.32 : 0.5
 
     this.camera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 0.1, 60)
     this.camera.position.set(0, 0, DEFAULTS.camZ)
+    this.scene.add(this.camera)
 
     this.env = makeBrandEnvironment(this.renderer)
     this.scene.environment = this.env
 
-    this.form = new ChromeForm(this.env, opts.lowPower)
-    this.scene.add(this.form.mesh)
+    this.backdrop = new Backdrop()
+    this.backdrop.fit(this.camera)
+    this.camera.add(this.backdrop.mesh)
 
-    this.particles = new ParticleField(opts.lowPower ? 4200 : 17000, dpr)
-    this.scene.add(this.particles.points)
+    this.cluster = new CrystalCluster(this.env, opts.lowPower)
+    this.scene.add(this.cluster.group)
 
-    // 面光源：让铬面在环境反射之外还有两条明确的品牌色高光
-    const cobalt = new THREE.PointLight(0x1226e8, 55, 24, 2)
+    // 两盏品牌色点光：让棱面在环境反射之外还有明确的高光轮廓
+    const cobalt = new THREE.PointLight(0x1226e8, 46, 24, 2)
     cobalt.position.set(-4.2, 2.6, 3.4)
-    const verm = new THREE.PointLight(0xff3b14, 42, 22, 2)
+    const verm = new THREE.PointLight(0xff3b14, 34, 22, 2)
     verm.position.set(4.4, -2.0, 2.6)
-    this.scene.add(cobalt, verm, new THREE.AmbientLight(0xffffff, 0.35))
+    const key = new THREE.DirectionalLight(0xffffff, 1.5)
+    key.position.set(2.5, 4, 5)
+    this.scene.add(cobalt, verm, key, new THREE.AmbientLight(0xffffff, 0.4))
 
     this.onResize = this.onResize.bind(this)
     window.addEventListener('resize', this.onResize, { passive: true })
@@ -107,49 +119,11 @@ export class Stage {
     }
   }
 
-  async loadSubject(key: SubjectKey, url: string, aspect: number) {
-    const loader = new THREE.TextureLoader()
-    const tex = await loader.loadAsync(url).catch(() => null)
-    if (!tex) return
-    const plane = new SubjectPlane(tex, aspect, this.lowPower)
-    this.subjects.set(key, plane)
-    this.subjectOpacity[key] = 0
-    this.subjectTarget[key] = 0
-    this.scene.add(plane.mesh)
-  }
-
-  placeSubject(key: SubjectKey, x: number, y: number, z: number, scale: number, rotY = 0) {
-    const s = this.subjects.get(key)
-    if (!s) return
-    s.mesh.position.set(x, y, z)
-    s.mesh.userData.base = { x, y }
-    s.mesh.scale.setScalar(scale)
-    s.mesh.rotation.y = rotY
-  }
-
-  /**
-   * 把素材钉在视口的某个比例位置上，尺寸也按视口高度比例给。
-   * 每帧按当前相机距离反算世界坐标，所以换分辨率、改 camZ 都不会跑位。
-   */
-  anchorSubject(key: SubjectKey, sx: number, sy: number, h: number, z = 1.1) {
-    this.anchors[key] = { sx, sy, h, z }
-  }
-
-  /** 收窄或放宽素材的椭圆羽化。窗口里的素材要放宽，纸底上漂浮的素材要收窄。 */
-  setSubjectFeather(key: SubjectKey, inner: number, outer: number) {
-    this.subjects.get(key)?.setFeather(inner, outer)
-  }
-
-  showSubject(key: SubjectKey, v: number) {
-    this.subjectTarget[key] = v
-  }
-
-  hideAllSubjects() {
-    for (const k of Object.keys(this.subjectTarget)) this.subjectTarget[k] = 0
-  }
-
+  /** 区块给的是完整构图，未指定的字段一律回落到默认值。
+      早先这里用 Object.assign 就地合并，上一屏没被覆盖的字段会一直粘着走
+      （圆窗那屏放大的 aura 就这样漏进了后面每一屏）。 */
   set(partial: Partial<StageTargets>) {
-    Object.assign(this.target, partial)
+    this.target = { ...DEFAULTS, ...partial }
   }
 
   reset() {
@@ -167,14 +141,20 @@ export class Stage {
     this.camera.aspect = w / h
     this.camera.updateProjectionMatrix()
     this.renderer.setSize(w, h, false)
+    this.backdrop.fit(this.camera)
   }
 
   start() {
     if (this.running) return
     this.running = true
     this.clock.start()
-    const loop = () => {
+    // 低性能设备限到 36fps：折射每帧要把场景多渲一遍，60fps 在手机上纯粹是烧电
+    const minDelta = this.minDelta
+    let last = -Infinity
+    const loop = (now: number) => {
       this.raf = requestAnimationFrame(loop)
+      if (now - last < minDelta) return
+      last = now
       this.frame()
     }
     this.raf = requestAnimationFrame(loop)
@@ -198,56 +178,39 @@ export class Stage {
 
     this.pointerSmooth.x += (this.pointer.x - this.pointerSmooth.x) * k
     this.pointerSmooth.y += (this.pointer.y - this.pointerSmooth.y) * k
-
     const px = this.reduced ? 0 : this.pointerSmooth.x
     const py = this.reduced ? 0 : this.pointerSmooth.y
 
-    const m = this.form.mesh
-    m.position.set(c.formX + px * 0.24, c.formY - py * 0.2, c.formZ)
-    m.scale.setScalar(c.formScale)
+    const grp = this.cluster.group
+    grp.position.set(c.clusterX + px * 0.22, c.clusterY - py * 0.18, c.clusterZ)
+    grp.scale.setScalar(c.clusterScale)
+    // 自转必须积分：直接写 t * spin 的话，spin 插值时角度会整体跳一大段
+    this.spinAngle += c.spin * dt
     if (!this.reduced) {
-      m.rotation.y = t * c.spin
-      m.rotation.x = Math.sin(t * 0.21) * 0.13 + py * 0.12
+      grp.rotation.y = this.spinAngle
+      grp.rotation.x = c.tilt + Math.sin(t * 0.19) * 0.08 + py * 0.1
+      grp.rotation.z = Math.sin(t * 0.13) * 0.05
+    } else {
+      grp.rotation.set(c.tilt, 0.6, 0)
     }
-    this.form.amp = c.amp
-    this.form.freq = c.freq
-    this.form.twist = c.twist
-    this.form.update(this.reduced ? 3.4 : t)
-
-    this.particles.opacity = c.particles
-    this.particles.update(this.reduced ? 2.0 : t)
-    this.particles.points.rotation.y = this.reduced ? 0 : t * 0.014
-
-    for (const [key, plane] of this.subjects) {
-      const want = this.subjectTarget[key] ?? 0
-      this.subjectOpacity[key] += (want - this.subjectOpacity[key]) * k
-      plane.opacity = this.subjectOpacity[key]
-      if (plane.opacity > 0.003) {
-        plane.update(this.reduced ? 1.0 : t)
-        const a = this.anchors[key]
-        if (a) {
-          const dz = Math.max(0.5, this.camera.position.z - a.z)
-          const vh = 2 * dz * Math.tan(((this.camera.fov / 2) * Math.PI) / 180)
-          const vw = vh * this.camera.aspect
-          plane.mesh.position.set(
-            (a.sx - 0.5) * vw + this.camera.position.x + px * 0.09,
-            (0.5 - a.sy) * vh + this.camera.position.y - py * 0.07,
-            a.z
-          )
-          plane.mesh.scale.setScalar(a.h * vh)
-        } else {
-          const base = (plane.mesh.userData.base as { x: number; y: number }) ?? { x: 0, y: 0 }
-          plane.mesh.position.x = base.x + px * 0.42
-          plane.mesh.position.y = base.y - py * 0.3
-        }
-        plane.mesh.rotation.z = this.reduced ? 0 : Math.sin(t * 0.28) * 0.02
-      }
-    }
+    this.cluster.update(this.reduced ? 3.4 : t, c.spread, c.dispersion, this.reduced)
 
     this.camera.position.z = c.camZ
-    this.camera.position.y = c.camY + py * 0.14
-    this.camera.position.x = px * 0.16
+    this.camera.position.y = c.camY + py * 0.12
+    this.camera.position.x = px * 0.14
     this.camera.lookAt(0, c.camY * 0.4, 0)
+
+    // 光台对准晶簇。相机先摆好再投影，否则光团会慢相机一帧。
+    this.camera.updateMatrixWorld()
+    _ndc.copy(grp.position).project(this.camera)
+    this.backdrop.aim(
+      _ndc,
+      c.clusterScale * (1.55 + 0.55 * c.spread) * c.aura,
+      Math.abs(this.camera.position.z - c.clusterZ),
+      this.camera.fov
+    )
+    this.backdrop.update(this.reduced ? 2.0 : t, c.tint, c.glow, px, py)
+
     this.renderer.toneMappingExposure = c.exposure
 
     this.renderer.render(this.scene, this.camera)
@@ -257,10 +220,8 @@ export class Stage {
     this.stop()
     window.removeEventListener('resize', this.onResize)
     this.ro?.disconnect()
-    this.form.dispose()
-    this.particles.dispose()
-    for (const s of this.subjects.values()) s.dispose()
-    this.subjects.clear()
+    this.cluster.dispose()
+    this.backdrop.dispose()
     this.env.dispose()
     this.scene.clear()
     this.renderer.dispose()
