@@ -1,0 +1,411 @@
+@import 'tailwindcss';
+
+/* ============================================================ FONTS */
+
+@font-face {
+  font-family: 'Smiley Sans';
+  src: url('/fonts/SmileySans-Display.woff2') format('woff2');
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Geist';
+  src: url('/fonts/Geist-Medium.woff2') format('woff2');
+  font-weight: 400 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Geist';
+  src: url('/fonts/Geist-Bold.woff2') format('woff2');
+  font-weight: 700 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('/fonts/GeistMono-Medium.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ============================================================ TOKENS */
+
+@theme {
+  --color-paper: #fbf5eb;
+  --color-paper-2: #f4eadc;
+  --color-ink: #0e1230;
+  --color-ink-60: #0e123099;
+  --color-cobalt: #1226e8;
+  --color-vermilion: #ff3b14;
+  --color-vermilion-press: #e02e0a;
+  --color-vermilion-deep: #c22a08;
+
+  --font-display: 'Smiley Sans', 'PingFang SC', 'HarmonyOS Sans SC', 'Microsoft YaHei', sans-serif;
+  --font-sans: 'Geist', -apple-system, 'PingFang SC', 'HarmonyOS Sans SC', 'Microsoft YaHei',
+    'Noto Sans SC', sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  --radius-none: 0px;
+
+  --text-d1: clamp(3.1rem, 8.2vw, 9.2rem);
+  --text-d1--line-height: 0.93;
+  --text-d1--letter-spacing: -0.035em;
+  --text-d2: clamp(2.25rem, 5.4vw, 5.2rem);
+  --text-d2--line-height: 0.98;
+  --text-d2--letter-spacing: -0.028em;
+  --text-d3: clamp(1.5rem, 2.9vw, 2.6rem);
+  --text-d3--line-height: 1.1;
+  --text-d3--letter-spacing: -0.02em;
+  --text-lead: clamp(1.05rem, 1.35vw, 1.3rem);
+  --text-lead--line-height: 1.72;
+  --text-meta: 0.78rem;
+  --text-meta--line-height: 1.4;
+  --text-meta--letter-spacing: 0.1em;
+}
+
+/* ============================================================ BASE */
+
+@layer base {
+  * {
+    border-radius: 0 !important;
+  }
+
+  html {
+    background: var(--color-paper);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    font-feature-settings: 'tnum' 0;
+  }
+
+  ::selection {
+    background: var(--color-vermilion);
+    color: var(--color-paper);
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-vermilion);
+    outline-offset: 3px;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  p,
+  figure {
+    margin: 0;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  img {
+    display: block;
+    max-width: 100%;
+  }
+
+  canvas {
+    display: block;
+  }
+}
+
+/* ============================================================ UTILITIES */
+
+@utility shell {
+  width: 100%;
+  max-width: 92rem;
+  margin-inline: auto;
+  padding-inline: clamp(1.25rem, 4vw, 4.5rem);
+}
+
+/* 与 .shell 对齐的横向内边距，供不能被 max-width 约束的横向轨道使用 */
+@utility shell-x {
+  padding-left: max(clamp(1.25rem, 4vw, 4.5rem), calc((100vw - 92rem) / 2 + 4.5rem));
+  padding-right: max(clamp(1.25rem, 4vw, 4.5rem), calc((100vw - 92rem) / 2 + 4.5rem));
+}
+
+@utility display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  text-wrap: balance;
+}
+
+@utility mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+@utility rule {
+  border-top: 1px solid color-mix(in srgb, var(--color-ink) 16%, transparent);
+}
+
+/* 正文行内链接：墨色文字 + 朱红下划线；hover 反相为朱红色块 */
+@utility inline-link {
+  display: inline;
+  box-shadow: inset 0 -2px 0 0 var(--color-vermilion);
+  transition:
+    background-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+@utility on-cobalt-link {
+  box-shadow: inset 0 -2px 0 0 var(--color-paper);
+}
+
+.inline-link:hover,
+.inline-link:focus-visible {
+  background: var(--color-vermilion);
+  box-shadow: inset 0 -2px 0 0 var(--color-vermilion);
+  color: var(--color-ink);
+}
+.on-cobalt-link:hover,
+.on-cobalt-link:focus-visible {
+  background: var(--color-paper);
+  box-shadow: inset 0 -2px 0 0 var(--color-paper);
+  color: var(--color-cobalt);
+}
+
+/* ============================================================ REVEAL */
+
+.reveal-line {
+  display: block;
+  overflow: hidden;
+}
+.reveal-line > span {
+  display: block;
+  will-change: transform;
+}
+
+.js-fade {
+  opacity: 0;
+}
+
+/* 首屏入场走纯 CSS 关键帧：不等 React hydrate、不等 GSAP 下载解析。
+   LCP 元素（hero 副标题）在 CSS 解析完就开始动，首屏指标不再被 JS 挡住。
+   其余分区仍由 GSAP + ScrollTrigger 驱动——那些本来就在折叠线以下。 */
+@keyframes heroRise {
+  from {
+    transform: translateY(116%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes heroFade {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.hero-rise > span {
+  animation: heroRise 1.05s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.hero-fade {
+  animation: heroFade 0.82s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .js-fade {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .reveal-line > span {
+    transform: none !important;
+  }
+  .hero-rise > span,
+  .hero-fade {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* 无 JS 时保证内容可读 */
+.no-js .js-fade {
+  opacity: 1;
+}
+
+/* ============================================================ WEBGL LAYER */
+
+#stage {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  contain: layout paint;
+}
+
+.above {
+  position: relative;
+  z-index: 1;
+}
+
+/* 色场：盖住画布的实色区块 */
+.field-cobalt {
+  background: var(--color-cobalt);
+  color: var(--color-paper);
+}
+.field-vermilion {
+  background: var(--color-vermilion);
+  color: var(--color-ink);
+}
+.field-paper {
+  background: var(--color-paper);
+}
+.field-paper2 {
+  background: var(--color-paper-2);
+}
+
+/* 窄屏不跑素材层（见 useScene 的 1024 门槛），用静态图片补位。
+   羽化范围与 SubjectPlane 着色器里的椭圆遮罩保持一致，两端观感统一 */
+.subject-img {
+  -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 56%, transparent 100%);
+  mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 56%, transparent 100%);
+}
+/* 钴蓝场上的素材用硬边圆窗，等价于宽屏的 .punch 开孔 */
+.subject-porthole {
+  clip-path: circle(49.5% at 50% 50%);
+}
+
+/* 细网格纹理，只在纸底区块的极低透明度出现 */
+.grid-tex {
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--color-ink) 6%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--color-ink) 6%, transparent) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+/* 横向滚动轨道 */
+.h-track {
+  display: flex;
+  align-items: stretch;
+  will-change: transform;
+}
+
+/* 拖拽画布 */
+.drag-plane {
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+}
+.drag-plane.is-dragging {
+  cursor: grabbing;
+}
+
+/* 打印与无 WebGL 降级由 JS 加 class */
+.no-webgl #stage {
+  display: none;
+}
+
+/* 钴蓝色场上打出的一个硬边圆孔，透出画布里的液态金属体 */
+.punch {
+  background: var(--color-cobalt);
+  --px: 78.5%;
+  --py: 30%;
+  --pr: clamp(104px, 12.5vw, 168px);
+  -webkit-mask-image: radial-gradient(
+    circle at var(--px) var(--py),
+    transparent 0 var(--pr),
+    #000 calc(var(--pr) + 1px)
+  );
+  mask-image: radial-gradient(
+    circle at var(--px) var(--py),
+    transparent 0 var(--pr),
+    #000 calc(var(--pr) + 1px)
+  );
+}
+@media (max-width: 1023px) {
+  .punch {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+}
+.no-webgl .punch {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+/* 项目封面的 RGB 分离，只在指针设备上启用 */
+.cover-stack .ghost {
+  opacity: 0;
+  mix-blend-mode: screen;
+  transition:
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.35s ease;
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .card:hover .cover-stack .ghost-r {
+    opacity: 0.85;
+    transform: translate3d(7px, -3px, 0) scale(1.045);
+  }
+  .card:hover .cover-stack .ghost-b {
+    opacity: 0.85;
+    transform: translate3d(-7px, 3px, 0) scale(1.045);
+  }
+  .card:hover .cover-stack .base {
+    transform: scale(1.045);
+  }
+}
+.cover-stack .base {
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* 案例堆叠 */
+.case-card {
+  position: sticky;
+  will-change: transform;
+}
+
+/* 纸面卡片的通用描边 */
+.panel {
+  background: var(--color-paper);
+  border: 1px solid color-mix(in srgb, var(--color-ink) 14%, transparent);
+}
+
+/* 朱红场上的链接：墨色文字 + 墨色下划线，5.2:1 */
+.on-vermilion-link {
+  color: var(--color-ink);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+.on-vermilion-link:hover,
+.on-vermilion-link:focus-visible {
+  background: var(--color-ink);
+  color: var(--color-vermilion);
+  text-decoration-color: transparent;
+}
+
+/* 锚点跳转给固定导航留位置 */
+section[id],
+[id="top"] {
+  scroll-margin-top: 88px;
+}
