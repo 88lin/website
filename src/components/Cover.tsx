@@ -8,45 +8,27 @@ const SHOTS: Record<string, string> = {
   'cover-gzh': 'gzh',
 }
 
-const TYPO: Record<string, { field: string; text: string; ink: string }> = {
-  'cover-wesum': { field: 'bg-cobalt', text: 'text-paper', ink: 'text-paper/88' },
-  'cover-diataxis': { field: 'bg-paper-2', text: 'text-ink', ink: 'text-ink-70' },
-  'cover-video': { field: 'bg-vermilion', text: 'text-ink', ink: 'text-ink/78' },
+/** 排印封面的三种配色，全部走语义 token。 */
+const TYPO: Record<string, { field: string; text: string; meta: string }> = {
+  'cover-wesum': { field: 'bg-brand-surface', text: 'text-on-brand', meta: 'text-on-brand' },
+  'cover-diataxis': { field: 'bg-highlight-soft', text: 'text-ink', meta: 'text-ink-light' },
+  'cover-video': { field: 'bg-dark-panel', text: 'text-on-dark', meta: 'text-on-dark-dim' },
 }
 
 export function Cover({ project }: { project: Project }) {
   const shot = SHOTS[project.cover]
 
   if (shot) {
-    const src = asset(`covers/${shot}.webp`)
     return (
-      <div className="cover-stack relative aspect-[16/10] w-full overflow-hidden rounded-lg bg-[#05060f] isolate">
+      <div className="work-card__shot aspect-[16/10] w-full bg-preview">
         <img
-          src={src}
+          src={asset(`covers/${shot}.webp`)}
           alt={`${project.name} 界面截图`}
           width={1200}
           height={750}
           loading="lazy"
           decoding="async"
-          className="base absolute inset-0 h-full w-full object-cover object-top"
-        />
-        <img
-          src={src}
-          alt=""
-          aria-hidden
-          loading="lazy"
-          decoding="async"
-          className="ghost ghost-r absolute inset-0 h-full w-full object-cover object-top"
-          style={{ filter: 'url(#chan-r)' }}
-        />
-        <img
-          src={src}
-          alt=""
-          aria-hidden
-          loading="lazy"
-          decoding="async"
-          className="ghost ghost-b absolute inset-0 h-full w-full object-cover object-top"
-          style={{ filter: 'url(#chan-c)' }}
+          className="h-full w-full object-cover object-top"
         />
       </div>
     )
@@ -54,32 +36,13 @@ export function Cover({ project }: { project: Project }) {
 
   const t = TYPO[project.cover] ?? TYPO['cover-diataxis']
   return (
-    <div className={`relative aspect-[16/10] w-full overflow-hidden rounded-lg ${t.field}`}>
-      <div className="grid-tex absolute inset-0 opacity-60" aria-hidden />
+    <div className={`work-card__shot relative aspect-[16/10] w-full ${t.field}`}>
       <div className="absolute inset-0 flex flex-col justify-between p-6">
-        <span className={`mono text-[0.875rem] tracking-[0.06em] ${t.ink}`}>{project.slug}</span>
-        <span
-          className={`display block max-w-full text-[clamp(2rem,4.4vw,3.2rem)] leading-[0.98] tracking-tight ${t.text}`}
-        >
+        <span className={`eyebrow ${t.meta}`}>{project.kind}</span>
+        <span className={`serif block text-[clamp(1.6rem,3.4vw,2.2rem)] leading-[1.1] ${t.text}`}>
           {project.cn}
         </span>
       </div>
     </div>
-  )
-}
-
-/** 通道分离滤镜，整站只需要一份。 */
-export function ChannelFilters() {
-  return (
-    <svg aria-hidden width="0" height="0" className="absolute" focusable="false">
-      <defs>
-        <filter id="chan-r" colorInterpolationFilters="sRGB">
-          <feColorMatrix type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" />
-        </filter>
-        <filter id="chan-c" colorInterpolationFilters="sRGB">
-          <feColorMatrix type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0" />
-        </filter>
-      </defs>
-    </svg>
   )
 }

@@ -1,312 +1,108 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { garden, gardenIntro, type GardenGroup } from '../content/site'
-import { fadeUp, gsap, prefersReduced, isNarrow } from '../lib/motion'
-import { useScene } from '../webgl/StageContext'
+import { Eyebrow, Mark, Note } from '../components/ui'
+import { fadeUp } from '../lib/motion'
 
-const ORDER: GardenGroup[] = ['特效', '工具', '内容', '组件']
+/**
+ * components.md #14 Filter 标签栏 + 胶囊标签流。
+ *
+ * 上一版这里是一块可拖动的均匀网格，41 个格子的 border-radius 计算值全是 0px。
+ * 现在每一枚都是 999px 胶囊，筛选按钮也是胶囊，靠 aria-pressed 表达状态。
+ */
+const GROUPS: GardenGroup[] = ['特效', '工具', '内容', '组件']
+type Filter = '全部' | GardenGroup
 
-const SKIN: Record<GardenGroup, string> = {
-  特效: 'hover:bg-vermilion hover:text-ink focus-visible:bg-vermilion focus-visible:text-ink',
-  工具: 'hover:bg-cobalt hover:text-paper focus-visible:bg-cobalt focus-visible:text-paper',
-  内容: 'hover:bg-ink hover:text-paper focus-visible:bg-ink focus-visible:text-paper',
-  组件: 'hover:bg-paper-2 hover:border-ink focus-visible:bg-paper-2 focus-visible:border-ink',
-}
-
-const TILE_W = 224
-const TILE_H = 58
-const GAP = 12
-const COLS = 3
-const CLUSTER_W = COLS * TILE_W + (COLS - 1) * GAP
-const HEAD_H = 74
-const COL_GAP = 190
-const PAD = 44
-const PLANE_W = 2 * CLUSTER_W + COL_GAP + 2 * PAD
-const ROW2 = PAD + HEAD_H + 5 * (TILE_H + GAP) + 84
-const ORIGIN: Record<GardenGroup, [number, number]> = {
-  特效: [PAD, PAD],
-  工具: [PAD + CLUSTER_W + COL_GAP, PAD],
-  内容: [PAD, ROW2],
-  组件: [PAD + CLUSTER_W + COL_GAP, ROW2],
+/** 名称越短给越大的字号，让标签流有呼吸感，而不是一排等高格子。 */
+function sizeOf(name: string) {
+  const n = [...name].length
+  if (n <= 4) return 'l'
+  if (n <= 6) return 'm'
+  return 's'
 }
 
 export function Garden() {
-  const ref = useRef<HTMLElement>(null)
-  const viewRef = useRef<HTMLDivElement>(null)
-  const planeRef = useRef<HTMLDivElement>(null)
-  // 同 Work：初始值必须是预渲染时的确定值，真实视口在水合后测
-  const [narrow, setNarrow] = useState(false)
-  const [reduced, setReduced] = useState(false)
+  const root = useRef<HTMLElement>(null)
+  const [filter, setFilter] = useState<Filter>('全部')
 
-  useScene(
-    ref,
-    { clusterX: 0.95, clusterY: 0.62, clusterScale: 0.58, spread: 1.05, spin: 0.33, tilt: 0.24, dispersion: 5.0, glow: 0.9, tint: 0.3, camZ: 6.4, exposure: 1.0 },
-    // 窄屏把晶簇顶出标题块，正文不压在晶面上
-    { clusterX: -0.62, clusterY: 2.15, clusterScale: 0.5, spread: 0.8 }
-  )
-
-  const laid = useMemo(() => {
-    const out: { name: string; href: string; group: GardenGroup; x: number; y: number }[] = []
-    for (const g of ORDER) {
-      const items = garden.filter((i) => i.group === g)
-      const [ox, oy] = ORIGIN[g]
-      items.forEach((it, i) => {
-        out.push({
-          ...it,
-          x: ox + (i % COLS) * (TILE_W + GAP),
-          y: oy + HEAD_H + Math.floor(i / COLS) * (TILE_H + GAP),
-        })
-      })
-    }
-    return out
+  const counts = useMemo(() => {
+    const m = new Map<Filter, number>([['全部', garden.length]])
+    GROUPS.forEach((g) => m.set(g, garden.filter((i) => i.group === g).length))
+    return m
   }, [])
 
-  const planeH = useMemo(() => Math.max(...laid.map((t) => t.y)) + TILE_H + PAD, [laid])
+  const shown = filter === '全部' ? garden : garden.filter((i) => i.group === filter)
 
   useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const ctx = gsap.context(() => fadeUp('.garden-fade', el, 0.08, 22), el)
-    const onR = () => setNarrow(isNarrow())
-    onR()
-    setReduced(prefersReduced())
-    window.addEventListener('resize', onR)
-    return () => {
-      ctx.revert()
-      window.removeEventListener('resize', onR)
-    }
+    if (!root.current) return
+    fadeUp('.garden-fade', root.current, 0.07, 22)
   }, [])
-
-  useEffect(() => {
-    const view = viewRef.current
-    const plane = planeRef.current
-    if (narrow || !view || !plane) return
-
-    let x = 0
-    let y = 0
-    let vx = 0
-    let vy = 0
-    let dragging = false
-    let moved = 0
-    let px = 0
-    let py = 0
-    let raf = 0
-
-    const bounds = () => {
-      const r = view.getBoundingClientRect()
-      return { minX: Math.min(0, r.width - PLANE_W), minY: Math.min(0, r.height - planeH) }
-    }
-
-    const clamp = () => {
-      const b = bounds()
-      x = Math.max(b.minX, Math.min(0, x))
-      y = Math.max(b.minY, Math.min(0, y))
-    }
-
-    const draw = () => {
-      plane.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`
-    }
-
-    // 起始停在左上角，第一屏就能看见完整的第一组，右下方留出「还有更多」的暗示
-    x = 0
-    y = 0
-    clamp()
-    draw()
-
-    const loop = () => {
-      if (!dragging) {
-        vx *= 0.93
-        vy *= 0.93
-        if (Math.abs(vx) > 0.05 || Math.abs(vy) > 0.05) {
-          x += vx
-          y += vy
-          clamp()
-          draw()
-        }
-      }
-      raf = requestAnimationFrame(loop)
-    }
-    raf = requestAnimationFrame(loop)
-
-    const onDown = (e: PointerEvent) => {
-      dragging = true
-      moved = 0
-      px = e.clientX
-      py = e.clientY
-      vx = 0
-      vy = 0
-      view.classList.add('is-dragging')
-      view.setPointerCapture(e.pointerId)
-    }
-    const onMove = (e: PointerEvent) => {
-      if (!dragging) return
-      const dx = e.clientX - px
-      const dy = e.clientY - py
-      px = e.clientX
-      py = e.clientY
-      moved += Math.abs(dx) + Math.abs(dy)
-      x += dx
-      y += dy
-      vx = dx
-      vy = dy
-      clamp()
-      draw()
-    }
-    const onUp = (e: PointerEvent) => {
-      if (!dragging) return
-      dragging = false
-      view.classList.remove('is-dragging')
-      try {
-        view.releasePointerCapture(e.pointerId)
-      } catch {
-        /* ignore */
-      }
-    }
-    const onClick = (e: MouseEvent) => {
-      if (moved > 8) {
-        e.preventDefault()
-        e.stopPropagation()
-      }
-    }
-    // 键盘 Tab 进入的磁贴自动带进视野
-    const onFocusIn = (e: FocusEvent) => {
-      const t = e.target as HTMLElement
-      if (!t?.dataset?.tx) return
-      const r = view.getBoundingClientRect()
-      x = r.width / 2 - Number(t.dataset.tx) - TILE_W / 2
-      y = r.height / 2 - Number(t.dataset.ty) - TILE_H / 2
-      vx = 0
-      vy = 0
-      clamp()
-      draw()
-    }
-
-    view.addEventListener('pointerdown', onDown)
-    view.addEventListener('pointermove', onMove)
-    view.addEventListener('pointerup', onUp)
-    view.addEventListener('pointercancel', onUp)
-    view.addEventListener('click', onClick, true)
-    view.addEventListener('focusin', onFocusIn)
-    const onResize = () => {
-      clamp()
-      draw()
-    }
-    window.addEventListener('resize', onResize)
-
-    return () => {
-      cancelAnimationFrame(raf)
-      view.removeEventListener('pointerdown', onDown)
-      view.removeEventListener('pointermove', onMove)
-      view.removeEventListener('pointerup', onUp)
-      view.removeEventListener('pointercancel', onUp)
-      view.removeEventListener('click', onClick, true)
-      view.removeEventListener('focusin', onFocusIn)
-      window.removeEventListener('resize', onResize)
-    }
-  }, [planeH, narrow])
 
   return (
-    <section ref={ref} id="garden" className="relative border-y border-ink/12 py-[clamp(4rem,9vw,7rem)]">
-      <div className="shell mb-10">
-        <div className="grid grid-cols-12 items-end gap-x-6 gap-y-8">
-          <div className="col-span-12 max-w-[46ch] lg:col-span-6">
-            <h2 className="display text-d2 garden-fade opacity-0">{gardenIntro.headline}</h2>
-            <p className="garden-fade mt-5 text-lead text-ink-70 opacity-0">{gardenIntro.body}</p>
-          </div>
-          <div className="relative col-span-12 lg:col-span-6">
-            <a
-              href={gardenIntro.hub}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="garden-fade inline-link relative pb-1 text-[1rem] opacity-0 lg:float-right"
-            >
-              全部 {garden.length} 个页面
-            </a>
-          </div>
-        </div>
-      </div>
-
+    <section id="garden" ref={root} className="section-y bg-cream-dark">
       <div className="shell">
-        {narrow ? (
-          <div className="space-y-10">
-            {ORDER.map((g) => (
-              <div key={g}>
-                <h3 className="display flex items-baseline gap-3 border-b border-ink/20 pb-2 text-[1.35rem] leading-none tracking-tight">
-                  {g}
-                  <span className="mono text-[0.875rem] tracking-[0.06em] text-ink-70">
-                    {garden.filter((i) => i.group === g).length}
-                  </span>
-                </h3>
-                <ul className="mt-4 grid grid-cols-2 gap-2">
-                  {garden
-                    .filter((i) => i.group === g)
-                    .map((t) => (
-                      <li key={t.href + t.name}>
-                        <a
-                          href={t.href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={`flex h-full items-center justify-between gap-2 rounded-sm border border-ink/18 bg-paper px-3.5 py-3 text-[0.9375rem] ${SKIN[g]}`}
-                        >
-                          <span className="truncate">{t.name}</span>
-                          <span aria-hidden className="mono shrink-0 text-[0.875rem] opacity-80">
-                            &#8599;
-                          </span>
-                        </a>
-                      </li>
-                    ))}
-                </ul>
-              </div>
-            ))}
+        <div className="garden-fade js-fade flex flex-wrap items-end justify-between gap-x-10 gap-y-6">
+          <div className="max-w-[44ch]">
+            <Eyebrow>Digital garden</Eyebrow>
+            <h2 className="serif mt-4 text-d2">
+              数字<Mark>花园</Mark>
+            </h2>
+            <p className="mt-5 text-lead text-ink-light">{gardenIntro.body}</p>
           </div>
-        ) : (
-          <div
-            ref={viewRef}
-            className="drag-plane relative h-[clamp(420px,64vh,660px)] overflow-hidden rounded-xl border border-ink/20 bg-paper-2/70"
-            role="group"
-            aria-label="可拖动的作品画布"
-          >
-            <div className="grid-tex pointer-events-none absolute inset-0 opacity-70" aria-hidden />
-            <div
-              ref={planeRef}
-              className="absolute left-0 top-0"
-              style={{ width: PLANE_W, height: planeH, willChange: 'transform' }}
-            >
-              {ORDER.map((g) => (
-                <h3
-                  key={g}
-                  className="display pointer-events-none absolute text-[clamp(1.5rem,2.2vw,2rem)] leading-none tracking-tight text-ink/78"
-                  style={{ left: ORIGIN[g][0], top: ORIGIN[g][1], width: CLUSTER_W }}
-                >
-                  {g}
-                  <span className="mono ml-3 align-middle text-[0.875rem] tracking-[0.06em]">
-                    {garden.filter((i) => i.group === g).length}
-                  </span>
-                </h3>
-              ))}
-              {laid.map((t) => (
-                <a
-                  key={t.href + t.name}
-                  href={t.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  data-tx={t.x}
-                  data-ty={t.y}
-                  className={`absolute flex items-center justify-between gap-3 border border-ink/18 bg-paper px-4 text-[1rem] transition-colors duration-200 ${SKIN[t.group]}`}
-                  style={{ left: t.x, top: t.y, width: TILE_W, height: TILE_H }}
-                >
-                  <span className="truncate">{t.name}</span>
-                  <span aria-hidden className="mono shrink-0 text-[0.875rem] opacity-80">
-                    &#8599;
-                  </span>
-                </a>
-              ))}
-            </div>
+          <p className="flex items-baseline gap-3">
+            <span className="nums text-[clamp(2.4rem,4vw,3.4rem)] leading-none">
+              {garden.length}
+            </span>
+            <span className="text-sm font-medium text-ink-light">个还活着的小页面</span>
+          </p>
+        </div>
 
-            <p className="mono pointer-events-none absolute bottom-3 right-4 rounded-full border border-ink/15 bg-paper/88 px-3 py-1 text-[0.875rem] tracking-[0.06em] text-ink-70">
-              {reduced ? '点选打开' : '按住拖动'}
-            </p>
-          </div>
-        )}
+        {/* 筛选栏：一排胶囊，active 用 --brand-surface + --on-brand */}
+        <div
+          className="garden-fade js-fade mt-[clamp(32px,4vw,52px)] flex flex-wrap items-center gap-2.5"
+          role="group"
+          aria-label="按类型筛选"
+        >
+          {(['全部', ...GROUPS] as Filter[]).map((g) => (
+            <button
+              key={g}
+              type="button"
+              className="pill"
+              aria-pressed={filter === g}
+              onClick={() => setFilter(g)}
+            >
+              {g}
+              <span className="nums text-[0.8125rem] opacity-80">{counts.get(g)}</span>
+            </button>
+          ))}
+          <Note className="ml-1 hidden text-ink-faint sm:inline">全部都能点开</Note>
+        </div>
+
+        {/* 标签流：字号错落的胶囊，不是等宽网格 */}
+        <ul className="garden-flow garden-fade js-fade mt-7">
+          {shown.map((item) => (
+            <li key={item.href}>
+              <a
+                href={item.href}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="garden-pill inline-flex items-center"
+                data-size={sizeOf(item.name)}
+                data-group={item.group}
+              >
+                <span aria-hidden className="garden-pill__dot" />
+                {item.name}
+              </a>
+            </li>
+          ))}
+        </ul>
+
+        <p className="garden-fade js-fade mt-9 text-[0.9375rem] text-ink-light">
+          全部入口收在{' '}
+          <a href={gardenIntro.hub} target="_blank" rel="noreferrer noopener" className="link">
+            88lin.github.io
+          </a>
+          ，也可以直接翻 GitHub 仓库列表。
+        </p>
       </div>
     </section>
   )

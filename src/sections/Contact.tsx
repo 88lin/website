@@ -1,77 +1,72 @@
 import { useEffect, useRef } from 'react'
 import { contact, footer, profile, META_AS_OF } from '../content/site'
-import { Cta } from '../components/ui'
-import { gsap, revealLines, fadeUp } from '../lib/motion'
-import { useScene } from '../webgl/StageContext'
+import { Btn, Eyebrow, Note } from '../components/ui'
+import { fadeUp } from '../lib/motion'
 
+/**
+ * layouts.md #6 全宽深色面板 + CTA，收尾用一整片 --dark-panel 打断奶油底。
+ * 六个渠道用 hairline 网格分隔，不做卡片。
+ */
 export function Contact() {
-  const ref = useRef<HTMLElement>(null)
-
-  // 收尾放到最大：晶簇压在标题右侧，色散拉满
-  useScene(
-    ref,
-    { clusterX: 2.45, clusterY: -0.25, clusterScale: 0.85, spread: 1.0, spin: 0.2, tilt: 0.16, dispersion: 6.2, glow: 1.1, tint: 0.5, camZ: 6.2, exposure: 1.05 },
-    { clusterX: 0.28, clusterY: -1.42, clusterScale: 0.72, spread: 0.85 }
-  )
+  const root = useRef<HTMLElement>(null)
 
   useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const ctx = gsap.context(() => {
-      revealLines(el)
-      fadeUp('.contact-fade', el, 0.09, 24)
-      fadeUp('.channel', el, 0.05, 18)
-    }, el)
-    return () => ctx.revert()
+    if (!root.current) return
+    fadeUp('.contact-fade', root.current, 0.09, 24)
+    fadeUp('.channel', root.current, 0.05, 18)
   }, [])
 
   return (
-    <section ref={ref} id="contact" className="relative pt-[clamp(5rem,12vw,9rem)]">
+    <section id="contact" ref={root} className="section-y bg-dark-panel text-on-dark">
       <div className="shell">
-        <div className="grid grid-cols-12 gap-x-6">
-          <div className="col-span-12 lg:col-span-7">
-            <h2 className="display text-d1">
-              <span className="reveal-line">
-                <span>{contact.headline}</span>
-              </span>
-            </h2>
-            <p className="contact-fade mt-8 max-w-[44ch] text-lead text-ink-70 opacity-0">{contact.body}</p>
-            <div className="contact-fade mt-10 opacity-0">
-              <Cta size="lg" />
+        <div className="grid gap-[clamp(28px,4vw,64px)] lg:grid-cols-12 lg:items-end">
+          <div className="lg:col-span-7">
+            <Eyebrow tone="onDark">Get in touch</Eyebrow>
+            <h2 className="serif mt-4 text-d1 text-on-dark">{contact.headline}</h2>
+          </div>
+          <div className="contact-fade js-fade lg:col-span-5">
+            <p className="max-w-[44ch] text-lead text-on-dark-dim">{contact.body}</p>
+            <div className="mt-8 flex flex-wrap items-center gap-4">
+              <Btn variant="onDark" />
+              <Note className="text-on-dark-dim">写清问题就行</Note>
             </div>
           </div>
         </div>
 
-        <ul className="mt-[clamp(4rem,9vw,7rem)] grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-ink/15 bg-ink/15 sm:grid-cols-2 md:grid-cols-3">
+        <ul
+          className="channel-grid mt-[clamp(48px,6vw,88px)] grid gap-px sm:grid-cols-2 md:grid-cols-3"
+        >
           {contact.channels.map((c) => (
-            <li key={c.id} className="channel bg-paper opacity-0">
+            <li key={c.id} className="channel js-fade bg-dark-panel">
               <a
                 href={c.href}
-                target={c.href.startsWith('mailto:') ? undefined : '_blank'}
-                rel="noopener noreferrer"
-                className="group flex h-full flex-col gap-2 p-5 transition-colors duration-200 hover:bg-ink sm:p-6"
+                {...(c.href.startsWith('mailto:')
+                  ? null
+                  : { target: '_blank', rel: 'noreferrer noopener' })}
+                className="channel-link flex h-full flex-col gap-2 px-6 py-7"
               >
-                <span className="mono text-[0.875rem] tracking-[0.06em] text-ink-70 group-hover:text-paper/88">
-                  {c.label}
+                <span className="eyebrow text-on-dark-dim">{c.label}</span>
+                <span className="text-[1.0625rem] font-medium break-all text-on-dark">
+                  {c.value}
                 </span>
-                <span className="break-all text-[1rem] group-hover:text-paper">{c.value}</span>
               </a>
             </li>
           ))}
         </ul>
       </div>
 
-      <footer className="field-vermilion mt-[clamp(3.5rem,7vw,5.5rem)] py-9">
-        <div className="shell flex flex-wrap items-center justify-between gap-x-8 gap-y-3">
-          <p className="mono text-[0.875rem] tracking-[0.05em] text-ink">{footer.copyright}</p>
-          <p className="mono text-[0.875rem] tracking-[0.05em] text-ink/90">
+      {/* 页脚回到奶油底，深色面板到此为止 */}
+      <footer className="mt-[clamp(56px,7vw,104px)] -mb-[clamp(80px,12vh,160px)] bg-cream py-9 text-ink">
+        <div className="shell flex flex-wrap items-center justify-between gap-x-8 gap-y-2.5">
+          <p className="text-sm font-medium">{footer.copyright}</p>
+          <p className="text-sm text-ink-light">
             {footer.note}{' '}
-            <a href={footer.source} target="_blank" rel="noopener noreferrer" className="on-vermilion-link">
+            <a href={footer.source} target="_blank" rel="noreferrer noopener" className="link">
               查看源码
             </a>
           </p>
-          <p className="mono text-[0.875rem] tracking-[0.05em] text-ink/90">
-            {profile.location} · 数据 {META_AS_OF}
+          <p className="text-sm text-ink-light">
+            {profile.location} · 数据截至 {META_AS_OF}
           </p>
         </div>
       </footer>

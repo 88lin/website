@@ -1,50 +1,50 @@
 @import 'tailwindcss';
+@import './palettes.css';
 
-/* ============================================================ FONTS
+/* ============================================================================
+   茉灵智库 · 个人主页 —— 视觉基准取自 88lin/mydesign-system。
 
-   苹果设备：-apple-system / BlinkMacSystemFont 直接命中系统里的 SF Pro +
-   苹方，一个 webfont 都不会下载（字体回退是逐字符的，拉丁被 SF Pro 接住、
-   汉字被苹方接住，后面的 @font-face 家族永远不会被激活）。
-   Windows / Android 兜底：Inter（拉丁，OFL）+ Noto Sans SC（汉字，OFL）。
-   SF Pro 的许可不允许作为 webfont 分发，这是唯一合法拿到"苹果字体"的方式。
-   全部 font-display: swap，且不 preload —— 首屏用系统字先画出来。          */
+   规则（来自 brand-dna.md，违反即视为 bug）：
+     · 颜色一律走 palettes.css 的语义 token，本文件不定义任何十六进制品牌色
+     · 小字号彩色文字只用 --brand-text / --pop-text，带字色块只用 *-surface
+     · 背景永远偏暖（--cream / --cream-dark），文字永远不是纯黑
+     · 标题衬线、正文无衬线
+     · 禁止：glassmorphism、AI 光晕、蓝紫渐变、neon、bounce、全站居中
+   ========================================================================= */
+
+/* ------------------------------------------------------------------ FONTS
+
+   Fraunces  拉丁标题与数字（OFL，opsz/SOFT/WONK 已定轴，只留 wght）
+   Noto Serif SC  中文标题（OFL，按真实标题用字子集化）
+   Caveat    手写点缀，只出现在编号与批注（OFL）
+   正文：苹果设备直接命中系统的苹方 / SF，一个 webfont 都不下载；
+        其余平台回退到子集化的 Noto Sans SC。
+   全部 font-display: swap，且不 preload —— 首屏先用系统字画出来。          */
 
 @font-face {
-  font-family: 'Inter';
-  src: url('/fonts/Inter-Regular.woff2') format('woff2');
-  font-weight: 400;
+  font-family: 'Fraunces';
+  src: url('/fonts/Fraunces.woff2') format('woff2');
+  font-weight: 300 900;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: 'Inter';
-  src: url('/fonts/Inter-Medium.woff2') format('woff2');
-  font-weight: 500;
+  font-family: 'Caveat';
+  src: url('/fonts/Caveat.woff2') format('woff2');
+  font-weight: 600;
   font-style: normal;
   font-display: swap;
 }
+/* 家族名带 Web 后缀，避免和用户本地装的同名字体打架 */
 @font-face {
-  font-family: 'Inter';
-  src: url('/fonts/Inter-SemiBold.woff2') format('woff2');
-  font-weight: 600 900;
+  font-family: 'Noto Serif SC Web';
+  src:
+    local('Noto Serif SC SemiBold'),
+    url('/fonts/NotoSerifSC-Display.woff2') format('woff2');
+  font-weight: 500 900;
   font-style: normal;
   font-display: swap;
 }
-@font-face {
-  font-family: 'Inter Display';
-  src: url('/fonts/InterDisplay-SemiBold.woff2') format('woff2');
-  font-weight: 500 650;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Inter Display';
-  src: url('/fonts/InterDisplay-Bold.woff2') format('woff2');
-  font-weight: 651 900;
-  font-style: normal;
-  font-display: swap;
-}
-/* 家族名带 Web 后缀，避免和用户本地装的 Noto 打架；local() 优先复用系统副本 */
 @font-face {
   font-family: 'Noto Sans SC Web';
   src:
@@ -65,125 +65,134 @@
   font-display: swap;
 }
 
-/* ============================================================ TOKENS */
+/* ------------------------------------------------------------------ THEME */
 
 @theme {
-  --color-paper: #fbf5eb;
-  --color-paper-2: #f4eadc;
-  --color-ink: #0e1230;
-  /* 次级文字：墨色 70% = 6.63:1，比旧的 60%（4.71:1）明显更实 */
-  --color-ink-70: #0e1230c9;
-  --color-ink-80: #0e1230e0;
-  --color-cobalt: #1226e8;
-  --color-vermilion: #ff3b14;
-  --color-vermilion-press: #e02e0a;
-  --color-vermilion-deep: #c22a08;
-  /* 钴蓝底上的次级文字：纸色 88% = 6.3:1 */
-  --color-paper-88: #fbf5ebe0;
+  /* 颜色全部转发 palettes.css 的语义角色。换 data-palette 时这里自动跟着变，
+     因为值是 var() 引用而不是快照。 */
+  --color-brand: var(--brand);
+  --color-brand-deep: var(--brand-deep);
+  --color-brand-tint: var(--brand-tint);
+  --color-brand-text: var(--brand-text);
+  --color-brand-surface: var(--brand-surface);
+  --color-highlight: var(--highlight);
+  --color-highlight-soft: var(--highlight-soft);
+  --color-pop: var(--pop);
+  --color-pop-text: var(--pop-text);
+  --color-pop-surface: var(--pop-surface);
+  --color-pop-soft: var(--pop-soft);
+  --color-cream: var(--cream);
+  --color-cream-dark: var(--cream-dark);
+  --color-card: var(--card-bg);
+  --color-preview: var(--preview-bg);
+  --color-ink: var(--ink);
+  --color-ink-light: var(--ink-light);
+  --color-ink-faint: var(--ink-faint);
+  --color-dark-panel: var(--dark-panel);
+  --color-on-brand: var(--on-brand);
+  --color-on-highlight: var(--on-highlight);
+  --color-on-pop: var(--on-pop);
+  --color-on-dark: var(--on-dark);
+  --color-on-dark-dim: var(--on-dark-dim);
+  --color-info-soft: var(--info-soft);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-hairline: var(--hairline);
 
   --font-sans:
-    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'PingFang SC', 'HarmonyOS Sans SC',
-    'MiSans', 'Noto Sans SC Web', 'Microsoft YaHei', sans-serif;
-  --font-display:
-    -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter Display', 'Inter', 'PingFang SC',
-    'HarmonyOS Sans SC', 'MiSans', 'Noto Sans SC Web', 'Microsoft YaHei', sans-serif;
-  /* 站点不用等宽体：数字统一走 SF Pro / Inter 的表格数字，和苹果官网一致 */
+    -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', 'Noto Sans SC Web',
+    'HarmonyOS Sans SC', 'Microsoft YaHei', sans-serif;
+  --font-serif: 'Fraunces', 'Noto Serif SC Web', 'Songti SC', 'STSong', serif;
+  /* Caveat 只有拉丁字形，中文批注自动落回正文栈，不会掉进浏览器默认 cursive */
+  --font-hand:
+    'Caveat', 'Fraunces', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans SC Web',
+    'Microsoft YaHei', sans-serif;
   --font-mono: var(--font-sans);
 
-  /* 圆角尺度。980px 是苹果按钮的胶囊半径 */
+  /* 圆角取设计系统页面里实际统计出的高频值，另加 999px 胶囊 */
   --radius-xs: 8px;
-  --radius-sm: 12px;
-  --radius-md: 16px;
-  --radius-lg: 22px;
-  --radius-xl: 30px;
-  --radius-2xl: 40px;
-  --radius-3xl: 56px;
-  --radius-full: 980px;
+  --radius-sm: 10px;
+  --radius-md: 12px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-2xl: 24px;
+  --radius-full: 999px;
 
-  /* 展示级字号 */
-  --text-d1: clamp(2.9rem, 7.6vw, 8.4rem);
-  --text-d1--line-height: 0.96;
-  --text-d1--letter-spacing: -0.032em;
-  --text-d1--font-weight: 600;
-  --text-d2: clamp(2.15rem, 5vw, 4.7rem);
-  --text-d2--line-height: 1.04;
-  --text-d2--letter-spacing: -0.026em;
-  --text-d2--font-weight: 600;
-  --text-d3: clamp(1.5rem, 2.7vw, 2.45rem);
-  --text-d3--line-height: 1.18;
-  --text-d3--letter-spacing: -0.019em;
+  /* 字号：对比拉到极端。大标题 > 3rem，辅助文字 0.8125rem。 */
+  --text-d1: clamp(2.6rem, 6.6vw, 6.5rem);
+  --text-d1--line-height: 1.02;
+  --text-d1--letter-spacing: -0.028em;
+  --text-d1--font-weight: 700;
+  --text-d2: clamp(2rem, 4.2vw, 3.6rem);
+  --text-d2--line-height: 1.08;
+  --text-d2--letter-spacing: -0.022em;
+  --text-d2--font-weight: 700;
+  --text-d3: clamp(1.4rem, 2.2vw, 2rem);
+  --text-d3--line-height: 1.24;
+  --text-d3--letter-spacing: -0.016em;
   --text-d3--font-weight: 600;
 
-  /* 正文尺度：17px 起，和苹果官网同一档。最小可读字号 14px，绝不再往下走 */
-  --text-xs: 0.875rem;
-  --text-xs--line-height: 1.45;
-  --text-xs--letter-spacing: 0.004em;
-  --text-sm: 0.9375rem;
-  --text-sm--line-height: 1.58;
-  --text-sm--letter-spacing: 0;
-  --text-base: 1.0625rem;
-  --text-base--line-height: 1.62;
-  --text-base--letter-spacing: -0.011em;
-  --text-lg: 1.1875rem;
-  --text-lg--line-height: 1.58;
-  --text-lg--letter-spacing: -0.014em;
-  --text-xl: 1.375rem;
-  --text-xl--line-height: 1.48;
-  --text-xl--letter-spacing: -0.017em;
-  --text-2xl: 1.625rem;
-  --text-2xl--line-height: 1.34;
-  --text-2xl--letter-spacing: -0.02em;
-
-  --text-lead: clamp(1.1875rem, 1.35vw, 1.5rem);
-  --text-lead--line-height: 1.56;
-  --text-lead--letter-spacing: -0.016em;
-  /* 微标签：14px + 中黑 + 克制的字距，不再是 0.34em 的灰色细线 */
-  --text-meta: 0.875rem;
-  --text-meta--line-height: 1.3;
-  --text-meta--letter-spacing: 0.05em;
-  --text-meta--font-weight: 590;
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.42;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.6;
+  --text-base: 1rem;
+  --text-base--line-height: 1.75;
+  --text-lg: 1.0625rem;
+  --text-lg--line-height: 1.72;
+  --text-xl: 1.1875rem;
+  --text-xl--line-height: 1.6;
+  --text-2xl: 1.375rem;
+  --text-2xl--line-height: 1.45;
+  --text-lead: clamp(1.0625rem, 1.15vw, 1.25rem);
+  --text-lead--line-height: 1.72;
 }
 
-/* ============================================================ BASE */
+/* ------------------------------------------------------------------- BASE */
 
 @layer base {
   html {
-    background: var(--color-paper);
+    background: var(--cream);
     -webkit-text-size-adjust: 100%;
   }
 
   body {
     margin: 0;
-    background: var(--color-paper);
-    color: var(--color-ink);
+    background: var(--cream);
+    color: var(--ink);
     font-family: var(--font-sans);
-    font-size: var(--text-base);
-    line-height: 1.62;
-    letter-spacing: -0.011em;
-    font-weight: 420;
+    font-size: 1rem;
+    line-height: 1.75;
+    font-weight: 400;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
-    font-feature-settings: 'tnum' 0;
-  }
-
-  ::selection {
-    background: var(--color-vermilion);
-    color: var(--color-paper);
-  }
-
-  :focus-visible {
-    outline: 3px solid var(--color-vermilion);
-    outline-offset: 3px;
   }
 
   h1,
   h2,
   h3,
-  h4,
-  p,
-  figure {
+  h4 {
     margin: 0;
+    font-family: var(--font-serif);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  p,
+  figure,
+  ul,
+  ol,
+  dl,
+  dd {
+    margin: 0;
+  }
+
+  ul,
+  ol {
+    padding: 0;
+    list-style: none;
   }
 
   a {
@@ -196,119 +205,508 @@
     max-width: 100%;
   }
 
-  canvas {
-    display: block;
+  button {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+  }
+
+  /* 锚点跳转给固定导航让位 */
+  section[id],
+  [id='top'] {
+    scroll-margin-top: 92px;
   }
 }
 
-/* ============================================================ UTILITIES */
+/* -------------------------------------------------------------- UTILITIES */
 
+/* 版心 1300px，设计系统规定值 */
 @utility shell {
   width: 100%;
-  max-width: 92rem;
+  max-width: 1300px;
   margin-inline: auto;
-  padding-inline: clamp(1.25rem, 4vw, 4.5rem);
+  padding-inline: clamp(1.25rem, 5vw, 3rem);
 }
 
-/* 与 .shell 对齐的横向内边距，供不能被 max-width 约束的横向轨道使用 */
-@utility shell-x {
-  padding-left: max(clamp(1.25rem, 4vw, 4.5rem), calc((100vw - 92rem) / 2 + 4.5rem));
-  padding-right: max(clamp(1.25rem, 4vw, 4.5rem), calc((100vw - 92rem) / 2 + 4.5rem));
+/* 与 .shell 左边缘对齐，但右侧可以出血（横向轨道用） */
+@utility shell-l {
+  padding-left: max(clamp(1.25rem, 5vw, 3rem), calc((100vw - 1300px) / 2 + 3rem));
 }
 
-@utility display {
-  font-family: var(--font-display);
+@utility section-y {
+  padding-block: clamp(80px, 12vh, 160px);
+}
+
+@utility serif {
+  font-family: var(--font-serif);
+  font-variant-ligatures: common-ligatures;
+}
+
+@utility hand {
+  font-family: var(--font-hand);
   font-weight: 600;
-  text-wrap: balance;
+  letter-spacing: 0.01em;
 }
 
-/* 曾经是等宽体。现在是"表格数字 + 中黑"，字形和正文同源，只是数字对齐 */
-@utility mono {
-  font-family: var(--font-sans);
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: 'tnum' 1;
-  font-weight: 560;
-}
-
-/* 分区微标签：大写拉丁 + 汉字都靠它，14px / 中黑 / 克制字距 */
+/* 分区微标签：13px 大写拉丁 / 中文，实色，不做灰细线 */
 @utility eyebrow {
-  font-size: var(--text-meta);
+  font-size: 0.8125rem;
   line-height: 1.3;
-  letter-spacing: 0.05em;
-  font-weight: 590;
+  letter-spacing: 0.14em;
+  font-weight: 650;
+  text-transform: uppercase;
   font-variant-numeric: tabular-nums;
 }
 
-@utility rule {
-  border-top: 1px solid color-mix(in srgb, var(--color-ink) 16%, transparent);
+@utility nums {
+  font-family: var(--font-serif);
+  font-variant-numeric: tabular-nums lining-nums;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
-/* 正文行内链接：墨色文字 + 朱红下划线；hover 反相为朱红色块 */
-@utility inline-link {
-  display: inline;
-  box-shadow: inset 0 -2px 0 0 var(--color-vermilion);
+/* 荧光笔：设计系统自带的 --highlighter token */
+@utility marker {
+  background-image: var(--highlighter);
+  background-repeat: no-repeat;
+  padding-inline: 0.08em;
+}
+
+/* ------------------------------------------------------------- COMPONENTS */
+
+/* 胶囊按钮。scene-landing.md 规定的 CTA 形制，圆角改成 999px 胶囊。 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  border-radius: var(--radius-full);
+  padding: 14px 30px;
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.2;
+  border: 1.5px solid transparent;
   transition:
+    transform 0.18s ease,
     background-color 0.18s ease,
+    color 0.18s ease,
+    border-color 0.18s ease,
     box-shadow 0.18s ease;
 }
-@utility on-cobalt-link {
-  box-shadow: inset 0 -2px 0 0 var(--color-paper);
+.btn--sm {
+  padding: 9px 20px;
+  font-size: 0.9375rem;
+}
+.btn--solid {
+  background: var(--brand-surface);
+  color: var(--on-brand);
+}
+.btn--solid:hover,
+.btn--solid:focus-visible {
+  background: var(--brand-deep);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(var(--brand-rgb), 0.3);
+}
+.btn--outline {
+  background: var(--card-bg);
+  color: var(--ink);
+  border-color: var(--border-strong);
+}
+.btn--outline:hover,
+.btn--outline:focus-visible {
+  border-color: var(--brand-surface);
+  color: var(--brand-text);
+  transform: translateY(-2px);
+}
+.btn--onDark {
+  background: var(--highlight);
+  color: var(--on-highlight);
+}
+.btn--onDark:hover,
+.btn--onDark:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(var(--highlight-rgb), 0.3);
+}
+.btn--onDarkGhost {
+  background: transparent;
+  color: var(--on-dark);
+  border-color: rgba(255, 255, 255, 0.34);
+}
+.btn--onDarkGhost:hover,
+.btn--onDarkGhost:focus-visible {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+.btn__arrow {
+  transition: transform 0.24s ease;
+}
+.btn:hover .btn__arrow,
+.btn:focus-visible .btn__arrow {
+  transform: translateX(4px);
 }
 
-.inline-link:hover,
-.inline-link:focus-visible {
-  background: var(--color-vermilion);
-  box-shadow: inset 0 -2px 0 0 var(--color-vermilion);
-  color: var(--color-ink);
+/* 导航项（components.md #9）：实色文字 + 黄色荧光下划线，
+   下划线从 0 宽长出来，不做位移、不做背景块。 */
+.nav-item {
+  position: relative;
+  display: inline-block;
+  padding: 6px 10px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--ink-light);
+  border-radius: var(--radius-full);
+  transition: color 0.18s ease;
 }
-.on-cobalt-link:hover,
-.on-cobalt-link:focus-visible {
-  background: var(--color-paper);
-  box-shadow: inset 0 -2px 0 0 var(--color-paper);
-  color: var(--color-cobalt);
+.nav-item::after {
+  content: '';
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 2px;
+  height: 3px;
+  border-radius: var(--radius-full);
+  background: var(--highlight);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.nav-item:hover,
+.nav-item:focus-visible {
+  color: var(--ink);
+}
+.nav-item:hover::after,
+.nav-item:focus-visible::after,
+.nav-item[aria-current='true']::after {
+  transform: scaleX(1);
 }
 
-/* ============================================================ REVEAL */
+/* 胶囊标签 / 筛选器（components.md #14）。所有 chip 一律 999px。 */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-strong);
+  background: var(--card-bg);
+  color: var(--ink-light);
+  padding: 7px 16px;
+  font-size: 0.875rem;
+  line-height: 1.3;
+  font-weight: 500;
+  white-space: nowrap;
+  transition:
+    transform 0.16s ease,
+    background-color 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+a.pill:hover,
+button.pill:hover,
+a.pill:focus-visible,
+button.pill:focus-visible {
+  transform: translateY(-2px);
+  background: var(--info-soft);
+  border-color: var(--brand-surface);
+  color: var(--brand-text);
+}
+.pill[aria-pressed='true'],
+.pill--active {
+  background: var(--brand-surface);
+  border-color: var(--brand-surface);
+  color: var(--on-brand);
+}
+.pill[aria-pressed='true']:hover,
+.pill--active:hover {
+  background: var(--brand-deep);
+  border-color: var(--brand-deep);
+  color: var(--on-brand);
+}
+.pill--static {
+  background: var(--highlight-soft);
+  border-color: transparent;
+  color: var(--ink-light);
+}
+.pill--onDark {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: var(--on-dark);
+}
+/* 品牌蓝面板上的标签。填充只能往深里走：白色 alpha 会把底色提亮，
+   白字对比度立刻从 4.79 掉到 4.0（实测），用 ink alpha 压暗后回到 ~6:1。 */
+.pill--onBrand {
+  background: rgba(var(--ink-rgb), 0.18);
+  border-color: rgba(255, 255, 255, 0.26);
+  color: var(--on-brand);
+}
 
-.reveal-line {
-  display: block;
+/* 品牌色面板上的分隔线 / 深色面板上的网格缝隙。
+   深底上的白色只能用 alpha 白，不属于品牌色，不进 palette。 */
+.rule-onBrand {
+  border-top: 1px solid rgba(255, 255, 255, 0.28);
+}
+.channel-grid {
+  background: rgba(255, 255, 255, 0.16);
+}
+.channel-link {
+  transition: background-color 0.18s ease;
+}
+.channel-link:hover,
+.channel-link:focus-visible {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+/* 纸面卡片。不做玻璃、不做渐变、不嵌套卡片。 */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 2px 12px rgba(var(--ink-rgb), 0.03);
+  transition:
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.28s ease,
+    border-color 0.28s ease;
+}
+
+.hairline {
+  border-top: 1px solid var(--border);
+}
+
+/* 正文行内链接：墨字 + 品牌色下划线，hover 转品牌色 */
+.link {
+  color: var(--ink);
+  box-shadow: inset 0 -1.5px 0 0 var(--brand-surface);
+  transition:
+    color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+.link:hover,
+.link:focus-visible {
+  color: var(--brand-text);
+  box-shadow: inset 0 -1.5px 0 0 var(--brand-deep);
+}
+.link--onDark {
+  color: var(--on-dark);
+  box-shadow: inset 0 -1.5px 0 0 var(--brand-tint);
+}
+.link--onDark:hover,
+.link--onDark:focus-visible {
+  color: var(--brand-tint);
+}
+
+/* 编号：Fraunces 大数字 + 一层 highlight 偏移，像套印没对齐的印刷品。
+   这是全站唯一的「立体」处理，纯排版，不用 WebGL。 */
+.numeral {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-variant-numeric: lining-nums tabular-nums;
+  line-height: 0.86;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+  text-shadow:
+    2px 2px 0 var(--highlight),
+    4px 4px 0 var(--highlight),
+    6px 6px 0 var(--highlight);
+}
+.numeral--onDark {
+  color: var(--on-dark);
+  text-shadow:
+    2px 2px 0 var(--brand-tint),
+    4px 4px 0 var(--brand-tint),
+    6px 6px 0 var(--brand-tint);
+}
+
+/* ------------------------------------------------------- 精选作品横向轨道 */
+
+.hscroll {
   overflow: hidden;
+  /* 两端做柔化遮罩，卡片不会硬生生被裁断 */
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 4%, #000 96%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 4%, #000 96%, transparent 100%);
 }
-.reveal-line > span {
-  display: block;
+.hscroll__track {
+  display: flex;
+  width: max-content;
+  animation: marquee 60s linear infinite;
   will-change: transform;
 }
+/* 间距做在每一项的 margin-right 上，不用 flex gap：
+   gap 只出现在项与项之间（11 处），而 translateX(-50%) 需要
+   前后两份宽度严格相等，用 gap 会差半个间距，接缝处能看见跳动。 */
+.hscroll__item {
+  margin-right: clamp(18px, 2vw, 28px);
+}
+.hscroll:hover .hscroll__track,
+.hscroll:focus-within .hscroll__track,
+.hscroll[data-paused='true'] .hscroll__track {
+  animation-play-state: paused;
+}
+@keyframes marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    /* 轨道内容复制了一份，位移半程即可无缝衔接 */
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+/* 关掉动效时退回原生横滑 + scroll-snap（components.md #26） */
+@media (prefers-reduced-motion: reduce) {
+  .hscroll {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .hscroll__track {
+    animation: none !important;
+    transform: none !important;
+  }
+  .hscroll__item {
+    scroll-snap-align: start;
+  }
+  .hscroll__item[data-clone='true'] {
+    display: none;
+  }
+}
+
+.work-card {
+  width: clamp(280px, 82vw, 380px);
+  flex: 0 0 auto;
+}
+/* 注意：这里不能写 background —— 本文件的规则不在 Tailwind 的 utilities 层里，
+   会盖掉排印封面上的 bg-brand-surface / bg-dark-panel。截图封面的占位底色
+   由 Cover.tsx 用 bg-preview 显式给。 */
+.work-card__shot {
+  overflow: hidden;
+  border-radius: var(--radius-md);
+}
+.work-card__shot img {
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.work-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(var(--ink-rgb), 0.1);
+  border-color: var(--border-strong);
+}
+.work-card:hover .work-card__shot img {
+  transform: scale(1.03);
+}
+.work-card:hover .work-card__title {
+  background-image: var(--highlighter);
+  background-repeat: no-repeat;
+}
+
+/* --------------------------------------------------------------- 数字花园 */
+
+.garden-flow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.garden-pill {
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-strong);
+  background: var(--card-bg);
+  color: var(--ink);
+  padding: 10px 20px;
+  font-weight: 500;
+  line-height: 1.3;
+  transition:
+    transform 0.16s ease,
+    background-color 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease;
+}
+.garden-pill:hover,
+.garden-pill:focus-visible {
+  transform: translateY(-2px);
+  background: var(--info-soft);
+  border-color: var(--brand-surface);
+  color: var(--brand-text);
+}
+.garden-pill[data-size='l'] {
+  font-size: 1.125rem;
+  padding: 13px 26px;
+}
+.garden-pill[data-size='m'] {
+  font-size: 1rem;
+}
+.garden-pill[data-size='s'] {
+  font-size: 0.9375rem;
+  padding: 9px 18px;
+}
+.garden-pill__dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  margin-right: 9px;
+  vertical-align: 0.12em;
+  background: var(--brand-tint);
+}
+.garden-pill[data-group='工具'] .garden-pill__dot {
+  background: var(--highlight);
+}
+.garden-pill[data-group='内容'] .garden-pill__dot {
+  background: var(--pop-surface);
+}
+.garden-pill[data-group='组件'] .garden-pill__dot {
+  background: var(--brand-deep);
+}
+
+/* ----------------------------------------------------------------- 文章索引 */
+
+.post-row {
+  display: grid;
+  grid-template-columns: 1.6rem 1fr;
+  gap: 0.85rem;
+  align-items: baseline;
+  padding: 13px 14px 13px 10px;
+  border-radius: var(--radius-md);
+  transition:
+    background-color 0.16s ease,
+    transform 0.16s ease;
+}
+.post-row:hover,
+.post-row:focus-visible {
+  background: var(--cream-dark);
+  transform: translateX(3px);
+}
+.post-row:hover .post-row__title {
+  color: var(--brand-text);
+}
+.post-row__title {
+  font-weight: 500;
+  transition: color 0.16s ease;
+}
+
+/* ---------------------------------------------------------------- REVEAL */
 
 .js-fade {
   opacity: 0;
 }
-
-/* 首屏入场走纯 CSS 关键帧：不等 React hydrate、不等 GSAP 下载解析。
-   LCP 元素（hero 副标题）在 CSS 解析完就开始动，首屏指标不再被 JS 挡住。
-   其余分区仍由 GSAP + ScrollTrigger 驱动——那些本来就在折叠线以下。 */
-@keyframes heroRise {
-  from {
-    transform: translateY(116%);
-  }
-  to {
-    transform: translateY(0);
-  }
+.no-js .js-fade {
+  opacity: 1;
 }
+
+/* 首屏入场走纯 CSS 关键帧，不等 hydrate、不等 GSAP */
 @keyframes heroFade {
   from {
     opacity: 0;
-    transform: translateY(22px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
     transform: none;
   }
 }
-.hero-rise > span {
-  animation: heroRise 1.05s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
 .hero-fade {
-  animation: heroFade 0.82s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: heroFade 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -316,181 +714,19 @@
     opacity: 1 !important;
     transform: none !important;
   }
-  .reveal-line > span {
-    transform: none !important;
-  }
-  .hero-rise > span,
   .hero-fade {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
   }
-  html {
-    scroll-behavior: auto;
+}
+
+/* ------------------------------------------------------------------ PRINT */
+
+@media print {
+  .hscroll__track {
+    animation: none;
+    width: auto;
+    flex-wrap: wrap;
   }
-  * {
-    animation-duration: 0.001ms !important;
-    transition-duration: 0.001ms !important;
-  }
-}
-
-/* 无 JS 时保证内容可读 */
-.no-js .js-fade {
-  opacity: 1;
-}
-
-/* ============================================================ WEBGL LAYER */
-
-#stage {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-  pointer-events: none;
-  contain: layout paint;
-  /* 画布底色与页面纸底一致，淡入只是为了盖掉首帧尚未渲染的那一瞬 */
-  opacity: 0;
-  transition: opacity 0.7s ease;
-}
-.stage-on #stage {
-  opacity: 1;
-}
-
-.above {
-  position: relative;
-  z-index: 1;
-}
-
-/* 色场：盖住画布的实色区块 */
-.field-cobalt {
-  background: var(--color-cobalt);
-  color: var(--color-paper);
-}
-.field-vermilion {
-  background: var(--color-vermilion);
-  color: var(--color-ink);
-}
-.field-paper {
-  background: var(--color-paper);
-}
-.field-paper2 {
-  background: var(--color-paper-2);
-}
-
-/* 细网格纹理，只在纸底区块的极低透明度出现 */
-.grid-tex {
-  background-image:
-    linear-gradient(to right, color-mix(in srgb, var(--color-ink) 6%, transparent) 1px, transparent 1px),
-    linear-gradient(to bottom, color-mix(in srgb, var(--color-ink) 6%, transparent) 1px, transparent 1px);
-  background-size: 64px 64px;
-}
-
-/* 横向滚动轨道 */
-.h-track {
-  display: flex;
-  align-items: stretch;
-  will-change: transform;
-}
-
-/* 拖拽画布 */
-.drag-plane {
-  cursor: grab;
-  touch-action: pan-y;
-  user-select: none;
-}
-.drag-plane.is-dragging {
-  cursor: grabbing;
-}
-
-/* 打印与无 WebGL 降级由 JS 加 class */
-.no-webgl #stage {
-  display: none;
-}
-
-/* 钴蓝色场上打出的一个硬边圆孔，透出画布里的液态金属体 */
-.punch {
-  background: var(--color-cobalt);
-  /* 默认值只在 JS 接管前出现一瞬；真实位置由 Tracks 反投影晶簇坐标算出 */
-  --px: 76%;
-  --py: 50%;
-  --pr: clamp(150px, 15.5vw, 223px);
-  -webkit-mask-image: radial-gradient(
-    circle at var(--px) var(--py),
-    transparent 0 var(--pr),
-    #000 calc(var(--pr) + 1px)
-  );
-  mask-image: radial-gradient(
-    circle at var(--px) var(--py),
-    transparent 0 var(--pr),
-    #000 calc(var(--pr) + 1px)
-  );
-}
-@media (max-width: 1023px) {
-  .punch {
-    -webkit-mask-image: none;
-    mask-image: none;
-  }
-}
-.no-webgl .punch {
-  -webkit-mask-image: none;
-  mask-image: none;
-}
-
-/* 项目封面的 RGB 分离，只在指针设备上启用 */
-.cover-stack .ghost {
-  opacity: 0;
-  mix-blend-mode: screen;
-  transition:
-    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 0.35s ease;
-}
-@media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  .card:hover .cover-stack .ghost-r {
-    opacity: 0.85;
-    transform: translate3d(7px, -3px, 0) scale(1.045);
-  }
-  .card:hover .cover-stack .ghost-b {
-    opacity: 0.85;
-    transform: translate3d(-7px, 3px, 0) scale(1.045);
-  }
-  .card:hover .cover-stack .base {
-    transform: scale(1.045);
-  }
-}
-.cover-stack .base {
-  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-/* 案例堆叠 */
-.case-card {
-  position: sticky;
-  will-change: transform;
-}
-
-/* 纸面卡片的通用描边 */
-.panel {
-  background: var(--color-paper);
-  border: 1px solid color-mix(in srgb, var(--color-ink) 14%, transparent);
-  border-radius: var(--radius-lg);
-}
-
-/* 朱红场上的链接：墨色文字 + 墨色下划线，5.2:1 */
-.on-vermilion-link {
-  color: var(--color-ink);
-  text-decoration: underline;
-  text-decoration-thickness: 2px;
-  text-underline-offset: 3px;
-}
-.on-vermilion-link:hover,
-.on-vermilion-link:focus-visible {
-  background: var(--color-ink);
-  color: var(--color-vermilion);
-  text-decoration-color: transparent;
-}
-
-/* 锚点跳转给固定导航留位置 */
-section[id],
-[id="top"] {
-  scroll-margin-top: 88px;
 }

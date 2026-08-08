@@ -212,7 +212,7 @@ export type CaseStudy = {
   index: string
   name: string
   cn: string
-  tone: 'cobalt' | 'vermilion' | 'ink'
+  tone: 'brand' | 'pop' | 'ink'
   sections: { label: string; body: string }[]
   result: { value: string; label: string }[]
   link: string
@@ -225,7 +225,7 @@ export const cases: CaseStudy[] = [
     index: '01',
     name: 'Lofi Radio Web',
     cn: '把「打开即听」做成一个界面约束',
-    tone: 'cobalt',
+    tone: 'brand',
     sections: [
       {
         label: '背景',
@@ -254,7 +254,7 @@ export const cases: CaseStudy[] = [
     index: '02',
     name: 'Computer Repair Skill',
     cn: '给 Agent 装上「先取证，再动手」的职业素养',
-    tone: 'vermilion',
+    tone: 'pop',
     sections: [
       {
         label: '背景',
@@ -364,7 +364,7 @@ export const garden: GardenItem[] = [
 
 export const gardenIntro = {
   headline: '数字花园',
-  body: '这些年顺手做的小页面，特效、工具、Notion 组件与内容站，都还活着。按住拖动可以逛。',
+  body: '这些年顺手做的小页面，特效、工具、Notion 组件与内容站，全都还活着。挑一类看看。',
   hub: 'https://88lin.github.io',
 }
 
@@ -401,23 +401,11 @@ export const stack = {
 
 export const writing = {
   headline: '写下来的部分',
-  body: '博客写的是能直接抄走用的东西：软件资源、AI 工具、效率方法与学习资料。不追热点，追可复用。',
+  body: '博客写的是能直接抄走用的东西：技术教程、软件工具、避坑指南与学习思考。不追热点，追可复用。',
   href: 'https://blog.88lin.eu.org',
   hrefLabel: 'blog.88lin.eu.org',
-  posts: '55',
   days: '1,781',
-  categories: [
-    { name: '软件资源', count: 11 },
-    { name: 'AI 工具', count: 9 },
-    { name: '个人成长', count: 4 },
-    { name: '省钱攻略', count: 3 },
-    { name: '学术论文', count: 3 },
-    { name: '学习工具', count: 3 },
-    { name: '课程资源', count: 2 },
-    { name: '医学科普', count: 2 },
-    { name: '电子书资源', count: 2 },
-    { name: '其他分类', count: 6 },
-  ],
+  /** 文章清单、分类与年份分布见 content/writing.ts（机器生成，来自博客数据库）。 */
 }
 
 /* ---------------------------------------------------------------- 联系 */
@@ -437,6 +425,6 @@ export const contact = {
 
 export const footer = {
   copyright: '© 2023 - 2026 茉灵智库 · 88lin',
-  note: '本站由 Vite + React + Three.js 构建，源码开源。',
+  note: '本站由 Vite + React + Tailwind 构建，视觉基准来自 88lin/mydesign-system，源码开源。',
   source: 'https://github.com/88lin/website',
 }

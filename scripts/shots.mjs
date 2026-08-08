@@ -6,6 +6,7 @@ import { chromium } from 'playwright'
 import { mkdir } from 'node:fs/promises'
 import path from 'node:path'
 import { serveDist } from './lib/serve.mjs'
+import { findOverflow } from './lib/overflow.mjs'
 
 const DIST = new URL('../dist/', import.meta.url).pathname
 const outDir = process.argv[2] || '/workspace/shots'
@@ -28,16 +29,19 @@ const VIEWS = [
 
 const STOPS = [
   { id: '1-hero', y: 0 },
-  { id: '2-stats', sel: '.stat-value' },
-  { id: '3-tracks', sel: '.punch' },
-  // 钉住区块要停在 pin 生效的位置（top = 0），否则截图会落在 pin 之前
-  { id: '4-work', sel: '#work', off: 0 },
+  { id: '2-numbers', sel: '#numbers' },
+  { id: '3-tracks', sel: '#tracks' },
+  { id: '4-work', sel: '#work' },
   { id: '5-cases', sel: '#cases' },
   { id: '6-garden', sel: '#garden' },
-  { id: '7-stack', sel: '.field-vermilion' },
+  { id: '7-stack', sel: '#stack' },
   { id: '8-writing', sel: '#writing' },
   { id: '9-contact', sel: '#contact' },
 ]
+
+// 换配色：node scripts/shots.mjs <dir> --palette=D
+const paletteArg = process.argv.find((a) => a.startsWith('--palette='))
+const palette = paletteArg ? paletteArg.split('=')[1] : null
 
 const errors = []
 for (const v of VIEWS) {
@@ -64,9 +68,13 @@ for (const v of VIEWS) {
     })
   }
   await page.goto(URL_BASE, { waitUntil: 'load', timeout: 45000 })
+  if (palette) {
+    await page.evaluate((p) => document.documentElement.setAttribute('data-palette', p), palette)
+  }
   await page.waitForTimeout(2200)
 
-  const suffix = (reduced ? '-reduced' : '') + (noWebgl ? '-nowebgl' : '')
+  const suffix =
+    (reduced ? '-reduced' : '') + (noWebgl ? '-nowebgl' : '') + (palette ? `-p${palette}` : '')
   for (const s of STOPS) {
     if (s.y === 0) {
       await page.evaluate(() => window.scrollTo(0, 0))
@@ -88,20 +96,8 @@ for (const v of VIEWS) {
     await page.screenshot({ path: path.join(outDir, `${v.id}-${s.id}${suffix}.png`) })
   }
 
-  // 横向溢出检测
-  const overflow = await page.evaluate(() => {
-    const bad = []
-    document.querySelectorAll('body *').forEach((el) => {
-      const r = el.getBoundingClientRect()
-      if (r.width > 0 && (r.right > window.innerWidth + 2 || r.left < -2)) {
-        const cs = getComputedStyle(el)
-        if (cs.position === 'fixed' || cs.overflow === 'hidden') return
-        if (el.closest('.h-track') || el.closest('.drag-plane')) return
-        bad.push(`${el.tagName}.${String(el.className).slice(0, 60)} right=${Math.round(r.right)}`)
-      }
-    })
-    return bad.slice(0, 12)
-  })
+  // 横向溢出检测（相对最近的裁剪祖先，而不是视口）
+  const overflow = await page.evaluate(findOverflow)
   if (overflow.length) errors.push(`[${v.id}] overflow: ${JSON.stringify(overflow)}`)
 
   await ctx.close()

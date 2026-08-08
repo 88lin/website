@@ -1,117 +1,99 @@
 import { useEffect, useRef } from 'react'
 import { cases, type CaseStudy } from '../content/site'
-import { gsap, prefersReduced, fadeUp } from '../lib/motion'
-import { useScene } from '../webgl/StageContext'
+import { Eyebrow, Mark } from '../components/ui'
+import { fadeUp } from '../lib/motion'
 
-const TONE: Record<CaseStudy['tone'], { spine: string; num: string }> = {
-  cobalt: { spine: 'bg-cobalt', num: 'text-cobalt' },
-  vermilion: { spine: 'bg-vermilion', num: 'text-vermilion-deep' },
-  ink: { spine: 'bg-ink', num: 'text-ink' },
+/**
+ * layouts.md #16：Sticky 编号侧栏 + 杂志式正文。
+ *
+ * 刻意不做「卡片里再放卡片」——三段正文靠 hairline 与排印分隔，
+ * 编号用 .numeral 大字钉在左栏，随内容滚动一直贴在视野里。
+ */
+const TONE: Record<CaseStudy['tone'], { eyebrow: 'brand' | 'pop' | 'ink'; rule: string }> = {
+  brand: { eyebrow: 'brand', rule: 'bg-brand-surface' },
+  pop: { eyebrow: 'pop', rule: 'bg-pop-surface' },
+  ink: { eyebrow: 'ink', rule: 'bg-ink' },
 }
 
-export function Cases() {
-  const ref = useRef<HTMLElement>(null)
-
-  // 卡片是实色面板，只有导语区透光：晶簇停在标题右侧的空白里
-  useScene(
-    ref,
-    { clusterX: 2.55, clusterY: 0.85, clusterScale: 0.7, spread: 1.0, spin: 0.24, tilt: -0.12, dispersion: 5.6, glow: 0.95, tint: 0.55, camZ: 6.0, exposure: 1.02 },
-    { clusterX: 0.38, clusterY: 1.45, clusterScale: 0.55, spread: 0.75 }
-  )
-
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const ctx = gsap.context(() => {
-      fadeUp('.cases-head > *', el, 0.08, 22)
-      if (prefersReduced()) return
-      const cards = gsap.utils.toArray<HTMLElement>('.case-card')
-      cards.forEach((card, i) => {
-        if (i === cards.length - 1) return
-        gsap.to(card, {
-          scale: 0.945,
-          opacity: 0.4,
-          ease: 'none',
-          scrollTrigger: { trigger: cards[i + 1], start: 'top 88%', end: 'top 18%', scrub: true },
-        })
-      })
-    }, el)
-    return () => ctx.revert()
-  }, [])
-
+function Case({ c }: { c: CaseStudy }) {
+  const tone = TONE[c.tone]
   return (
-    <section ref={ref} id="cases" className="relative py-[clamp(4.5rem,10vw,8rem)]">
-      <div className="shell mb-[clamp(2.5rem,5vw,4rem)]">
-        <div className="grid grid-cols-12 items-center gap-x-6">
-          <div className="cases-head col-span-12 max-w-[54ch] lg:col-span-7">
-            <h2 className="display text-d2 opacity-0">怎么做的</h2>
-            <p className="mt-6 text-lead text-ink-70 opacity-0">
-              三个项目，各写清楚一件事：背景、卡在哪、最后怎么解。数字都是仓库里能查到的。
-            </p>
-          </div>
+    <article className="case-item grid gap-[clamp(28px,4vw,64px)] border-t border-line pt-[clamp(40px,5vw,72px)] lg:grid-cols-12">
+      {/* 左：sticky 编号侧栏 */}
+      <div className="lg:col-span-4">
+        <div className="lg:sticky lg:top-[120px]">
+          <p className="numeral text-[clamp(3.4rem,7vw,6rem)]">{c.index}</p>
+          <span aria-hidden className={`mt-6 block h-[6px] w-10 rounded-full ${tone.rule}`} />
+          <h3 className="serif mt-5 text-d3">{c.name}</h3>
+          <p className="mt-2 text-[1.0625rem] text-ink-light">{c.cn}</p>
+          <a
+            href={c.link}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="btn btn--outline btn--sm mt-6"
+          >
+            <span>{c.linkLabel}</span>
+            <span aria-hidden className="btn__arrow">
+              &rarr;
+            </span>
+          </a>
         </div>
       </div>
 
-      <div className="shell">
-        {cases.map((c, i) => {
-          const tone = TONE[c.tone]
-          return (
-            <div
-              key={c.slug}
-              className="case-card"
-              style={{ top: `calc(7vh + ${i * 16}px)`, zIndex: i + 1, marginBottom: i < cases.length - 1 ? '3rem' : 0 }}
-            >
-              <article className="panel relative flex min-h-[68vh] flex-col overflow-hidden rounded-xl">
-                <div className={`absolute inset-y-0 left-0 w-[5px] ${tone.spine}`} aria-hidden />
-                <div className="grid grid-cols-12 gap-x-6 gap-y-8 p-7 pl-9 sm:p-10 sm:pl-12">
-                  <header className="col-span-12 lg:col-span-4">
-                    <p className={`mono text-[clamp(2.6rem,5vw,4.2rem)] font-medium leading-none tabular-nums ${tone.num}`}>
-                      {c.index}
-                    </p>
-                    <h3 className="display mt-5 text-[clamp(1.6rem,2.6vw,2.3rem)] leading-none tracking-tight">
-                      {c.name}
-                    </h3>
-                    <p className="mt-3 max-w-[26ch] text-[1.0625rem] leading-[1.7] text-ink-70">{c.cn}</p>
-                    <a
-                      href={c.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-link mt-6 inline-block text-[1rem]"
-                    >
-                      {c.linkLabel}
-                    </a>
-                  </header>
-
-                  <div className="col-span-12 lg:col-span-8">
-                    <div className="space-y-6">
-                      {c.sections.map((s) => (
-                        <div key={s.label} className="grid grid-cols-12 gap-x-5 border-t border-ink/12 pt-5">
-                          <p className="mono col-span-12 text-[0.875rem] tracking-[0.06em] text-ink-70 sm:col-span-2">
-                            {s.label}
-                          </p>
-                          <p className="col-span-12 mt-2 text-[1rem] leading-[1.8] sm:col-span-10 sm:mt-0">
-                            {s.body}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-
-                    <dl className="mt-9 grid grid-cols-2 gap-y-6 border-t-2 border-ink pt-6 sm:grid-cols-4">
-                      {c.result.map((r) => (
-                        <div key={r.label}>
-                          <dd className="mono text-[clamp(1.5rem,2.4vw,2.1rem)] font-medium leading-none tabular-nums">
-                            {r.value}
-                          </dd>
-                          <dt className="mt-2 text-[0.875rem] font-medium text-ink-70">{r.label}</dt>
-                        </div>
-                      ))}
-                    </dl>
-                  </div>
-                </div>
-              </article>
+      {/* 右：杂志正文 —— 标签左置，正文右置，行与行之间只有一条细线 */}
+      <div className="lg:col-span-8">
+        <div className="grid gap-y-[clamp(22px,2.4vw,34px)]">
+          {c.sections.map((s) => (
+            <div key={s.label} className="grid gap-x-8 gap-y-2 sm:grid-cols-[6.5rem_1fr]">
+              <Eyebrow tone={tone.eyebrow} className="sm:pt-[0.42rem]">
+                {s.label}
+              </Eyebrow>
+              <p className="max-w-[62ch] text-[1.0625rem] leading-[1.85] text-ink-light">{s.body}</p>
             </div>
-          )
-        })}
+          ))}
+        </div>
+
+        <ul className="mt-[clamp(30px,3.4vw,46px)] grid grid-cols-2 gap-x-6 gap-y-7 border-t border-line pt-7 sm:grid-cols-4">
+          {c.result.map((r) => (
+            <li key={r.label}>
+              <span className="nums block text-[clamp(1.6rem,2.6vw,2.25rem)] leading-none">
+                {r.value}
+              </span>
+              <span className="mt-2.5 block text-sm font-medium text-ink-light">{r.label}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </article>
+  )
+}
+
+export function Cases() {
+  const root = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    if (!root.current) return
+    fadeUp('.case-item', root.current, 0.1, 26)
+  }, [])
+
+  return (
+    <section id="cases" ref={root} className="section-y">
+      <div className="shell">
+        <div className="max-w-[46ch]">
+          <Eyebrow>Case studies</Eyebrow>
+          <h2 className="serif mt-4 text-d2">
+            三个<Mark>拆开讲</Mark>
+          </h2>
+          <p className="mt-5 text-lead text-ink-light">
+            背景、难点、方案，以及最后落到的数。不写「赋能」，只写做了什么。
+          </p>
+        </div>
+
+        <div className="mt-[clamp(44px,5.5vw,80px)] grid gap-[clamp(48px,6vw,86px)]">
+          {cases.map((c) => (
+            <Case key={c.slug} c={c} />
+          ))}
+        </div>
       </div>
     </section>
   )

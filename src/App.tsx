@@ -1,8 +1,6 @@
 import { useEffect } from 'react'
 import Lenis from 'lenis'
 import { Nav } from './components/Nav'
-import { ChannelFilters } from './components/Cover'
-import { StageProvider } from './webgl/StageContext'
 import { Hero } from './sections/Hero'
 import { Stats } from './sections/Stats'
 import { Tracks } from './sections/Tracks'
@@ -20,7 +18,12 @@ function useSmoothScroll() {
     let cleanupTicker: (() => void) | undefined
 
     if (!prefersReduced()) {
-      const l = new Lenis({ duration: 1.05, wheelMultiplier: 1, touchMultiplier: 1.6, smoothWheel: true })
+      const l = new Lenis({
+        duration: 1.05,
+        wheelMultiplier: 1,
+        touchMultiplier: 1.6,
+        smoothWheel: true,
+      })
       lenis = l
       l.on('scroll', ScrollTrigger.update)
       const raf = (time: number) => l.raf(time * 1000)
@@ -62,10 +65,9 @@ export default function App() {
   useSmoothScroll()
 
   return (
-    <StageProvider>
-      <ChannelFilters />
+    <>
       <Nav />
-      <main className="above">
+      <main>
         <Hero />
         <Stats />
         <Tracks />
@@ -76,6 +78,6 @@ export default function App() {
         <Writing />
         <Contact />
       </main>
-    </StageProvider>
+    </>
   )
 }

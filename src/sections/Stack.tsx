@@ -1,52 +1,50 @@
 import { useEffect, useRef } from 'react'
 import { stack } from '../content/site'
-import { gsap, revealLines, fadeUp } from '../lib/motion'
-import { useScene } from '../webgl/StageContext'
+import { Eyebrow } from '../components/ui'
+import { fadeUp } from '../lib/motion'
 
+/**
+ * layouts.md #11 全宽品牌色面板。
+ *
+ * 这块的做法保留（整片出血色 + 四个技术簇 + 7/5/5/7 的不对称栅格），
+ * 只把配色换成语义 token，标签全部改成胶囊。面板上不再叠白卡片，
+ * 分隔靠 hairline，避免「卡片里套卡片」。
+ */
 const SPAN = ['lg:col-span-7', 'lg:col-span-5', 'lg:col-span-5', 'lg:col-span-7']
 
 export function Stack() {
-  const ref = useRef<HTMLElement>(null)
-
-  // 朱红实色场同样盖住画布：这里把晶簇推到正中放大，作为进入写作区之前的蓄力
-  useScene(
-    ref,
-    { clusterX: 0, clusterY: -0.3, clusterScale: 2.1, spread: 1.6, spin: 0.09, tilt: 0.3, dispersion: 7.5, glow: 1.3, tint: 0.95, camZ: 5.0, exposure: 1.2 },
-    { clusterX: 0, clusterY: -0.2, clusterScale: 1.1, spread: 1.0 }
-  )
+  const root = useRef<HTMLElement>(null)
 
   useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const ctx = gsap.context(() => {
-      revealLines(el)
-      fadeUp('.stack-panel', el, 0.09, 26)
-    }, el)
-    return () => ctx.revert()
+    if (!root.current) return
+    fadeUp('.stack-cluster', root.current, 0.09, 26)
   }, [])
 
   return (
-    <section ref={ref} className="field-vermilion relative py-[clamp(4.5rem,10vw,8rem)]">
+    <section id="stack" ref={root} className="section-y bg-brand-surface text-on-brand">
       <div className="shell">
         <div className="max-w-[46ch]">
-          <h2 className="display text-d2 text-paper">
-            <span className="reveal-line">
-              <span>{stack.headline}</span>
-            </span>
-          </h2>
-          <p className="mt-6 text-[1.125rem] leading-[1.75] text-ink">{stack.body}</p>
+          <Eyebrow tone="onBrand">Toolbox</Eyebrow>
+          <h2 className="serif mt-4 text-d2 text-on-brand">{stack.headline}</h2>
+          <p className="mt-5 text-lead text-on-brand">{stack.body}</p>
         </div>
 
-        <div className="mt-[clamp(2.5rem,5vw,4rem)] grid grid-cols-12 gap-4">
+        <div className="mt-[clamp(40px,5vw,68px)] grid grid-cols-12 gap-x-[clamp(24px,3vw,48px)] gap-y-[clamp(30px,3.4vw,46px)]">
           {stack.clusters.map((c, i) => (
-            <div key={c.id} className={`stack-panel col-span-12 rounded-xl bg-paper p-7 opacity-0 sm:p-8 ${SPAN[i]}`}>
-              <h3 className="display text-[clamp(1.25rem,1.9vw,1.6rem)] leading-none tracking-tight">{c.title}</h3>
+            <div
+              key={c.id}
+              className={`stack-cluster rule-onBrand js-fade col-span-12 pt-6 ${SPAN[i]}`}
+            >
+              <div className="flex items-baseline gap-3">
+                <span aria-hidden className="h-2.5 w-2.5 rounded-full bg-highlight" />
+                <h3 className="serif text-[clamp(1.25rem,1.9vw,1.6rem)] leading-none text-on-brand">
+                  {c.title}
+                </h3>
+                <span className="nums ml-auto text-sm text-on-brand">{c.items.length}</span>
+              </div>
               <ul className="mt-5 flex flex-wrap gap-2">
                 {c.items.map((s) => (
-                  <li
-                    key={s}
-                    className="mono rounded-full border border-ink/20 px-3.5 py-1.5 text-[0.875rem] tracking-[0.04em] text-ink-70"
-                  >
+                  <li key={s} className="pill pill--onBrand">
                     {s}
                   </li>
                 ))}
