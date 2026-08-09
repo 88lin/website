@@ -1,29 +1,37 @@
 import { useEffect, useRef } from 'react'
 import { tracksIntro, trackA, trackB } from '../content/site'
-import { Eyebrow, Mark } from '../components/ui'
-import { fadeUp } from '../lib/motion'
+import { Mark } from '../components/ui'
+import { Section } from '../components/Section'
+import { revealChars, revealMask } from '../lib/motion'
 
-/** layouts.md #13 分栏对称：两条主线左右分列，中缝一条竖线，交点落在正中。 */
+/**
+ * 对开页。
+ *
+ * 「两条主线，一个交点」这句话本身就是版式说明书：把区块做成一张摊开的对开纸，
+ * 中缝一条 1px 实线，两侧底色一浅一深，左栏文字右对齐、右栏文字左对齐，全部朝
+ * 中缝靠拢——交点不是画一个图标去比喻，是让排版真的在那里相交。
+ * 入场时两栏各自从中缝向外揭开。
+ */
 function Column({
   kicker,
   items,
-  align,
+  side,
 }: {
   kicker: string
   items: { id: string; title: string; body: string }[]
-  align: 'left' | 'right'
+  side: 'l' | 'r'
 }) {
   return (
-    <div className={align === 'right' ? 'lg:pl-[clamp(32px,4vw,64px)]' : 'lg:pr-[clamp(32px,4vw,64px)]'}>
-      <p className="pill pill--static">{kicker}</p>
-      <ul className="mt-8 space-y-8">
+    <div className={`spread__col spread__col--${side}`}>
+      <p className="spread__kicker">{kicker}</p>
+      <ul className="mt-7 space-y-7">
         {items.map((t, i) => (
-          <li key={t.id} className="track-item js-fade">
-            <div className="flex items-baseline gap-3">
-              <span className="hand text-[1.1rem] text-brand-text">0{i + 1}</span>
+          <li key={t.id}>
+            <div className="spread__head">
+              <span className="hand text-[1.1rem] text-brand-deep">0{i + 1}</span>
               <h3 className="serif text-d3">{t.title}</h3>
             </div>
-            <p className="mt-2.5 text-ink-light">{t.body}</p>
+            <p className="mt-2 text-ink-light">{t.body}</p>
           </li>
         ))}
       </ul>
@@ -33,38 +41,35 @@ function Column({
 
 export function Tracks() {
   const root = useRef<HTMLElement>(null)
+  const head = useRef<HTMLHeadingElement>(null)
 
   useEffect(() => {
-    if (!root.current) return
-    fadeUp('.track-item', root.current, 0.08, 24)
+    const el = root.current
+    if (!el) return
+    if (head.current) revealChars(head.current, 0.026)
+    const cols = el.querySelector<HTMLElement>('.spread__grid')
+    if (cols) {
+      revealMask('.spread__col--l', cols, 'r', 0)
+      revealMask('.spread__col--r', cols, 'l', 0)
+    }
   }, [])
 
   return (
-    <section id="tracks" ref={root} className="section-y">
-      <div className="shell">
-        <div className="max-w-[52ch]">
-          <Eyebrow>Two tracks</Eyebrow>
-          <h2 className="serif mt-4 text-d2">
-            两条主线，<Mark>一个交点</Mark>
-          </h2>
-          <p className="mt-5 text-lead text-ink-light">{tracksIntro.body}</p>
-        </div>
-
-        <div className="relative mt-[clamp(48px,6vw,84px)] grid gap-[clamp(40px,5vw,0px)] lg:grid-cols-2">
-          {/* 中缝：一条细线 + 正中的交点标记 */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-y-0 left-1/2 hidden w-px -translate-x-1/2 bg-line-strong lg:block"
-          />
-          <div
-            aria-hidden
-            className="pointer-events-none absolute top-1/2 left-1/2 hidden -translate-x-1/2 -translate-y-1/2 rotate-45 border border-line-strong bg-cream lg:block"
-            style={{ width: 14, height: 14 }}
-          />
-          <Column kicker={trackA.kicker} items={trackA.items} align="left" />
-          <Column kicker={trackB.kicker} items={trackB.items} align="right" />
-        </div>
+    <Section id="tracks" tone="cream" label="主线 TWO TRACKS" className="sec--spread" ref={root}>
+      {/* 标题横跨中缝压在对开页上方 */}
+      <div className="max-w-[58ch]">
+        <h2 className="serif text-d2" ref={head}>
+          两条主线，<Mark>一个交点</Mark>
+        </h2>
+        <p className="mt-5 text-lead text-ink-light">{tracksIntro.body}</p>
       </div>
-    </section>
+
+      <div className="spread__grid mt-[clamp(46px,6vw,86px)]">
+        <div aria-hidden className="spread__seam" />
+        <div aria-hidden className="spread__cross" />
+        <Column kicker={trackA.kicker} items={trackA.items} side="l" />
+        <Column kicker={trackB.kicker} items={trackB.items} side="r" />
+      </div>
+    </Section>
   )
 }

@@ -1,5 +1,8 @@
 /**
- * 上线前自动验收。八项检查，任何一项 fail 都会让进程以非零码退出。
+ * 上线前自动验收。十二项检查，任何一项 fail 都会让进程以非零码退出。
+ * 1 子路径部署 · 2 Lighthouse · 3 对比度 · 4 破折号 · 5 版式纪律 ·
+ * 6 reduced-motion 降级 · 7 交互与版式硬断言 · 8 外链可达 · 9 字体与设计系统规则 ·
+ * 10 滚动手感 · 11 3D 活字门禁与降级 · 12 作品轨道拖拽与惯性
  * 用法：node scripts/audit.mjs [--skip-lh] [--skip-links]
  */
 import { chromium } from 'playwright'
@@ -344,8 +347,11 @@ for (const vp of [
         .replace(/^\s*\*.*$/, '')
         .replace(/\/\/.*$/, '')
         .replace(/<!--.*$/, '')
-      // 中文破折号是连续两个 U+2014，是合法排版；孤立的 — / – 才是 AI 味
-      const stripped = code.replace(/\u2014\u2014/g, '')
+      // 判据 V4 收紧一次，改成按「排版职能」判而不是按字符判：
+      //   连续两个 U+2014 = 中文破折号，合法
+      //   紧排（两侧无空格）的 U+2013 = 连接号本职：2022–2026、正则字符类 [a-z–]，合法
+      //   剩下的都是空格分隔的插入语破折号 — 这个才是要抓的 AI 味
+      const stripped = code.replace(/\u2014\u2014/g, '').replace(/(?<=\S)\u2013(?=\S)/g, '')
       if (/[\u2014\u2013]/.test(stripped)) hits.push(`${path.relative(ROOT, f)}:${i + 1} ${line.trim().slice(0, 70)}`)
     })
   }
@@ -370,7 +376,10 @@ for (const vp of [
       if (!prev) return
       const cs = getComputedStyle(prev)
       const ls = parseFloat(cs.letterSpacing) || 0
-      if (parseFloat(cs.fontSize) <= 15 && ls / parseFloat(cs.fontSize) >= 0.05 && prev.textContent.trim()) {
+      const txt = (prev.textContent || '').trim()
+      // 序号（01 / 02 / 03）不是 eyebrow，是列表记号。eyebrow 必须是「词」。
+      if (!txt || /^[\d\s./·]+$/.test(txt)) return
+      if (parseFloat(cs.fontSize) <= 15 && ls / parseFloat(cs.fontSize) >= 0.05) {
         eyebrows++
         const sec = h.closest('section[id]')
         const k = sec ? sec.id : '(none)'
@@ -378,6 +387,12 @@ for (const vp of [
       }
     })
     const crowded = [...perSection].filter(([, n]) => n > 1).map(([k, n]) => `${k}×${n}`)
+    // V4 结构签名：每个区块恰好一条竖排微标签挂在基准线上，多一条少一条都是漏改
+    const railBad = []
+    document.querySelectorAll('#root section[id]').forEach((s) => {
+      const n = s.querySelectorAll('.eyebrow--rail').length
+      if (n !== 1) railBad.push(`${s.id}=${n}`)
+    })
     // 区块内部也会用 <header>，必须精确锁定顶部那条固定导航
     const nav = document.querySelector('nav[aria-label="主导航"]') || document.querySelector('header nav')
     const navH = nav ? Math.round(nav.getBoundingClientRect().height) : -1
@@ -397,11 +412,12 @@ for (const vp of [
       r.selectNodeContents(t)
       if (r.getClientRects().length > 1) wrapped.push((el.textContent || '').trim().slice(0, 24))
     })
-    return { eyebrows, crowded, navH, navLines, navSpread, wrapped }
+    return { eyebrows, crowded, railBad, navH, navLines, navSpread, wrapped }
   })
   await ctx.close()
   const probs = []
   if (m.crowded.length) probs.push(`同一区块出现多个 eyebrow: ${m.crowded.join(', ')}`)
+  if (m.railBad.length) probs.push(`基准线微标签数量不为 1: ${m.railBad.join(', ')}`)
   if (m.navH > 80) probs.push(`导航高 ${m.navH}px > 80`)
   if (m.navLines > 1) probs.push(`导航折成 ${m.navLines} 行（中心线偏差 ${m.navSpread}px）`)
   if (m.wrapped.length) probs.push(`CTA/链接折行: ${m.wrapped.join(', ')}`)
@@ -410,7 +426,7 @@ for (const vp of [
     : pass(
         '5',
         '版式纪律 (1024px)',
-        `eyebrow ${m.eyebrows} 个（每区块至多 1 个）、导航 ${m.navH}px 单行（中心线偏差 ${m.navSpread}px）、0 处链接折行`
+        `基准线竖排微标签 9 个区块各 1 条、行内 eyebrow ${m.eyebrows} 个（每区块至多 1 个）、导航 ${m.navH}px 单行（中心线偏差 ${m.navSpread}px）、0 处链接折行`
       )
 }
 
@@ -431,13 +447,13 @@ for (const vp of [
   await page.waitForTimeout(1500)
   await scrollThrough(page)
   const m = await page.evaluate(() => {
-    const track = document.querySelector('.hscroll__track')
-    const wrap = document.querySelector('.hscroll')
+    const track = document.querySelector('.wtrack__inner')
+    const wrap = document.querySelector('.wtrack')
     const t0 = track ? getComputedStyle(track).transform : 'none'
     const hiddenFades = [...document.querySelectorAll('.js-fade')].filter(
       (e) => Number(getComputedStyle(e).opacity) < 0.9,
     ).length
-    const clonesShown = [...document.querySelectorAll('.hscroll__item[data-clone="true"]')].filter(
+    const clonesShown = [...document.querySelectorAll('.wtrack__item[data-clone="true"]')].filter(
       (e) => getComputedStyle(e).display !== 'none',
     ).length
     return {
@@ -448,12 +464,17 @@ for (const vp of [
       fades: document.querySelectorAll('.js-fade').length,
       hiddenFades,
       clonesShown,
+      // v4 新增的三条动效地基，降级下必须一并停掉
+      canvas3d: !!document.querySelector('canvas#stage'),
+      stage: window.__typeStage ? { ok: window.__typeStage.ok, reason: window.__typeStage.reason } : null,
+      sv: getComputedStyle(document.documentElement).getPropertyValue('--sv').trim(),
+      drag: window.__wtrack ? window.__wtrack.state.v : null,
     }
   })
   await page.waitForTimeout(1200)
   const moved = await page.evaluate(() =>
-    document.querySelector('.hscroll__track')
-      ? getComputedStyle(document.querySelector('.hscroll__track')).transform
+    document.querySelector('.wtrack__inner')
+      ? getComputedStyle(document.querySelector('.wtrack__inner')).transform
       : 'none',
   )
   const ov = await page.evaluate(findOverflow)
@@ -465,6 +486,10 @@ for (const vp of [
   if (m.snap === 'none') probs.push('降级后缺少 scroll-snap')
   if (m.clonesShown) probs.push(`降级后仍显示 ${m.clonesShown} 个克隆项（会出现重复卡片）`)
   if (m.hiddenFades) probs.push(`${m.hiddenFades}/${m.fades} 个入场元素停在 opacity<0.9`)
+  if (m.canvas3d) probs.push('降级下仍挂了 3D canvas')
+  if (m.stage && m.stage.ok) probs.push(`降级下 3D 仍判定为可用（reason=${m.stage.reason ?? '-'}）`)
+  if (m.sv && Math.abs(parseFloat(m.sv)) > 0.0001) probs.push(`速度总线未归零：--sv=${m.sv}`)
+  if (m.drag !== null && Math.abs(m.drag) > 0.0001) probs.push(`轨道惯性未停：v=${m.drag}`)
   if (ov.length) probs.push(`横向溢出 ${ov.length} 处：${ov.slice(0, 3).join(' | ')}`)
   if (errs.length) probs.push(`运行时错误：${errs.slice(0, 3).join(' | ')}`)
 
@@ -473,7 +498,8 @@ for (const vp of [
     : pass(
         '6',
         'prefers-reduced-motion 降级',
-        `轨道动画停止且不再位移、退回 overflow-x:${m.overflowX} + ${m.snap}、克隆项隐藏、${m.fades} 个入场元素全部可见、0 溢出 0 错误`,
+        `轨道动画停止且不再位移、退回 overflow-x:${m.overflowX} + ${m.snap}、克隆项隐藏、` +
+          `${m.fades} 个入场元素全部可见、0 个 3D canvas、--sv 归零、0 溢出 0 错误`,
       )
 }
 
@@ -525,7 +551,7 @@ for (const vp of [
       const arts = [...document.querySelectorAll('#writing a')]
         .map((a) => a.href)
         .filter((h) => /\/article\//.test(h))
-      // 版式指纹：每个 section 的栅格模板 + 背景 + 首个标题的位置，九个不能重样。
+      // 版式指纹（下限）：栅格模板 + 背景 + 首个标题的位置，九个不能重样。
       // 只算九个顶层区块；写作区内部按年份分组的 <section> 本来就该长一样。
       const prints = [...document.querySelectorAll('#root section[id]')].map((s) => {
         const cs = getComputedStyle(s)
@@ -540,7 +566,74 @@ for (const vp of [
           .join('|')
         return `${s.id}::${cs.backgroundColor}|${ics.display}|h@${hx}|${cols}`
       })
-      return { radii, arts, prints }
+
+      // 六元组版式指纹（真正的门槛）。
+      //
+      // 上面那条只查「完全一样」，太松了 —— v3 九个区块的指纹串各不相同，
+      // 但骨架全是「eyebrow + 标题 + 一段引言 + 一排卡片」，看下来就是同一页
+      // 重复九次。这里改成量化六个结构维度，再要求任意两块至少三处不同，
+      // 换背景色和换文案糊弄不过去。
+      const q = (n, s) => Math.round(n / s) * s
+      const prints6 = [...document.querySelectorAll('#root section[id]')].map((s) => {
+        const body = s.querySelector('.sec__body') || s
+        const br = body.getBoundingClientRect()
+        const h = s.querySelector('h1, h2')
+        const hr = h ? h.getBoundingClientRect() : null
+
+        // ③ 主分栏：body 里「真的把内容切成多栏」的那个最宽后代
+        const splits = []
+        for (const e of body.querySelectorAll('*')) {
+          const cs = getComputedStyle(e)
+          const r = e.getBoundingClientRect()
+          if (r.width < 200 || r.height < 40) continue
+          if (cs.display.includes('grid')) {
+            const t = cs.gridTemplateColumns
+            const n = t === 'none' ? 1 : t.trim().split(/\s+/).length
+            if (n >= 2) splits.push({ k: `grid${n}`, w: r.width, r })
+          } else if (cs.display.includes('flex') && cs.flexDirection === 'row') {
+            const kids = [...e.children].filter((c) => c.getBoundingClientRect().width > 40)
+            if (kids.length >= 2) splits.push({ k: `flexrow${kids.length}`, w: r.width, r })
+          } else if (cs.columnCount && cs.columnCount !== 'auto' && +cs.columnCount >= 2) {
+            splits.push({ k: `cols${cs.columnCount}`, w: r.width, r })
+          }
+        }
+        splits.sort((a, b) => b.w - a.w)
+        const main = splits[0] || null
+
+        // ④ 标题与主分栏的位置关系
+        let rel = 'none'
+        if (main && hr) {
+          const r = main.r
+          if (r.top >= hr.bottom - 4) rel = 'below'
+          else if (r.bottom <= hr.top + 4) rel = 'above'
+          else if (r.left <= hr.left + 4 && r.right >= hr.right - 4 && r.top <= hr.top + 4) rel = 'inside'
+          else rel = 'beside'
+        }
+
+        // ⑤ 出血：body 里有元素越出版心左右缘
+        const bleed = [...body.querySelectorAll('*')].some((e) => {
+          const r = e.getBoundingClientRect()
+          return r.width > 0 && (r.left < br.left - 6 || r.right > br.right + 6)
+        })
+
+        // ⑥ sticky（必须排除基准线标签，否则九块全都有，这一维就没信息量了）
+        const sticky = [...s.querySelectorAll('*')].some(
+          (e) => getComputedStyle(e).position === 'sticky' && !e.classList.contains('eyebrow--rail'),
+        )
+
+        return {
+          id: s.id,
+          f: [
+            `w${hr ? Math.round((hr.width / br.width) * 100 / 12) : -1}`, // ① 标题占版心宽度的档位
+            `fs${h ? q(parseFloat(getComputedStyle(h).fontSize), 12) : -1}`, // ② 标题字号档
+            main ? main.k : 'nosplit', // ③ 主分栏
+            rel, // ④ 标题与主分栏的关系
+            `bl${bleed ? 1 : 0}`, // ⑤ 出血
+            `st${sticky ? 1 : 0}`, // ⑥ sticky
+          ],
+        }
+      })
+      return { radii, arts, prints, prints6 }
     })
 
     // 防止「把选择器收窄到只剩两个元素」式的假通过
@@ -561,13 +654,28 @@ for (const vp of [
     const ov = await page.evaluate(findOverflow)
     if (ov.length) probs.push(`${vp.name} 横向溢出 ${ov.length} 处：${ov.slice(0, 3).join(' | ')}`)
 
+    // 版式指纹只在 desktop 判：1024px 下 lg 栅格全塌成单列，正好把差异抹平了
     if (vp.name === 'desktop') {
       const dup = m.prints.length - new Set(m.prints).size
       if (dup > 0) probs.push(`九个区块版式指纹重复 ${dup} 组：${m.prints.join('\n        ')}`)
+
+      const near = []
+      let minDiff = 6
+      for (let i = 0; i < m.prints6.length; i++) {
+        for (let j = i + 1; j < m.prints6.length; j++) {
+          const a = m.prints6[i]
+          const b = m.prints6[j]
+          const d = a.f.filter((v, k) => v !== b.f[k]).length
+          if (d < minDiff) minDiff = d
+          if (d < 3) near.push(`${a.id} ↔ ${b.id} 只有 ${d} 处不同\n          ${a.f.join(' ')}\n          ${b.f.join(' ')}`)
+        }
+      }
+      if (near.length) probs.push(`版式骨架撞型 ${near.length} 组（六维至少要有三维不同）：\n        ${near.join('\n        ')}`)
       detail =
         `数字花园 ${m.radii.length} 个可点元素全部是胶囊（0 个方角）、` +
         `写作区 ${m.arts.length} 条文章链接、轨道 6 张封面无空白滑入、` +
-        `两视口 0 处横向溢出、${m.prints.length} 个区块版式指纹互不相同`
+        `两视口 0 处横向溢出、${m.prints.length} 个区块版式指纹互不相同、` +
+        `六维骨架两两最少 ${minDiff} 处不同（门槛 3）`
     }
     await ctx.close()
   }
@@ -632,7 +740,241 @@ if (!SKIP_LINKS) {
   pass('8', '外链可达', 'skipped')
 }
 
+/* === 11. 3D 活字：能力分级门禁与降级 =================================
+   3D 只有在「跑得动 + 用户没关动效 + 屏幕够宽」时才该出现，其余情况必须
+   干净地退回 DOM 活字方阵。这条检查守两件事：
+     a) 门禁真的按能力分级，不是无脑挂 canvas；
+     b) 两种表现形式永远只出现一种，不会叠成两排字。
+   沙箱是 SwiftShader，天然落在「跑不动」那一档，正好把降级路径测实；
+   `?force3d=1` 只放行性能类判据，用来在同一台机器上把 3D 路径也跑一遍。 */
+{
+  const probs = []
+  const notes = []
+  const withQ = (u, s) => u + (u.includes('?') ? '&' : '?') + s
+
+  /* (a) 桌面 + force3d：真的跑起来，且三个锚点各自换阵型 */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } })
+    const page = await ctx.newPage()
+    const errs = []
+    page.on('pageerror', (e) => errs.push(String(e)))
+    page.on('console', (m) => m.type() === 'error' && errs.push(m.text()))
+    await page.goto(withQ(URL_BASE, 'force3d=1'), { waitUntil: 'networkidle' })
+
+    // three 必须是懒加载：首屏解析完不能出现它的 <script>
+    const early = await page.evaluate(
+      () => [...document.querySelectorAll('script[src]')].filter((s) => /three|Stage/.test(s.src)).length,
+    )
+    if (early) probs.push(`首屏就带了 ${early} 个 three/Stage script 标签（懒加载失效）`)
+
+    await page.waitForTimeout(4200)
+    const boot = await page.evaluate(() => ({
+      ...window.__typeStage,
+      canvas: !!document.querySelector('canvas#stage'),
+    }))
+    if (!boot.ok) probs.push(`force3d 下仍未启用：${boot.reason}`)
+    if (!boot.canvas) probs.push('force3d 下没有 canvas#stage')
+    // draw call 是这套东西唯一的性能开关：一帧超过 3 次就说明合批塌了
+    if ((boot.calls ?? 99) > 3) probs.push(`一帧 ${boot.calls} 次 draw call > 3`)
+
+    const want = { top: 'forme', stack: 'cluster', contact: 'fall' }
+    const got = {}
+    for (const id of Object.keys(want)) {
+      await page.evaluate((i) => {
+        const el = document.getElementById(i)
+        if (!el) return
+        if (window.__lenis) window.__lenis.scrollTo(el, { offset: -60, immediate: true })
+        else el.scrollIntoView()
+      }, id)
+      await page.waitForTimeout(2200)
+      const st = await page.evaluate(() => ({ ...window.__typeStage }))
+      got[id] = st.mode
+      if (st.mode !== want[id]) probs.push(`#${id} 阵型是 ${st.mode}，应为 ${want[id]}`)
+      if (!st.running) probs.push(`#${id} 渲染循环没在跑`)
+    }
+
+    // 无锚点的区块必须停帧。别在用户看不见 3D 的时候空转烧电。
+    // （不能拿「滚到底」当判据：底部 contact 的锚点还在视口里，running 本就该是 true）
+    await page.evaluate(() => {
+      const el = document.getElementById('writing')
+      if (window.__lenis) window.__lenis.scrollTo(el, { offset: -60, immediate: true })
+      else el?.scrollIntoView()
+    })
+    await page.waitForTimeout(2200)
+    const idle = await page.evaluate(() => ({ ...window.__typeStage }))
+    if (idle.running) probs.push('滚到无锚点区块 #writing 时渲染循环没停')
+    if (errs.length) probs.push(`3D 运行时错误：${errs.slice(0, 2).join(' | ')}`)
+    notes.push(
+      `force3d：ok · ${boot.calls} draw call · 阵型 ${Object.entries(got).map(([k, v]) => `${k}→${v}`).join(' ')} · #writing 停帧`,
+    )
+    await ctx.close()
+  }
+
+  /* (b) 三种降级路径：两种表现形式永远只出现一种 */
+  const lanes = [
+    { name: '桌面软件渲染', vp: { width: 1440, height: 900 }, rm: null, must3d: false },
+    { name: '移动 390', vp: { width: 390, height: 844 }, rm: null, must3d: false },
+    { name: '桌面 + reduced-motion', vp: { width: 1440, height: 900 }, rm: 'reduce', must3d: false },
+  ]
+  for (const lane of lanes) {
+    const ctx = await browser.newContext({
+      viewport: lane.vp,
+      ...(lane.rm ? { reducedMotion: lane.rm } : {}),
+    })
+    const page = await ctx.newPage()
+    await page.goto(URL_BASE, { waitUntil: 'load' })
+    await page.waitForTimeout(2600)
+    const s = await page.evaluate(() => {
+      const tm = document.querySelector('#top .type-matrix')
+      const r = tm ? tm.getBoundingClientRect() : null
+      return {
+        canvas: !!document.querySelector('canvas#stage'),
+        ok: window.__typeStage ? !!window.__typeStage.ok : null,
+        reason: window.__typeStage ? window.__typeStage.reason : null,
+        matrix: !!(tm && Number(getComputedStyle(tm).opacity) > 0.9 && r.width > 40 && r.height > 40),
+        slugs: tm ? tm.querySelectorAll('.type-slug').length : 0,
+      }
+    })
+    // 契约：3D 在，DOM 方阵让位；3D 不在，DOM 方阵必须顶上 —— 不能两个都在，也不能都没有
+    if (s.canvas && s.matrix) probs.push(`${lane.name}：3D 和 DOM 活字同时可见（会叠成两排字）`)
+    if (!s.canvas && !s.matrix) probs.push(`${lane.name}：3D 没起来，DOM 活字方阵也没顶上`)
+    if (lane.rm && s.ok) probs.push(`${lane.name}：用户关了动效，3D 仍判定为可用`)
+    if (lane.vp.width < 768 && s.canvas) probs.push(`${lane.name}：窄屏不该上 3D`)
+    if (!s.canvas && s.slugs < 4) probs.push(`${lane.name}：降级方阵只有 ${s.slugs} 枚字`)
+    notes.push(`${lane.name}：${s.canvas ? '3D' : `DOM ${s.slugs} 枚字`}（${s.reason ?? 'ok'}）`)
+    await ctx.close()
+  }
+
+  probs.length
+    ? fail('11', '3D 活字门禁与降级', probs.join('\n      '))
+    : pass('11', '3D 活字门禁与降级', notes.join('\n      '))
+}
+
+/* === 12. 作品轨道：拖拽 / 动量 / 巡航 ================================
+   「滑动手感不行」是这一版的起点，所以轨道不能只测「它在动」。
+   拆成四段分别断言：跟手、松手后的惯性、静置后自己接回巡航、键盘也能推。 */
+{
+  const probs = []
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } })
+  const page = await ctx.newPage()
+  await page.goto(URL_BASE, { waitUntil: 'load' })
+  await page.waitForTimeout(1400)
+  await page.evaluate(() => document.querySelector('#work')?.scrollIntoView({ block: 'center' }))
+  await page.waitForTimeout(1600)
+
+  const has = await page.evaluate(() => !!(window.__wtrack && window.__wtrack.state))
+  let detail = ''
+  if (!has) {
+    probs.push('拿不到 window.__wtrack —— 轨道没挂上拖拽')
+  } else {
+    const box = await page.$eval('.wtrack', (e) => {
+      const r = e.getBoundingClientRect()
+      return { x: r.x, y: r.y, w: r.width, h: r.height }
+    })
+    const cx = box.x + box.w * 0.72
+    const cy = box.y + box.h / 2
+    const read = () => page.evaluate(() => ({ ...window.__wtrack.state }))
+
+    // ① 跟手：拖多少走多少，中间不许有橡皮筋或倍率
+    await page.mouse.move(cx, cy)
+    await page.mouse.down()
+    const s0 = await read()
+    const DRAG = -400
+    for (let i = 1; i <= 20; i++) {
+      await page.mouse.move(cx + (DRAG / 20) * i, cy)
+      await page.waitForTimeout(16)
+    }
+    const s1 = await read()
+    const follow = s1.x - s0.x
+    if (Math.abs(follow - DRAG) > 20) probs.push(`跟手误差 ${(follow - DRAG).toFixed(1)}px > 20px（拖 ${DRAG} 走了 ${follow.toFixed(1)}）`)
+
+    // ② 松手后要滑出去，不能一撒手就钉住
+    await page.mouse.up()
+    const vUp = (await read()).v
+    await page.mouse.move(box.x + box.w / 2, 6) // 挪开，别让 hover 压住巡航
+    await page.waitForTimeout(600)
+    const glide = (await read()).x - s1.x
+    if (glide > -40) probs.push(`松手后只滑了 ${glide.toFixed(1)}px，没有动量（松手速度 ${vUp.toFixed(2)}）`)
+
+    // ③ 静置之后自己接回巡航。鼠标点过一下轨道会 focusin，
+    //    如果那里没区分键盘焦点，这一条就会挂 —— 正是它抓出来的 bug。
+    await page.waitForTimeout(2200)
+    const a = await read()
+    await page.waitForTimeout(700)
+    const b = await read()
+    if (b.v > -0.2) probs.push(`静置后没接回巡航：v=${b.v.toFixed(3)}（应 ≤ -0.2）`)
+    if (b.x - a.x > -8) probs.push(`静置后轨道没继续走：700ms 只移动 ${(b.x - a.x).toFixed(1)}px`)
+
+    // ④ 键盘也要能推（拖拽不能是唯一入口）
+    await page.evaluate(() => document.querySelector('.wtrack')?.focus())
+    const k0 = await read()
+    await page.keyboard.press('ArrowRight')
+    await page.waitForTimeout(450)
+    const k1 = await read()
+    if (k1.x - k0.x > -20) probs.push(`ArrowRight 推不动轨道：Δx=${(k1.x - k0.x).toFixed(1)}px`)
+
+    detail =
+      `跟手误差 ${(follow - DRAG).toFixed(1)}px（拖 ${DRAG}px）、松手速度 ${vUp.toFixed(2)} 滑行 ${glide.toFixed(0)}px、` +
+      `静置 2.9s 后接回巡航 v=${b.v.toFixed(2)}、ArrowRight 推进 ${(k1.x - k0.x).toFixed(0)}px`
+  }
+  await ctx.close()
+  probs.length ? fail('12', '作品轨道拖拽与惯性', probs.join('\n      ')) : pass('12', '作品轨道拖拽与惯性', detail)
+}
+
 await browser.close()
+
+/* === 10. 滚动手感 ====================================================
+   「滑动阻尼一塌糊涂」没法靠肉眼验收，所以逐帧记录位移，把手感拆成
+   跟手 / 超调 / 停稳 / 平滑度 / 掉帧几个量（实现见 scroll-feel.mjs）。
+   同时把 v3 的 duration 配置也跑一遍当基线，防止调参调出个比上一版还钝的结果。
+
+   三条定标经验，都是踩出来的：
+
+   a) 停稳判毫秒，不判帧。lenis 1.3 用帧率无关阻尼 damp(x,y,lerp*60,dt_s)，
+      时间常数在秒域，所以毫秒才是跨机器不变量。早先换算成「帧」再判，
+      60fps 下 834ms 会被算成 50 帧而误判失败。
+
+   b) 平滑度判 jerkRatio（幅度型），flipRate（计数型）只记录不卡。
+      稳态窗口只有约 30 帧、过门限的样本更少，flipRate 实测随 lerp 无规律
+      跳变（0 / 0.5 / 0.5 / 0.333 / 0.545），统计上撑不住一个硬门槛。
+
+   c) jerk 要跟「输入自己的 jerk」比。同一条录像里 tg 是未平滑的原始输入，
+      它自带 rAF 计时噪声；只有输出明显放大了输入，才算站点在抖。 */
+{
+  const { measure, LAUNCH_ARGS } = await import('./scroll-feel.mjs')
+  const b = await chromium.launch({ args: LAUNCH_ARGS })
+  const page = await b.newPage({ viewport: { width: 1440, height: 900 } })
+  const now = await measure(page, URL_BASE)
+  const v3 = await measure(page, URL_BASE + (URL_BASE.includes('?') ? '&' : '?') + 'scroll=duration')
+  await b.close()
+
+  const probs = []
+  let line = ''
+  if (now.error || v3.error) {
+    probs.push(`采样失败：${now.error || v3.error}（${now.frames ?? v3.frames} 帧）`)
+  } else {
+    const jerkCap = Math.max(0.12, now.inJerkRatio * 2.5)
+    if (now.overshootPct > 2) probs.push(`超调 ${now.overshootPct}% > 2%（回弹了）`)
+    if (now.settleMs < 0) probs.push('静置段没测到停稳点')
+    if (now.settleMs > 1200) probs.push(`停稳 ${now.settleMs}ms > 1200ms（尾巴太长）`)
+    if (now.settleMs > v3.settleMs * 1.1)
+      probs.push(`停稳 ${now.settleMs}ms 比 v3 基线 ${v3.settleMs}ms 还拖`)
+    if (now.lagPx > v3.lagPx * 1.15) probs.push(`跟手 ${now.lagPx}px 比 v3 基线 ${v3.lagPx}px 还钝`)
+    if (now.jerkRatio > jerkCap)
+      probs.push(`速度 jerk ${now.jerkRatio} > ${jerkCap.toFixed(3)}（输入自带 ${now.inJerkRatio}）`)
+    if (now.worstDropRun >= 3) probs.push(`连续掉帧 ${now.worstDropRun} 帧 ≥ 3`)
+    if (now.medianDt > now.baseDt * 1.35)
+      probs.push(`滚动时 ${now.medianDt}ms/帧，比空转基线 ${now.baseDt}ms 贵 35% 以上`)
+    if (now.svEnd > 0.01) probs.push(`速度总线没归零：收尾 ${now.svEnd}`)
+    line =
+      `本机 ${now.medianDt}ms/帧（空转基线 ${now.baseDt}ms）· 跟手 ${now.lagPx}px · 超调 ${now.overshootPct}% · ` +
+      `停稳 ${now.settleMs}ms · jerk ${now.jerkRatio}（输入 ${now.inJerkRatio}，上限 ${jerkCap.toFixed(3)}）· ` +
+      `掉帧连跑 ${now.worstDropRun} · 速度总线峰值 ${now.svPeak} 收尾 ${now.svEnd}\n      ` +
+      `v3 基线（?scroll=duration）跟手 ${v3.lagPx}px · 停稳 ${v3.settleMs}ms · jerk ${v3.jerkRatio}\n      ` +
+      `抖动率仅记录：本版 ${now.flipRate} / v3 ${v3.flipRate}（计数型，样本少，不作门槛）`
+  }
+  probs.length ? fail('10', '滚动手感', `${line}\n      未达标: ${probs.join('; ')}`) : pass('10', '滚动手感', line)
+}
 
 /* === 2. Lighthouse ================================================== */
 if (!SKIP_LH) {
@@ -643,25 +985,37 @@ if (!SKIP_LH) {
     chromePath,
     chromeFlags: ['--headless=new', '--no-sandbox', '--use-gl=swiftshader', '--enable-unsafe-swiftshader'],
   })
+  const DESKTOP = {
+    formFactor: 'desktop',
+    screenEmulation: { mobile: false, width: 1440, height: 900, deviceScaleFactor: 1, disabled: false },
+    throttling: { rttMs: 40, throughputKbps: 10240, cpuSlowdownMultiplier: 1, requestLatencyMs: 0, downloadThroughputKbps: 0, uploadThroughputKbps: 0 },
+  }
+  // 两轮：
+  //  · 默认轮走能力分级挡下 3D 之后的真实页面（绝大多数访客拿到的就是这一版），
+  //    硬门槛照 v3 的成绩守住，3D 不能成为性能倒退的借口；
+  //  · force3d 轮把 three 真的加载起来跑一遍，确认最重的那条路径也不塌，
+  //    只卡一个下限 + CLS，不拿它当主指标（沙箱是软件光栅，本来就偏悲观）。
   const presets = {
-    desktop: {
-      formFactor: 'desktop',
-      screenEmulation: { mobile: false, width: 1440, height: 900, deviceScaleFactor: 1, disabled: false },
-      throttling: { rttMs: 40, throughputKbps: 10240, cpuSlowdownMultiplier: 1, requestLatencyMs: 0, downloadThroughputKbps: 0, uploadThroughputKbps: 0 },
-      minPerf: 90,
-    },
+    desktop: { ...DESKTOP, url: URL_BASE, minPerf: 95, hard: true },
     mobile: {
       formFactor: 'mobile',
       screenEmulation: { mobile: true, width: 390, height: 844, deviceScaleFactor: 2, disabled: false },
       throttling: { rttMs: 150, throughputKbps: 1638.4, cpuSlowdownMultiplier: 4, requestLatencyMs: 562.5, downloadThroughputKbps: 1474.56, uploadThroughputKbps: 675 },
+      url: URL_BASE,
       minPerf: 90,
+      hard: true,
+    },
+    'desktop+3d': {
+      ...DESKTOP,
+      url: URL_BASE + (URL_BASE.includes('?') ? '&' : '?') + 'force3d=1',
+      minPerf: 85,
+      hard: false,
     },
   }
   const lhOut = {}
-  // v3 删掉了 three.js，页面上已经没有需要软件光栅的东西，直接跑真实页面卡验收。
   for (const [name, p] of Object.entries(presets)) {
     const r = await lighthouse(
-      URL_BASE,
+      p.url,
       { port: chrome.port, output: 'json', logLevel: 'error' },
       {
         extends: 'lighthouse:default',
@@ -687,21 +1041,27 @@ if (!SKIP_LH) {
         .filter((x) => x.score === 0 && x.scoreDisplayMode === 'binary' && c.accessibility.auditRefs.some((ar) => ar.id === x.id))
         .map((x) => x.id),
       minPerf: p.minPerf,
+      hard: p.hard,
     }
   }
   await chrome.kill()
   await writeFile('/workspace/lighthouse.json', JSON.stringify(lhOut, null, 2))
   const probs = []
   for (const [name, v] of Object.entries(lhOut)) {
-    if (v.a11y < 96) probs.push(`${name} A11y ${v.a11y} < 96 (${v.a11yFails.join(',') || '-'})`)
+    // CLS 和 Perf 下限两轮都要守：3D 是 fixed canvas，本来就不该推动任何东西
     if (v.cls > 0) probs.push(`${name} CLS ${v.cls} > 0`)
     if (v.perf < v.minPerf) probs.push(`${name} Perf ${v.perf} < ${v.minPerf}`)
+    if (!v.hard) continue
+    if (v.a11y < 96) probs.push(`${name} A11y ${v.a11y} < 96 (${v.a11yFails.join(',') || '-'})`)
+    if (v.bp < 100) probs.push(`${name} BP ${v.bp} < 100`)
+    if (v.seo < 92) probs.push(`${name} SEO ${v.seo} < 92`)
     if (v.lcp >= 2.5) probs.push(`${name} LCP ${v.lcp}s ≥ 2.5`)
+    if (v.tbt > 150) probs.push(`${name} TBT ${v.tbt}ms > 150`)
   }
   const line = Object.entries(lhOut)
     .map(
       ([n, v]) =>
-        `${n.padEnd(8)} Perf ${String(v.perf).padStart(3)} / A11y ${v.a11y} / BP ${v.bp} / SEO ${v.seo} · LCP ${v.lcp}s · CLS ${v.cls} · TBT ${v.tbt}ms`
+        `${n.padEnd(11)} Perf ${String(v.perf).padStart(3)} / A11y ${v.a11y} / BP ${v.bp} / SEO ${v.seo} · LCP ${v.lcp}s · CLS ${v.cls} · TBT ${v.tbt}ms${v.hard ? '' : ' (仅记录)'}`
     )
     .join('\n      ')
   probs.length ? fail('2', 'Lighthouse', `${line}\n      未达标: ${probs.join('; ')}`) : pass('2', 'Lighthouse', line)
@@ -798,7 +1158,7 @@ if (!SKIP_LH) {
 
 server.close()
 
-results.sort((a, b) => a.id.localeCompare(b.id))
+results.sort((a, b) => Number(a.id) - Number(b.id)) // 字符串排序会把 '10' 排到 '2' 前面
 console.log('\n──────────── 验收结果 ────────────')
 for (const r of results) console.log(`${r.ok ? 'PASS' : 'FAIL'}  ${r.id}. ${r.name}\n      ${r.detail}`)
 const failed = results.filter((r) => !r.ok)

@@ -1,18 +1,24 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { writing } from '../content/site'
-import { posts, postCategories, postYears, postCount, yearMax, postHref } from '../content/writing'
-import { Eyebrow, Mark } from '../components/ui'
-import { countUp, fadeUp } from '../lib/motion'
+import { posts, postCategories, postYears, postCount, postHref } from '../content/writing'
+import { Section } from '../components/Section'
+import { Mark } from '../components/ui'
+import { revealChars, revealRows } from '../lib/motion'
 
 /**
- * layouts.md #2 Sticky 侧栏 + 内容滚动。
+ * 按年分栏的账簿。
  *
- * 上一版整个 #writing 只有 1 个 <a>（指向博客首页），右侧十个「分类」是纯文本，
- * 而且那份分类其实是博客的标签不是分类。现在右侧是 55 篇真实文章，
- * 每一条都是可点的 <a>，按年份分组；分类与年份分布取自博客数据库。
+ * 这一段的组织逻辑是「时间轴」，和全站其它八段都不一样：
+ * - 刊头一行，标题与统计压在同一条基线上（别处都是标题在上、内容在下）；
+ * - 年份是巨型竖排刻度，sticky 跟着该年的列表走；
+ * - 每年的分隔线越过基准线向左出血，横线切竖线，像一本被划过格的账簿。
+ *
+ * 55 篇全是真实文章、每条可点，年份与分类计数来自博客数据库。
+ * 行入场用 revealRows（x -12 → 0），一年一个 trigger，不让 55 行排成一条长队。
  */
 export function Writing() {
   const root = useRef<HTMLElement>(null)
+  const head = useRef<HTMLHeadingElement>(null)
 
   const byYear = useMemo(() => {
     const m = new Map<string, typeof posts>()
@@ -25,135 +31,91 @@ export function Writing() {
     return [...m.entries()]
   }, [])
 
+  const span = useMemo(() => {
+    const ys = postYears.map((y) => y.year).sort()
+    return ys.length ? `${ys[0]}–${ys[ys.length - 1]}` : ''
+  }, [])
+
   useEffect(() => {
-    if (!root.current) return
-    fadeUp('.writing-fade', root.current, 0.08, 24)
-    fadeUp('.year-block', root.current, 0.06, 20)
-    root.current.querySelectorAll<HTMLElement>('[data-count]').forEach((el) => {
-      countUp(el, el.dataset.count || '')
+    const el = root.current
+    if (!el) return
+    if (head.current) revealChars(head.current, 0.03)
+    el.querySelectorAll<HTMLElement>('.year-row').forEach((row) => {
+      revealRows(row.querySelectorAll('.entry'), row)
     })
   }, [])
 
   return (
-    <section id="writing" ref={root} className="section-y">
-      <div className="shell grid gap-x-[clamp(32px,4vw,72px)] gap-y-[clamp(40px,5vw,64px)] lg:grid-cols-12">
-        {/* 左：sticky 侧栏 */}
-        <div className="lg:col-span-4">
-          <div className="lg:sticky lg:top-[112px]">
-            <div className="writing-fade js-fade">
-              <Eyebrow>Writing</Eyebrow>
-              <h2 className="serif mt-4 text-d2">
-                写下来的<Mark>部分</Mark>
-              </h2>
-              <p className="mt-5 max-w-[38ch] text-lead text-ink-light">{writing.body}</p>
-            </div>
-
-            <div className="writing-fade js-fade mt-9 flex gap-10">
-              <p>
-                <span
-                  className="nums block text-[clamp(2.2rem,3.6vw,3rem)] leading-none"
-                  data-count={String(postCount)}
-                >
-                  {postCount}
-                </span>
-                <span className="mt-2 block text-sm font-medium text-ink-light">篇文章</span>
-              </p>
-              <p>
-                <span
-                  className="nums block text-[clamp(2.2rem,3.6vw,3rem)] leading-none"
-                  data-count={writing.days}
-                >
-                  {writing.days}
-                </span>
-                <span className="mt-2 block text-sm font-medium text-ink-light">天持续更新</span>
-              </p>
-            </div>
-
-            {/* 年份分布条形 */}
-            <ul className="writing-fade js-fade mt-9 space-y-2.5 border-t border-line pt-6">
-              {postYears.map((y) => (
-                <li key={y.year} className="flex items-center gap-3">
-                  <span className="nums w-[3.2rem] shrink-0 text-sm font-semibold text-ink-light">
-                    {y.year}
-                  </span>
-                  <span aria-hidden className="h-2.5 grow rounded-full bg-cream-dark">
-                    <span
-                      className="block h-full rounded-full bg-brand-tint"
-                      style={{ width: `${Math.round((y.count / yearMax) * 100)}%` }}
-                    />
-                  </span>
-                  <span className="nums w-[2.4rem] shrink-0 text-right text-sm text-ink-light">
-                    {y.count}
-                  </span>
-                </li>
-              ))}
-            </ul>
-
-            {/* 真实分类（博客自己的 categoryOptions） */}
-            <ul className="writing-fade js-fade mt-7 flex flex-wrap gap-2 border-t border-line pt-6">
-              {postCategories.map((c) => (
-                <li key={c.name} className="pill pill--static">
-                  {c.name}
-                  <span className="nums text-[0.8125rem]">{c.count}</span>
-                </li>
-              ))}
-            </ul>
-
-            <a
-              href={writing.href}
-              target="_blank"
-              rel="noreferrer noopener"
-              className="btn btn--outline btn--sm writing-fade js-fade mt-8"
-            >
-              <span>{writing.hrefLabel}</span>
-              <span aria-hidden className="btn__arrow">
-                &rarr;
-              </span>
-            </a>
-          </div>
-        </div>
-
-        {/* 右：按年份分组的全量文章索引，每条都可点 */}
-        <div className="lg:col-span-8">
-          {byYear.map(([year, list]) => (
-            <section key={year} className="year-block js-fade mb-[clamp(28px,3vw,40px)]">
-              <div className="flex items-baseline gap-4 border-b border-line pb-3">
-                <h3 className="nums text-[1.5rem] leading-none">{year}</h3>
-                <span className="text-sm font-medium text-ink-faint">{list.length} 篇</span>
-              </div>
-              <ul className="mt-2 xl:columns-2 xl:gap-x-8">
-                {list.map((p) => (
-                  <li key={p.slug} className="xl:break-inside-avoid">
-                    <a
-                      href={postHref(p.slug)}
-                      target="_blank"
-                      rel="noreferrer noopener"
-                      className="post-row"
-                    >
-                      <span aria-hidden className="text-[1.05rem] leading-none">
-                        {p.icon}
-                      </span>
-                      <span>
-                        <span className="post-row__title block text-[0.9375rem] leading-snug">
-                          {p.title}
-                        </span>
-                        <span className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1">
-                          <span className="nums text-xs font-semibold text-ink-faint">{p.date}</span>
-                          {p.cat ? (
-                            <span className="pill pill--static px-2.5 py-0.5 text-[0.75rem]">
-                              {p.cat}
-                            </span>
-                          ) : null}
-                        </span>
-                      </span>
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))}
-        </div>
+    <Section id="writing" tone="cream" label="写作 WRITING" ref={root}>
+      {/* 刊头：标题与统计同基线 */}
+      <div className="flex flex-wrap items-baseline justify-between gap-x-10 gap-y-2">
+        <h2 className="serif text-d2 writing-head" ref={head}>
+          写下来的<Mark>部分</Mark>
+        </h2>
+        <p className="nums text-sm font-semibold tracking-[0.06em] text-ink-light">
+          {postCount} 篇 · {span} · {writing.days} 天
+        </p>
       </div>
-    </section>
+
+      <div className="mt-5 flex flex-wrap items-end justify-between gap-x-10 gap-y-6">
+        <p className="max-w-[46ch] text-lead text-ink-light">{writing.body}</p>
+        <a
+          href={writing.href}
+          target="_blank"
+          rel="noreferrer noopener"
+          className="btn btn--outline btn--sm"
+        >
+          <span>{writing.hrefLabel}</span>
+          <span aria-hidden className="btn__arrow">
+            &rarr;
+          </span>
+        </a>
+      </div>
+
+      <ul className="cat-line mt-8 border-t border-line pt-5">
+        {postCategories.map((c) => (
+          <li key={c.name}>
+            {c.name}
+            <span className="cat-line__n">{c.count}</span>
+          </li>
+        ))}
+      </ul>
+
+      <div className="mt-[clamp(30px,3.6vw,52px)]">
+        {byYear.map(([year, list]) => (
+          <div key={year} className="year-row">
+            <p className="year-mark">
+              <span className="year-mark__num">{year}</span>
+              <span className="year-mark__n">{list.length} 篇</span>
+            </p>
+            <ul className="xl:columns-2 xl:gap-x-7">
+              {list.map((p) => (
+                <li key={p.slug} className="entry js-fade xl:break-inside-avoid">
+                  <a
+                    href={postHref(p.slug)}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="post-row"
+                  >
+                    <span aria-hidden className="post-row__icon text-[1.05rem] leading-none">
+                      {p.icon}
+                    </span>
+                    <span>
+                      <span className="post-row__title block text-[0.9375rem] leading-snug">
+                        {p.title}
+                      </span>
+                      <span className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                        <span className="nums text-xs font-semibold text-ink-faint">{p.date}</span>
+                        {p.cat ? <span className="text-xs text-ink-faint">{p.cat}</span> : null}
+                      </span>
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </Section>
   )
 }

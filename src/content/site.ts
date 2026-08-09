@@ -18,11 +18,15 @@ export const profile = {
   since: '2022',
 }
 
+/**
+ * 主标题拆成三行阶梯，断行位置是排过的：
+ * 「把前沿 AI 变成 / 看得见的 / 工程。」——「的」结尾合法，「工程。」独占一行成为落点。
+ */
 export const hero = {
   line1: '把前沿 AI 变成',
-  line2Pre: '',
   line2Mark: '看得见',
-  line2Post: '的工程。',
+  line2Post: '的',
+  line3: '工程。',
   sub: 'AI Agent 工程 × 创意前端。从模型能力到可维护的界面，我负责中间那一段。',
   primaryCta: '聊聊合作',
   secondaryCta: '看作品',
@@ -372,6 +376,8 @@ export const gardenIntro = {
 
 export const stack = {
   headline: '用什么把它做出来',
+  /** 逐行上推的入场需要显式断行点，不能靠自动换行 */
+  headlineLines: ['用什么', '把它做出来'],
   body: '不是徽章墙。下面是我真正拿来交付项目的那一批。',
   clusters: [
     {
@@ -424,7 +430,7 @@ export const contact = {
 }
 
 export const footer = {
-  copyright: '© 2023 - 2026 茉灵智库 · 88lin',
+  copyright: '© 2023–2026 茉灵智库 · 88lin',
   note: '本站由 Vite + React + Tailwind 构建，视觉基准来自 88lin/mydesign-system，源码开源。',
   source: 'https://github.com/88lin/website',
 }

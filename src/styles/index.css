@@ -169,6 +169,14 @@
     overflow-x: hidden;
   }
 
+  /* 全站一种选区色。荧光黄压墨色在米色区、红场、深蓝场上都是同一块，选中文字
+     这件事因此始终是「拿马克笔划一道」，而不是每换一个区块就换一种蓝。 */
+  ::selection {
+    background: var(--highlight);
+    color: var(--ink);
+    text-shadow: none;
+  }
+
   h1,
   h2,
   h3,
@@ -221,19 +229,42 @@
   }
 }
 
+/* -------------------------------------------------------------- 版心几何 */
+/* 抽成变量，是因为基准线要落在版心内容区的左边界上，
+   而出血元素要能精确地跨过它。散在各处的 clamp() 没法对齐。 */
+:root {
+  --shell-max: 1300px;
+  --shell-pad: clamp(1.25rem, 5vw, 3rem);
+  /* 基准线到正文之间的栏外注留白，竖排微标签住在这里 */
+  /* 栏外注留白。窄屏必须给一个绝对下限：竖排标签本身就占 14px + 8px 外距，
+     纯比例值（4.2vw = 16px @390）会让标签直接贴上正文首字。实测 gap 只剩 1.7px。
+     改成「基数 + 比例」，窄屏保 40px（gap 18px），桌面到顶 68px。
+     注意这条同时驱动 bleed-rail / year-row / spread 中缝，三处都按 gutter 自洽推导，
+     改下限不会让它们错位。 */
+  --rail-gutter: clamp(40px, calc(3.2vw + 28px), 68px);
+}
+
 /* -------------------------------------------------------------- UTILITIES */
 
 /* 版心 1300px，设计系统规定值 */
 @utility shell {
   width: 100%;
-  max-width: 1300px;
+  max-width: var(--shell-max);
   margin-inline: auto;
-  padding-inline: clamp(1.25rem, 5vw, 3rem);
+  padding-inline: var(--shell-pad);
 }
 
 /* 与 .shell 左边缘对齐，但右侧可以出血（横向轨道用） */
 @utility shell-l {
-  padding-left: max(clamp(1.25rem, 5vw, 3rem), calc((100vw - 1300px) / 2 + 3rem));
+  padding-left: max(var(--shell-pad), calc((100vw - var(--shell-max)) / 2 + 3rem));
+}
+
+/* 跨过基准线向左出血：回到版心内容区左边界，压在线上 */
+/* 只退 gutter 的话，标题左缘正好落在基准线上；汉字自带一点左边距，读出来是
+   「差一点没对齐」，不是「故意越过去」。多给 4–13px 让第一行真的压过线，后面
+   两行才有回到线上、再让开一步的对照。窄屏取下限，离视口边仍有 16px。 */
+@utility bleed-rail {
+  margin-left: calc(-1 * var(--rail-gutter) - clamp(4px, 0.85vw, 13px));
 }
 
 @utility section-y {
@@ -273,6 +304,375 @@
   background-image: var(--highlighter);
   background-repeat: no-repeat;
   padding-inline: 0.08em;
+}
+
+/* ---------------------------------------------- 栏外注基准线（全站结构签名） */
+/*
+  一条 1px 竖线落在版心内容区的左边界。九个区块各画一段、首尾相接，视觉上是
+  贯通整页的同一条线。它不是装饰，是信息挂载轴：
+    · 分区微标签竖排挂在线上（取代九个一模一样的横排 eyebrow）
+    · 一段实色高亮沿线随滚动推进，是全站唯一一处滚动进度可见化
+    · 标题/内容/出血元素与这条线的位置关系（跨过去、贴着、退到右边），
+      是九个区块彼此区分的主要手段
+  这条线不来自任何设计系统。它来自这个人：55 篇博客 + 文档技能 + 排版工具，
+  页面应该长得像一页被批注过的稿。
+*/
+
+.sec {
+  position: relative;
+  --sec-pt: clamp(80px, 12vh, 160px);
+  --sec-pb: clamp(80px, 12vh, 160px);
+  --rail-line: var(--border-strong);
+  --rail-prog: var(--brand-deep);
+  --rail-label: var(--ink-light);
+  padding-top: var(--sec-pt);
+  padding-bottom: var(--sec-pb);
+}
+
+/* 场：底色 + 线与标签在该底色上的取色。彩场/深场上用白 alpha 与 --highlight，
+   都不是新品牌色，只是同一条线换了个衬底。 */
+.sec--cream {
+  background: var(--cream);
+}
+.sec--creamDark {
+  background: var(--cream-dark);
+}
+.sec--brand {
+  background: var(--brand-surface);
+  color: var(--on-brand);
+  --rail-line: rgba(255, 255, 255, 0.22);
+  --rail-prog: var(--highlight);
+  --rail-label: var(--on-brand);
+}
+.sec--pop {
+  background: var(--pop-surface);
+  color: var(--on-brand);
+  --rail-line: rgba(255, 255, 255, 0.22);
+  --rail-prog: var(--highlight);
+  --rail-label: var(--on-brand);
+}
+.sec--dark {
+  background: var(--dark-panel);
+  color: var(--on-dark);
+  --rail-line: rgba(255, 255, 255, 0.22);
+  --rail-prog: var(--highlight);
+  --rail-label: var(--on-dark-dim);
+}
+
+.sec__inner {
+  display: grid;
+  grid-template-columns: var(--rail-gutter) minmax(0, 1fr);
+}
+
+.sec__gutter {
+  position: relative;
+}
+
+/* 线向上下各撑出本区块的 padding，好让相邻两段严丝合缝地接上 */
+.sec__rail {
+  position: absolute;
+  left: 0;
+  top: calc(-1 * var(--sec-pt));
+  bottom: calc(-1 * var(--sec-pb));
+  width: 1px;
+  background: var(--rail-line);
+  pointer-events: none;
+}
+
+.sec__prog {
+  position: absolute;
+  left: -0.5px;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background: var(--rail-prog);
+  transform: scaleY(0);
+  transform-origin: top;
+}
+
+/* 竖排微标签：中文直排、拉丁侧转，这是横排 eyebrow 的替代品而不是补充 */
+.eyebrow--rail {
+  writing-mode: vertical-rl;
+  position: sticky;
+  top: 118px;
+  margin-left: 10px;
+  height: max-content;
+  white-space: nowrap;
+  letter-spacing: 0.2em;
+  color: var(--rail-label);
+}
+
+/* 首屏例外：大标题要跨过基准线出血，页边标签就让到这一段的下缘，
+   两者不抢同一条竖带。首屏本来就在视口内，不需要 sticky 跟随。 */
+#top .eyebrow--rail {
+  position: absolute;
+  top: auto;
+  bottom: 0;
+}
+
+/* 右侧页边批注：与左侧基准线对称的另一条边。只在放得下的宽度出现。 */
+.hero-latin {
+  position: absolute;
+  right: clamp(8px, 1vw, 22px);
+  top: 196px;
+  writing-mode: vertical-rl;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 0.6875rem;
+  letter-spacing: 0.045em;
+  color: var(--ink-faint);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+@media (max-width: 600px) {
+  .eyebrow--rail {
+    font-size: 0.6875rem;
+    letter-spacing: 0.14em;
+    margin-left: 8px;
+    top: 96px;
+  }
+}
+
+/* ------------------------------------------------------------------ 活字 */
+/*
+  一盘铅字。这是 3D 活字系统的 DOM 底层，也是移动端与 reduced-motion 下的
+  最终形态 —— 不是降级截图，它本身就是设计的一部分：0 KB、任意 DPR 锐利、
+  跟着色板走。WebGL 接管时只把这一层的 opacity 降到 0，布局不动。
+*/
+.type-matrix {
+  display: grid;
+  grid-template-columns: repeat(var(--tm-cols, 4), minmax(0, 1fr));
+  gap: clamp(6px, 0.9vw, 13px);
+  container-type: inline-size;
+  transition: opacity 0.7s ease;
+}
+
+.type-slug {
+  position: relative;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  font-family: var(--font-serif);
+  font-weight: 700;
+  line-height: 1;
+  user-select: none;
+  transform: rotate(var(--tm-r, 0deg));
+  /* 无容器查询单位时的兜底 */
+  font-size: clamp(1.4rem, 3.2vw, 3rem);
+  font-size: 10.5cqw;
+  box-shadow:
+    0 1px 0 rgba(var(--ink-rgb), 0.1),
+    0 5px 14px rgba(var(--ink-rgb), 0.075);
+}
+
+/* 字块落进字盘。首屏这一层不走 JS。 */
+@keyframes slugDrop {
+  from {
+    opacity: 0;
+    transform: translateY(-18px) scale(0.92) rotate(var(--tm-r, 0deg));
+  }
+  to {
+    opacity: 1;
+    transform: rotate(var(--tm-r, 0deg));
+  }
+}
+.type-slug--drop {
+  animation: slugDrop 0.66s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .type-slug--drop {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}
+
+/* 铅字的倒角：上缘受光、下缘压深 */
+.type-slug::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.42),
+    inset 0 -2px 0 rgba(var(--ink-rgb), 0.14);
+  pointer-events: none;
+}
+
+.type-slug--paper {
+  background: var(--card-bg);
+  color: var(--ink);
+}
+.type-slug--ink {
+  background: var(--ink);
+  color: var(--cream);
+}
+.type-slug--mark {
+  background: var(--highlight);
+  color: var(--ink);
+}
+.type-slug--brand {
+  background: var(--brand-deep);
+  color: var(--on-brand);
+}
+.type-slug--pop {
+  background: var(--pop-surface);
+  color: var(--on-brand);
+}
+
+/* WebGL 接管后 DOM 这盘字退场 */
+[data-type3d='on'] .type-matrix {
+  opacity: 0;
+}
+
+/*
+  活字舞台。
+  一张固定全屏 canvas，压在区块底色之上、正文之下——铅字沉在版面背后，
+  字永远读得到。canvas 不参与布局也不吃指针，CLS 与可交互性都不受影响。
+*/
+#stage {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.sec__inner,
+.ct-foot {
+  position: relative;
+  z-index: 2;
+}
+
+/* -------------------------------------------------------------- 对开页 */
+/*
+  底色在中缝处硬切成一浅一深。中缝落在正文列的正中，也就是视口中线再向右挪
+  半个栏外注留白——这样 DOM 的分栏边界和底色的分界线是同一条，不会错开一像素。
+*/
+@media (min-width: 900px) {
+  .sec--spread {
+    background: linear-gradient(
+      to right,
+      var(--cream) 0 calc(50% + var(--rail-gutter) / 2),
+      var(--cream-dark) calc(50% + var(--rail-gutter) / 2) 100%
+    );
+  }
+}
+
+.spread__grid {
+  position: relative;
+  display: grid;
+  gap: clamp(38px, 5vw, 0px);
+}
+@media (min-width: 900px) {
+  .spread__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .spread__col--l {
+    text-align: right;
+    padding-right: clamp(28px, 3.4vw, 60px);
+  }
+  .spread__col--r {
+    padding-left: clamp(28px, 3.4vw, 60px);
+  }
+  /* 左栏的序号跑到标题右侧，两栏在中缝处形成镜像 */
+  .spread__col--l .spread__head {
+    flex-direction: row-reverse;
+  }
+  .spread__seam {
+    position: absolute;
+    inset-block: 0;
+    left: 50%;
+    width: 1px;
+    background: var(--ink);
+    transform: translateX(-0.5px);
+  }
+  /* 交点：中缝正中的一枚菱形 */
+  .spread__cross {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 13px;
+    height: 13px;
+    transform: translate(-50%, -50%) rotate(45deg);
+    background: var(--cream);
+    border: 1px solid var(--ink);
+  }
+}
+
+.spread__head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+}
+.spread__kicker {
+  font-size: 0.8125rem;
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-light);
+}
+
+/* -------------------------------------------------------------- 数字带 */
+
+.metric-band {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: clamp(22px, 3.4vw, 58px);
+  row-gap: clamp(26px, 3vw, 44px);
+}
+
+.metric {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.metric__num {
+  display: inline-grid;
+  justify-items: end;
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+}
+/* 隐藏的终值把宽度撑住，计数过程不推动版面 */
+.metric__ghost {
+  grid-area: 1 / 1;
+  visibility: hidden;
+}
+.metric__live {
+  grid-area: 1 / 1;
+}
+
+/* 标签竖排在数字右侧。与基准线上的微标签同一套竖排语言。 */
+.metric__side {
+  writing-mode: vertical-lr;
+  align-self: flex-end;
+  display: flex;
+  gap: 5px;
+  padding-bottom: 0.1em;
+}
+.metric__label {
+  font-size: 0.8125rem;
+  font-weight: 650;
+  letter-spacing: 0.12em;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.metric__sub {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--ink-light);
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .metric__sub {
+    display: none;
+  }
 }
 
 /* ------------------------------------------------------------- COMPONENTS */
@@ -448,10 +848,8 @@ button.pill:focus-visible {
 .rule-onBrand {
   border-top: 1px solid rgba(255, 255, 255, 0.28);
 }
-.channel-grid {
-  background: rgba(255, 255, 255, 0.16);
-}
 .channel-link {
+  padding: clamp(16px, 1.9vw, 24px) var(--ch-pad, 16px);
   transition: background-color 0.18s ease;
 }
 .channel-link:hover,
@@ -519,61 +917,6 @@ button.pill:focus-visible {
     6px 6px 0 var(--brand-tint);
 }
 
-/* ------------------------------------------------------- 精选作品横向轨道 */
-
-.hscroll {
-  overflow: hidden;
-  /* 两端做柔化遮罩，卡片不会硬生生被裁断 */
-  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 4%, #000 96%, transparent 100%);
-  mask-image: linear-gradient(to right, transparent 0, #000 4%, #000 96%, transparent 100%);
-}
-.hscroll__track {
-  display: flex;
-  width: max-content;
-  animation: marquee 60s linear infinite;
-  will-change: transform;
-}
-/* 间距做在每一项的 margin-right 上，不用 flex gap：
-   gap 只出现在项与项之间（11 处），而 translateX(-50%) 需要
-   前后两份宽度严格相等，用 gap 会差半个间距，接缝处能看见跳动。 */
-.hscroll__item {
-  margin-right: clamp(18px, 2vw, 28px);
-}
-.hscroll:hover .hscroll__track,
-.hscroll:focus-within .hscroll__track,
-.hscroll[data-paused='true'] .hscroll__track {
-  animation-play-state: paused;
-}
-@keyframes marquee {
-  from {
-    transform: translate3d(0, 0, 0);
-  }
-  to {
-    /* 轨道内容复制了一份，位移半程即可无缝衔接 */
-    transform: translate3d(-50%, 0, 0);
-  }
-}
-
-/* 关掉动效时退回原生横滑 + scroll-snap（components.md #26） */
-@media (prefers-reduced-motion: reduce) {
-  .hscroll {
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    -webkit-mask-image: none;
-    mask-image: none;
-  }
-  .hscroll__track {
-    animation: none !important;
-    transform: none !important;
-  }
-  .hscroll__item {
-    scroll-snap-align: start;
-  }
-  .hscroll__item[data-clone='true'] {
-    display: none;
-  }
-}
-
 .work-card {
   width: clamp(280px, 82vw, 380px);
   flex: 0 0 auto;
@@ -601,7 +944,422 @@ button.pill:focus-visible {
   background-repeat: no-repeat;
 }
 
+/* ---- 逐行上推（V2 的大标题入场，V3 丢了，这里拿回来） ---- */
+/* 注意：overflow:hidden 会把 .marker 荧光笔的渐变底边裁掉，
+   所以带 <Mark> 的标题一律走 revealChars，不走这里。 */
+.reveal-line {
+  display: block;
+  overflow: hidden;
+}
+.reveal-line > span {
+  display: block;
+}
+
+/* ------------------------------------------------------------- 作品轨道 */
+/*
+  轨道由 JS 驱动 transform（拖拽 → 动量 → 巡航），CSS 只管裁剪、右侧柔化与光标。
+  左边是硬边界（对齐标题列右缘），只有右侧出血 + 渐隐，读作「还有更多」而不是
+  「两头都被裁掉了」。prefers-reduced-motion 下 JS 完全不接管，退回原生横滑。
+*/
+.work-grid {
+  display: grid;
+  gap: clamp(26px, 3vw, 44px);
+}
+@media (min-width: 900px) {
+  .work-grid {
+    grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+  }
+  .work-aside {
+    position: sticky;
+    top: 124px;
+    align-self: start;
+  }
+}
+
+.wtrack {
+  position: relative;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: pan-y;
+  /* 只向右出血：留 16px 安全余量，避开滚动条把 100vw 撑出视口宽度 */
+  margin-right: calc(
+    16px - max(var(--shell-pad), (100vw - var(--shell-max)) / 2 + var(--shell-pad))
+  );
+  /* 两端都渐隐，但长度不对称：右缘更长，"还有更多"的方向感由此而来。
+     左缘原先只给 3.5%（桌面 29px），循环轨道切出去的半张卡是被硬切在空场里的，
+     读起来像渲染没做完；拉到 7.5% 才够把它收成"从纸里退出去"。 */
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 7.5%,
+    #000 86%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(to right, transparent 0, #000 7.5%, #000 86%, transparent 100%);
+}
+.wtrack[data-drag='on'] {
+  cursor: grabbing;
+}
+.wtrack:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 4px;
+}
+.wtrack__inner {
+  display: flex;
+  width: max-content;
+  padding-block: 10px 26px;
+  will-change: transform;
+}
+/* 间距做在每一项的 margin-right 上，不用 flex gap：两份内容的宽度必须严格相等，
+   gap 会差半个间距，循环接缝处能看见跳动。 */
+.wtrack__item {
+  margin-right: clamp(18px, 2vw, 28px);
+}
+.wtrack .work-card {
+  width: clamp(300px, 34vw, 500px);
+}
+
+/* 手机上一屏只放得下一张卡，两个前提就都变了：
+   1) 左缘渐隐会一直啃当前这张卡的首字（实测 "Lofi" 被吃成 "ofi"），必须取消；
+      轨道左缘此时正好落在正文列的起点，硬切反而是对的。
+   2) 卡宽 300px 对 313px 的轨道等于铺满，下一张一点边都不露，看不出还能拖。
+      收到 72vw 让后面那张探出一指宽。 */
+@media (max-width: 720px) {
+  .wtrack {
+    -webkit-mask-image: linear-gradient(to right, #000 0, #000 87%, transparent 100%);
+    mask-image: linear-gradient(to right, #000 0, #000 87%, transparent 100%);
+  }
+  .wtrack .work-card {
+    width: clamp(258px, 72vw, 330px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wtrack {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    cursor: auto;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .wtrack__inner {
+    transform: none !important;
+  }
+  .wtrack__item {
+    scroll-snap-align: start;
+  }
+  .wtrack__item[data-clone='true'] {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------- 案例阶梯 */
+/*
+  三段案例沿对角线依次右移，序号做成 --highlight-soft 的巨型背景数字压在文字后。
+  没有卡片外框：分组完全靠缩进量与间距，这是「阶梯」而不是「列表」。
+*/
+.case-step {
+  position: relative;
+}
+.case-step::before {
+  /* 序号是版面重量，不是内容：走伪元素而不是 aria-hidden 的 span——后者仍会被
+     对比度扫描当成一段淡到看不清的正文，前者从头就不在无障碍树里。 */
+  content: attr(data-no);
+  position: absolute;
+  /* 压在标题与前两行正文后面，不是浮在上方的空处 */
+  top: -0.08em;
+  left: -0.04em;
+  z-index: 0;
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums lining-nums;
+  font-size: clamp(6rem, 16vw, 14rem);
+  line-height: 0.78;
+  letter-spacing: -0.05em;
+  color: var(--highlight-soft);
+  pointer-events: none;
+  user-select: none;
+}
+.case-step__body {
+  position: relative;
+  z-index: 1;
+}
+/* 窄屏没有右边的空场可站，序号退回标题后面。原来 16vw 只有 62px 高，正文又压着
+   34px 的上边距，两者刚好错开——读出来不是「压在标题后的号码」，是标题上方一块
+   来路不明的浅色斑。放大到 24vw 并把上边距调到号码的下三分之一处，让标题真的
+   从它身上穿过去。 */
+@media (max-width: 899px) {
+  .case-step::before {
+    top: 0;
+    left: -0.03em;
+    font-size: clamp(5.5rem, 24vw, 9rem);
+    color: var(--highlight);
+    opacity: 0.4;
+  }
+  .case-step__body {
+    padding-top: clamp(30px, 9vw, 54px);
+  }
+}
+/* 正文栏 60ch ≈ 540px，加上 5.5rem 标签栏与 2rem 栏距，一段案例只需要 ~660px。
+   不封顶的时候 body 会一直铺到版心右缘 1322px，于是底部 justify-between 的
+   「在线体验」按钮被甩到离正文右缘 350px 的空场里，孤零零一颗。封到 680px
+   之后按钮正好收在正文测量线外 20px，一段案例是一个有右缘的块。 */
+@media (min-width: 900px) {
+  .case-step__body {
+    max-width: clamp(560px, 48vw, 680px);
+  }
+  .case-step[data-step='1'] {
+    margin-left: 8%;
+  }
+  .case-step[data-step='2'] {
+    margin-left: 16%;
+  }
+}
+/* 封顶之后 1440 上右侧空出 456px。把台阶从 8/16% 加大到 15/30%，三段案例
+   自己走完这段对角线：第三段落到 1207px，右缘只剩 115px 白边。台阶只在
+   ≥1200px 加大——再窄的屏幕上缩进会把正文挤成 20 字一行。 */
+@media (min-width: 1200px) {
+  .case-step[data-step='1'] {
+    margin-left: 15%;
+  }
+  .case-step[data-step='2'] {
+    margin-left: 30%;
+  }
+  /* 序号从「压在标题后面」搬到「站在右边的空场里」。
+     封顶之后第一段案例右边空着 456px，第二段 286px，第三段只剩 115px——那不是
+     没排完的版，那就是台阶本身。让序号去站住它：右缘三段对齐同一条线，字号
+     272 → 176 → 83px 一路缩下去，读者看见的是余量在被吃掉。
+     三档都按各自最窄的视口验过：字宽加 30px 呼吸永远进得去自己的空场，既顶不到
+     正文右缘，也不会越过版心。 */
+  .case-step::before {
+    top: 50%;
+    right: 0;
+    left: auto;
+    transform: translateY(-50%);
+    line-height: 0.72;
+    /* 压在正文后面时必须淡到看不见（--highlight-soft 在米色上约 1.06:1）。
+       搬到空场之后它前面不再有字，可以站得实一点，否则在一块 456×196 的空白里
+       只剩一层比纸略黄的影子，投影和低对比屏上直接消失。 */
+    color: var(--highlight);
+    opacity: 0.46;
+  }
+  .case-step[data-step='0']::before {
+    font-size: clamp(9rem, 20vw, 17rem);
+  }
+  .case-step[data-step='1']::before {
+    font-size: clamp(6rem, 13vw, 11rem);
+  }
+  .case-step[data-step='2']::before {
+    font-size: clamp(3rem, 4.6vw, 4.2rem);
+  }
+}
+
+/* ---------------------------------------------------------------- 能力卡片 */
+/* 朱红场是整页最响的一段色。标题还用通用 d2 就压不住场，也让这一段跟
+   「两条主线」的骨架撞了型 —— 单独抬一档字号，色场和字号一起变才算换段。 */
+.stack-head {
+  font-size: clamp(2.4rem, 5.6vw, 4.6rem);
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+}
+/* 出血朱红场 + 白色大圆角卡片。V2 的做法，V3 拆成了发丝线上的胶囊墙——
+   而文案写着「不是徽章墙」。卡片回来之后这句话才重新成立。 */
+.stack-card {
+  background: var(--card-bg);
+  color: var(--ink);
+  border-radius: var(--radius-xl);
+  padding: clamp(28px, 3vw, 44px);
+}
+.pill--wire {
+  background: transparent;
+  border-color: var(--border-strong);
+  color: var(--ink-light);
+}
+.pill--wire:hover {
+  background: var(--cream-dark);
+  border-color: var(--ink-faint);
+  color: var(--ink);
+}
+
+/* ------------------------------------------------------------ 文章索引年份 */
+.year-row {
+  display: grid;
+  gap: 10px 0;
+  /* 横向的年份分隔线越过基准线向左出血：线是横的、年份是竖的，
+     整段读起来像一本按年分栏的账簿，而不是又一列卡片。 */
+  margin-left: calc(-1 * var(--rail-gutter));
+  padding-left: var(--rail-gutter);
+  padding-top: clamp(16px, 1.9vw, 26px);
+  padding-bottom: clamp(18px, 2.2vw, 32px);
+  border-top: 1px solid var(--border);
+}
+@media (min-width: 900px) {
+  .year-row {
+    grid-template-columns: clamp(4.5rem, 7vw, 7.5rem) minmax(0, 1fr);
+    gap: 0 clamp(12px, 1.6vw, 26px);
+  }
+}
+.year-mark {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  align-self: start;
+  line-height: 1;
+}
+@media (min-width: 900px) {
+  .year-mark {
+    position: sticky;
+    top: 116px;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  .year-mark__num,
+  .year-mark__n {
+    writing-mode: vertical-rl;
+  }
+}
+/* 写作区是一张报纸的刊头。报头本来就该比内文区的标题大一档，
+   否则它跟作品区（同样是 sticky 左栏 + 右侧长列表）在骨架上分不出来。 */
+.writing-head {
+  font-size: clamp(2.5rem, 6vw, 5.3rem);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+}
+.year-mark__num {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-variant-numeric: lining-nums tabular-nums;
+  font-size: clamp(2rem, 5.4vw, 4.4rem);
+  letter-spacing: 0.01em;
+  line-height: 1;
+  color: var(--ink-faint);
+}
+.year-mark__n {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+}
+
+/* 分类不做胶囊——Garden 已经是一整片胶囊了。这里是目录行：名字 + 上标计数。 */
+.cat-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px clamp(14px, 1.9vw, 28px);
+}
+.cat-line > li {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 0.9375rem;
+  color: var(--ink-light);
+}
+.cat-line__n {
+  font-size: 0.75rem;
+  font-weight: 500;
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--ink-faint);
+}
+
+/* ---------------------------------------------------------------- 收尾 */
+
+/* 全站最大的一号字，只在这里出现一次。 */
+.ct-title {
+  font-size: clamp(2.5rem, 8.2vw, 7.2rem);
+  line-height: 0.96;
+  letter-spacing: -0.03em;
+}
+/* 活字块坠进标题右侧的字缝。深底上要更硬的投影才立得住。 */
+/* 下限不能低于 200px：四等分后每枚字面 ~49px，还认得出是一枚铅字。
+   原来的 148px 在手机上摊成 33px，四个小方块看着像误落的色块而不是排好的活字。 */
+.ct-slugs {
+  width: clamp(200px, 20vw, 264px);
+}
+.ct-slugs .type-slug {
+  opacity: 0;
+  box-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.32),
+    0 16px 34px rgba(0, 0, 0, 0.4);
+}
+.no-js .ct-slugs .type-slug {
+  opacity: 1;
+}
+/* 页脚回到奶油底：深色面板到此为止，整页以纸收尾。 */
+.ct-foot {
+  background: var(--cream);
+  color: var(--ink);
+  padding-block: clamp(26px, 3vw, 40px);
+}
+
+.channel-row {
+  --ch-pad: clamp(12px, 1.3vw, 18px);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  /* 整排左移一个内边距，首格的文字就落回基准线上 */
+  margin-left: calc(-1 * var(--ch-pad));
+}
+.channel-cell {
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  border-left: 1px solid rgba(255, 255, 255, 0.16);
+}
+.channel-cell:nth-child(2n + 1) {
+  border-left: 0;
+}
+/* 手机上两栏的净宽只有 137px，431761794@qq.com 会被 break-all 断成 "…qq.co / m"。
+   与其压字号，不如退成单栏账簿行：标签靠左、值靠右，一行一条，读起来比方格更快。 */
+@media (max-width: 559px) {
+  .channel-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .channel-cell {
+    border-left: 0;
+  }
+  .channel-link {
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: clamp(12px, 4vw, 24px);
+    padding-block: 15px;
+  }
+  .channel-link > span:last-child {
+    word-break: normal;
+    overflow-wrap: anywhere;
+    text-align: right;
+  }
+}
+@media (min-width: 760px) {
+  .channel-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .channel-cell:nth-child(2n + 1) {
+    border-left: 1px solid rgba(255, 255, 255, 0.16);
+  }
+  .channel-cell:nth-child(3n + 1) {
+    border-left: 0;
+  }
+}
+@media (min-width: 1120px) {
+  .channel-row {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  .channel-cell:nth-child(3n + 1) {
+    border-left: 1px solid rgba(255, 255, 255, 0.16);
+  }
+  .channel-cell:nth-child(6n + 1) {
+    border-left: 0;
+  }
+}
+
 /* --------------------------------------------------------------- 数字花园 */
+
+/* 全站唯一逃到版心右缘的标题。窄屏保留标题的右对齐（签名还在），但正文回到左对齐
+   —— 三行中文右对齐时左边缘全是参差，起读点每行都在动，读不下去。 */
+@media (max-width: 720px) {
+  .garden-head > p {
+    text-align: left;
+  }
+}
 
 .garden-flow {
   display: flex;
@@ -639,6 +1397,66 @@ button.pill:focus-visible {
 .garden-pill[data-size='s'] {
   font-size: 0.9375rem;
   padding: 9px 18px;
+}
+/* 最大的一档留给有独立域名的四个：它们是真在跑的产品，不是 gh-pages 上一个目录 */
+.garden-pill[data-size='xl'] {
+  font-size: clamp(1.25rem, 1.7vw, 1.5rem);
+  padding: 15px 30px;
+  font-weight: 500;
+}
+
+/* ---- 形状排版：整片云绕开一个圆形空洞 ----
+   胶囊必须走 inline 流（不是 flex）才会被 float 的 shape-outside 挤开——
+   flex item 不参与行盒排布，shape-outside 对它无效。 */
+.garden-flow--shape {
+  display: block;
+  gap: 0;
+}
+.garden-flow--shape > li {
+  display: inline;
+}
+.garden-flow--shape .garden-pill {
+  margin: 0 9px 11px 0;
+}
+.garden-void {
+  float: right;
+  width: clamp(160px, 23vw, 262px);
+  height: clamp(160px, 23vw, 262px);
+  shape-outside: circle(50%);
+  shape-margin: 14px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 0 10px;
+  margin-bottom: 8px;
+}
+/* 窄屏没有可以绕的空间：圆洞退化成流首的一句引言，数字与批注落回同一条基线。
+   选择器必须写成 `li.garden-void` —— `.garden-flow--shape > li` 的特异性比
+   `.garden-void` 高，单写类名会被 display:inline 覆盖掉（float 再把它 blockify，
+   于是圆洞在手机上照样浮着，这是之前 display:none 没生效的原因）。 */
+@media (max-width: 720px) {
+  .garden-flow--shape > li.garden-void {
+    display: block;
+    float: none;
+    width: 100%;
+    height: auto;
+    shape-outside: none;
+    text-align: left;
+    padding: 0;
+    margin: 0 0 18px;
+    /* 必须显式清掉：Chrome 已经在 block 布局里实现了 justify-self，
+       圆洞那条 place-items:center 会继续把唯一的子块收成 shrink-to-fit 并居中，
+       于是这行引言在手机上是浮在中间的，不是贴着基准线起读。 */
+    place-items: normal;
+  }
+  .garden-void > p {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .garden-void > p > * {
+    margin-top: 0;
+  }
 }
 .garden-pill__dot {
   display: inline-block;
@@ -684,6 +1502,21 @@ button.pill:focus-visible {
   font-weight: 500;
   transition: color 0.16s ease;
 }
+/* 55 条里 55 个彩色 emoji 是这一屏最吵的东西。它们来自博客真实数据，删掉是丢
+   信息，全彩留着又把一版安静的排印打成贴纸墙。静置抽成灰、退到 52%，指针扫到
+   那一行再还原成彩色——图标于是变成「读到哪儿」的回执，而不是背景噪声。 */
+.post-row__icon {
+  filter: grayscale(1) contrast(0.86);
+  opacity: 0.52;
+  transition:
+    filter 0.28s ease,
+    opacity 0.28s ease;
+}
+.post-row:hover .post-row__icon,
+.post-row:focus-visible .post-row__icon {
+  filter: none;
+  opacity: 1;
+}
 
 /* ---------------------------------------------------------------- REVEAL */
 
@@ -692,6 +1525,11 @@ button.pill:focus-visible {
 }
 .no-js .js-fade {
   opacity: 1;
+}
+
+/* revealChars 切出来的字/词。要位移就必须是原子行内盒。 */
+.rc {
+  display: inline-block;
 }
 
 /* 首屏入场走纯 CSS 关键帧，不等 hydrate、不等 GSAP */
@@ -709,12 +1547,34 @@ button.pill:focus-visible {
   animation: heroFade 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+/*
+  主标题逐字到场，但用纯 CSS 关键帧 + SSR 里写死的 animation-delay，不走 JS。
+  逐字切分在服务端就做好了，首帧布局与最终布局完全一致 —— CLS 为 0，
+  且 LCP 不需要等 GSAP 那 45 KB 下载解析完。
+  区块标题的逐字用 motion.ts 的 revealChars（那些都在首屏之下，不影响 LCP）。
+*/
+@keyframes heroChar {
+  from {
+    opacity: 0;
+    transform: translateY(0.42em);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.hero-char {
+  display: inline-block;
+  animation: heroChar 0.72s cubic-bezier(0.22, 0.72, 0.24, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .js-fade {
     opacity: 1 !important;
     transform: none !important;
   }
-  .hero-fade {
+  .hero-fade,
+  .hero-char {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
@@ -724,7 +1584,7 @@ button.pill:focus-visible {
 /* ------------------------------------------------------------------ PRINT */
 
 @media print {
-  .hscroll__track {
+  .wtrack__inner {
     animation: none;
     width: auto;
     flex-wrap: wrap;

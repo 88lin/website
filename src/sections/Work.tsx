@@ -1,22 +1,27 @@
 import { useEffect, useRef, useState } from 'react'
 import { projects, type Project } from '../content/site'
 import { Cover } from '../components/Cover'
-import { Eyebrow, Mark } from '../components/ui'
-import { fadeUp } from '../lib/motion'
+import { Mark } from '../components/ui'
+import { Section } from '../components/Section'
+import { dragTrack, type TrackHandle } from '../lib/dragTrack'
+import { parallax, revealChars } from '../lib/motion'
 
 /**
- * 精选作品：一条持续自动滚动的横向轨道。
+ * 精选作品：左侧钉住的标题列 + 右侧可拖轨道。
  *
- * 轨道内容复制一份，位移正好一整份的宽度即可无缝接上（间距做在每张卡的
- * margin-right 上，不用 flex gap —— 否则 -50% 会差半个间距，接缝会跳）。
- * 悬停、聚焦、显式按钮三种方式都能暂停；prefers-reduced-motion 下直接退回
- * 原生横滑 + scroll-snap，克隆卡片隐藏。
+ * 版式回到 V2 的非对称构图——左边一列大标题钉在视野里不动，右边的轨道从标题列
+ * 右缘起步、只向右出血。V3 那种「标题在上、四张小卡被视口两侧同时裁断」的通用
+ * marquee 看起来像没做完；轨道两头都被切，等于告诉人两个方向都有内容却都够不着。
+ * 现在左边是硬边界，右边渐隐，方向只有一个。
+ *
+ * 卡片从 380px 放大到 clamp(300px,34vw,500px)，桌面正好露出两张多一点。
+ * 轨道的物理见 lib/dragTrack.ts。
  */
 function WorkCard({ p, clone = false }: { p: Project; clone?: boolean }) {
   const primary = p.live ?? p.repo
   return (
     <article
-      className="work-card hscroll__item card flex flex-col overflow-hidden"
+      className="work-card wtrack__item card flex flex-col overflow-hidden"
       data-clone={clone ? 'true' : undefined}
       {...(clone ? { 'aria-hidden': true } : null)}
     >
@@ -80,75 +85,104 @@ function WorkCard({ p, clone = false }: { p: Project; clone?: boolean }) {
 
 export function Work() {
   const root = useRef<HTMLElement>(null)
+  const view = useRef<HTMLDivElement>(null)
+  const inner = useRef<HTMLDivElement>(null)
+  const handle = useRef<TrackHandle | null>(null)
   const [paused, setPaused] = useState(false)
 
   useEffect(() => {
-    if (!root.current) return
-    fadeUp('.work-head', root.current, 0.06, 22)
+    const el = root.current
+    if (!el) return
+    const head = el.querySelector<HTMLElement>('.work-aside__title')
+    if (head) revealChars(head, 0.03)
+    parallax('.work-aside__note', el, 10)
+
+    if (view.current && inner.current) {
+      handle.current = dragTrack(view.current, inner.current)
+      // 审计（检查 12）要读轨道内部状态
+      ;(window as unknown as { __wtrack?: TrackHandle }).__wtrack = handle.current
+    }
 
     // 轨道是横向自动滚的，浏览器对 loading="lazy" 的横轴几乎不做提前量：
     // 实测卡片要滑到视口内约 40% 才开始请求，用户会看到一张空白卡片滑进来再闪出图。
     // 所以在整个分区接近视口时，一次性把轨道里的图全部转成 eager。
-    const el = root.current
     const eager = () => {
       el.querySelectorAll<HTMLImageElement>('img[loading="lazy"]').forEach((img) => {
         img.loading = 'eager'
       })
     }
-    if (!('IntersectionObserver' in window)) {
+    let io: IntersectionObserver | null = null
+    if ('IntersectionObserver' in window) {
+      io = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((e) => e.isIntersecting)) {
+            eager()
+            io?.disconnect()
+          }
+        },
+        { rootMargin: '600px 0px' }
+      )
+      io.observe(el)
+    } else {
       eager()
-      return
     }
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          eager()
-          io.disconnect()
-        }
-      },
-      { rootMargin: '600px 0px' },
-    )
-    io.observe(el)
-    return () => io.disconnect()
+
+    return () => {
+      io?.disconnect()
+      handle.current?.destroy()
+      handle.current = null
+    }
   }, [])
 
+  useEffect(() => {
+    handle.current?.setPaused(paused)
+  }, [paused])
+
   return (
-    <section id="work" ref={root} className="section-y bg-cream-dark">
-      <div className="shell">
-        <div className="work-head js-fade flex flex-wrap items-end justify-between gap-6">
-          <div className="max-w-[42ch]">
-            <Eyebrow>Selected work</Eyebrow>
-            <h2 className="serif mt-4 text-d2">
-              精选<Mark>作品</Mark>
-            </h2>
-          </div>
-          <div className="flex items-center gap-4">
-            <p className="hidden text-sm text-ink-light sm:block">轨道会自己走，指上去就停</p>
+    <Section id="work" tone="creamDark" label="作品 SELECTED WORK" ref={root}>
+      <div className="work-grid">
+        <div className="work-aside">
+          <h2 className="work-aside__title serif text-d2">
+            精选
+            <br />
+            <Mark>作品</Mark>
+          </h2>
+          <p className="work-aside__note mt-6 max-w-[24ch] text-ink-light">
+            六个还在维护的项目，按 star 排。轨道可以直接拖，松手会自己滑一段。
+          </p>
+          {/* 窄屏不巡航，也没有方向键：这排控件在手机上没有对应物，直接不出现 */}
+          <div className="mt-7 hidden flex-wrap items-center gap-3 md:flex">
             <button
               type="button"
               className="pill"
               aria-pressed={paused}
-              onClick={() => setPaused((v) => !v)}
+              onClick={() => setPaused((s) => !s)}
             >
-              {paused ? '继续滚动' : '暂停滚动'}
+              {paused ? '继续巡航' : '暂停巡航'}
             </button>
+            <span className="text-[0.8125rem] text-ink-faint">← → 也能推</span>
+          </div>
+        </div>
+
+        <div
+          className="wtrack"
+          ref={view}
+          tabIndex={0}
+          role="group"
+          aria-roledescription="carousel"
+          aria-label="精选作品轨道，可拖拽或用左右方向键"
+          data-drag="off"
+        >
+          <div className="wtrack__inner" ref={inner}>
+            {projects.map((p) => (
+              <WorkCard key={p.slug} p={p} />
+            ))}
+            {projects.map((p) => (
+              <WorkCard key={`clone-${p.slug}`} p={p} clone />
+            ))}
           </div>
         </div>
       </div>
-
-      <div
-        className="hscroll mt-[clamp(32px,4vw,52px)] shell-l"
-        data-paused={paused ? 'true' : 'false'}
-      >
-        <div className="hscroll__track py-2">
-          {projects.map((p) => (
-            <WorkCard key={p.slug} p={p} />
-          ))}
-          {projects.map((p) => (
-            <WorkCard key={`clone-${p.slug}`} p={p} clone />
-          ))}
-        </div>
-      </div>
-    </section>
+    </Section>
   )
 }

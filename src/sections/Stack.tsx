@@ -1,58 +1,68 @@
 import { useEffect, useRef } from 'react'
 import { stack } from '../content/site'
-import { Eyebrow } from '../components/ui'
-import { fadeUp } from '../lib/motion'
+import { Section } from '../components/Section'
+import { fadeUp, revealLines } from '../lib/motion'
 
 /**
- * layouts.md #11 全宽品牌色面板。
+ * 出血朱红场 + 白色大圆角卡片 + 7/5/5/7 非对称栅格。
  *
- * 这块的做法保留（整片出血色 + 四个技术簇 + 7/5/5/7 的不对称栅格），
- * 只把配色换成语义 token，标签全部改成胶囊。面板上不再叠白卡片，
- * 分隔靠 hairline，避免「卡片里套卡片」。
+ * V2 是这么做的，用户说「还可以」；V3 把卡片拆成了发丝线上的四组胶囊，而正文
+ * 第一句写着「不是徽章墙」——画面正好是一面 41 枚胶囊的徽章墙，文案和版面互相
+ * 打脸。卡片回来之后这句话才重新成立：每一簇是一张有边界的白纸，纸上才是标签。
+ *
+ * 红场用 palette A 自带的 --pop-surface #D43A50（白字 4.65:1 过 AA），
+ * 不破格引入 V2 那支不在色板里的朱红。
+ *
+ * 标题走 revealLines 逐行上推，这是 V2 的入场语言，全站只在这里和 Contact 出现。
+ * 3D 活字方阵会聚拢到这块卡片背后放大蓄力（见 webgl/），DOM 层此处留出锚点。
  */
 const SPAN = ['lg:col-span-7', 'lg:col-span-5', 'lg:col-span-5', 'lg:col-span-7']
 
 export function Stack() {
   const root = useRef<HTMLElement>(null)
+  const head = useRef<HTMLHeadingElement>(null)
 
   useEffect(() => {
-    if (!root.current) return
-    fadeUp('.stack-cluster', root.current, 0.09, 26)
+    const el = root.current
+    if (!el) return
+    if (head.current) revealLines(head.current)
+    fadeUp('.stack-card', el, 0.09, 26)
   }, [])
 
   return (
-    <section id="stack" ref={root} className="section-y bg-brand-surface text-on-brand">
-      <div className="shell">
-        <div className="max-w-[46ch]">
-          <Eyebrow tone="onBrand">Toolbox</Eyebrow>
-          <h2 className="serif mt-4 text-d2 text-on-brand">{stack.headline}</h2>
-          <p className="mt-5 text-lead text-on-brand">{stack.body}</p>
-        </div>
-
-        <div className="mt-[clamp(40px,5vw,68px)] grid grid-cols-12 gap-x-[clamp(24px,3vw,48px)] gap-y-[clamp(30px,3.4vw,46px)]">
-          {stack.clusters.map((c, i) => (
-            <div
-              key={c.id}
-              className={`stack-cluster rule-onBrand js-fade col-span-12 pt-6 ${SPAN[i]}`}
-            >
-              <div className="flex items-baseline gap-3">
-                <span aria-hidden className="h-2.5 w-2.5 rounded-full bg-highlight" />
-                <h3 className="serif text-[clamp(1.25rem,1.9vw,1.6rem)] leading-none text-on-brand">
-                  {c.title}
-                </h3>
-                <span className="nums ml-auto text-sm text-on-brand">{c.items.length}</span>
-              </div>
-              <ul className="mt-5 flex flex-wrap gap-2">
-                {c.items.map((s) => (
-                  <li key={s} className="pill pill--onBrand">
-                    {s}
-                  </li>
-                ))}
-              </ul>
-            </div>
+    <Section id="stack" tone="pop" label="工具 TOOLBOX" ref={root}>
+      <div className="max-w-[48ch]" data-type-anchor="stack">
+        <h2 className="serif text-d2 stack-head text-on-brand" ref={head}>
+          {stack.headlineLines.map((line) => (
+            <span key={line} className="reveal-line">
+              <span>{line}</span>
+            </span>
           ))}
-        </div>
+        </h2>
+        <p className="mt-5 text-lead text-on-brand">{stack.body}</p>
       </div>
-    </section>
+
+      {/* stack-grid：3D 那一团盘旋的铅字拿这块的上缘当下界，别改类名 */}
+      <div className="stack-grid mt-[clamp(38px,4.6vw,64px)] grid grid-cols-12 gap-[clamp(18px,2.2vw,30px)]">
+        {stack.clusters.map((c, i) => (
+          <div key={c.id} className={`stack-card js-fade col-span-12 ${SPAN[i]}`}>
+            <div className="flex items-baseline gap-3">
+              <span className="nums text-[0.8125rem] font-bold tracking-[0.14em] text-pop-text">
+                {String(i + 1).padStart(2, '0')}
+              </span>
+              <h3 className="serif text-[clamp(1.25rem,1.9vw,1.6rem)] leading-none">{c.title}</h3>
+              <span className="nums ml-auto text-sm text-ink-faint">{c.items.length}</span>
+            </div>
+            <ul className="mt-5 flex flex-wrap gap-2">
+              {c.items.map((s) => (
+                <li key={s} className="pill pill--wire">
+                  {s}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </Section>
   )
 }
