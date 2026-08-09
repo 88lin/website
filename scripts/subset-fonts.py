@@ -1,158 +1,148 @@
 #!/usr/bin/env python3
+"""按站内实际用字做字体子集，输出 public/fonts/*.woff2。
+
+流程：npm run build → npm run chars（浏览器采字）→ 本脚本（定轴 + 子集 + woff2）。
+
+三条不肯让步的规则：
+  1) **定轴**。四个源文件都是可变字体，直接子集会把整条 wght 轴带上，
+     Noto Sans SC 光轴数据就几百 KB。每个 @font-face 只要一个字重，
+     所以先 instancer 定死，再子集。
+  2) **正文两档分开**。400 与 650 是两个文件、两套字符集；SemiBold 只排小标题，
+     字数是正文的零头，合并只会让首屏多下载几十 KB。
+  3) **CJK 不预加载**。字体全部 font-display: swap，先用系统字顶上。
+     预加载 100+ KB 的中日韩字体会直接把 LCP 拖过 2.5 s。
 """
-按站点实际用到的字形子集化字体，输出 WOFF2 到 public/fonts/。
 
-字体策略（v3，取自 88lin/mydesign-system 的推荐池）：
-  标题拉丁 / 数字  Fraunces   —— 可变字体，先把 opsz/SOFT/WONK 定死，只保留 wght
-  标题中文        Noto Serif SC —— 定到 wght=600，按真实标题用字收窄
-  手写点缀        Caveat     —— 只做拉丁与数字
-  正文            苹果设备命中系统苹方 / SF，不下载 webfont；其余回退 Noto Sans SC
+from __future__ import annotations
 
-中文只子集源码里真实出现的汉字；标题衬线与 Semibold 再按 display-chars.txt
-（scripts/display-chars.mjs 遍历真实 DOM、按 computed font-weight 采集）收窄。
-
-首次执行时 display-chars.txt 可能还没有对应新版式，流程是：
-  1) 先跑一遍（标题子集回退到全站汉字） 2) npm run build 3) node scripts/display-chars.mjs
-  4) 再跑一遍收窄。
-"""
-import re
 import shutil
-import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
+from fontTools import subset
+from fontTools.ttLib import TTFont
+from fontTools.varLib import instancer
+
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / "src"
+CHARS = ROOT / "scripts" / "chars"
 OUT = ROOT / "public" / "fonts"
-DS = Path("/workspace/fonts/ds")  # Fraunces / Caveat / NotoSerifSC（google/fonts，OFL）
-NOTO_SANS = Path("/workspace/fonts/noto/NotoSansSC.ttf")
+SRC_DS = Path("/workspace/fonts/ds")
+SRC_NOTO = Path("/workspace/fonts/noto")
 
-OUT.mkdir(parents=True, exist_ok=True)
-for stale in OUT.glob("*.woff2"):
-    stale.unlink()
-(OUT / "LICENSE-Inter.txt").unlink(missing_ok=True)  # v3 已彻底移除 Inter
+# (源文件, 字重, 字符桶, 输出名, 许可证源文件, 额外定轴)
+# 额外定轴只对多轴可变字体有意义：Fraunces 除 wght 外还有 opsz/SOFT/WONK，
+# 只 pin wght 会把剩下三条轴的 gvar 数据整块留下，白多几十 KB。
+JOBS = [
+    (SRC_DS / "NotoSerifSC.ttf", 900, "serif", "NotoSerifSC-Display.woff2", "OFL-NotoSerifSC.txt", {}),
+    (SRC_NOTO / "NotoSansSC.ttf", 400, "sans-regular", "NotoSansSC-Regular.woff2", "OFL-NotoSansSC.txt", {}),
+    (SRC_NOTO / "NotoSansSC.ttf", 650, "sans-semibold", "NotoSansSC-Semibold.woff2", "OFL-NotoSansSC.txt", {}),
+    # 读数与案例编号都是巨号字，opsz 拉到 144 才是这套字的显示形态
+    (SRC_DS / "Fraunces.ttf", 900, "num", "Fraunces-Numerals.woff2", "OFL-Fraunces.txt", {"opsz": 144, "SOFT": 0, "WONK": 1}),
+    (SRC_DS / "JetBrainsMono.ttf", 400, "mono", "JetBrainsMono-Regular.woff2", "OFL-JetBrainsMono.txt", {}),
+    (SRC_DS / "Caveat.ttf", 600, "hand", "Caveat.woff2", "OFL-Caveat.txt", {}),
+    (SRC_DS / "ZhiMangXing.ttf", 400, "hand+cjk", "ZhiMangXing.woff2", "OFL-ZhiMangXing.txt", {}),
+]
 
-# ---- 收集站点实际使用的字符 -------------------------------------------------
-text = []
-for p in list(SRC.rglob("*.ts")) + list(SRC.rglob("*.tsx")) + [ROOT / "index.html"]:
-    text.append(p.read_text(encoding="utf-8"))
-blob = "\n".join(text)
-# 注释里的中文永远不会渲染，先剥掉（可省 ~20% 汉字）
-blob = re.sub(r"/\*.*?\*/", "", blob, flags=re.S)
-blob = re.sub(r"^\s*//.*$", "", blob, flags=re.M)
-blob = re.sub(r"<!--.*?-->", "", blob, flags=re.S)
+LICENSE_NAME = {
+    "OFL-NotoSerifSC.txt": "LICENSE-NotoSerifSC.txt",
+    "OFL-NotoSansSC.txt": "LICENSE-NotoSansSC.txt",
+    "OFL-Fraunces.txt": "LICENSE-Fraunces.txt",
+    "OFL-JetBrainsMono.txt": "LICENSE-JetBrainsMono.txt",
+    "OFL-Caveat.txt": "LICENSE-Caveat.txt",
+    "OFL-ZhiMangXing.txt": "LICENSE-ZhiMangXing.txt",
+}
 
-cjk = set(re.findall(r"[\u4e00-\u9fff\u3000-\u303f\uff00-\uffef]", blob))
-latin = set(
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-    " .,:;!?'\"()[]{}<>/\\|-_+=*&^%$#@~`\u00b7\u2026\u2192\u2190\u00d7\u00b0\u2022"
-    "\u2018\u2019\u201c\u201d\u2013\u2014\u00a9\u2605\u2042"
-)
-common = set("0123456789,.%+-/ ")
-
-cn_chars = "".join(sorted(cjk | common | {" "}))
-latin_chars = "".join(sorted(latin | common))
-print(f"CJK glyphs in source: {len(cjk)}")
-
-# ---- 两份收窄清单：衬线标题一份、无衬线中黑一份 ------------------------------
-# 由 scripts/display-chars.mjs 遍历真实 DOM 生成。共用一份会互相连坐：
-# Serif 会被 55 篇文章标题拖胖，Semibold 会被大标题拖胖。
+# v4/v5 留下的旧产物：文件名换了或字重不再被 @font-face 引用，留着只会白占预算。
+STALE = ["Fraunces.woff2", "JetBrainsMono-Bold.woff2"]
 
 
-def narrow(name: str, label: str) -> str:
-    path = ROOT / "scripts" / name
-    if not path.exists():
-        print(f"{label}: {name} 缺失，回退到全站汉字（{len(cjk)}）")
-        return cn_chars
-    picked = set(path.read_text(encoding="utf-8")) & cjk
-    print(f"{label}: {len(picked)} 汉字 ← {name}")
-    return "".join(sorted(picked | common | {" "}))
+def read_chars(bucket: str) -> str:
+    """桶名后加 +cjk 表示只取表里的中日韩部分。
+
+    手写层是两个文件拼出来的：Caveat 管拉丁与数字，志莽行书管汉字。
+    两边共用一张字符表，但各自只子集自己那一半，否则志莽行书会把
+    它那套拉丁字形也带进来——那些字形永远轮不到渲染。
+    """
+    cjk = bucket.endswith("+cjk")
+    name = bucket[:-4] if cjk else bucket
+    f = CHARS / f"{name}.txt"
+    if not f.exists():
+        sys.exit(f"缺少字符表 {f}，先跑 npm run chars")
+    text = f.read_text(encoding="utf-8")
+    if cjk:
+        text = "".join(ch for ch in text if ord(ch) >= 0x2E80)
+    return text
 
 
-serif_chars = narrow("serif-chars.txt", "衬线标题子集")
-display_chars = narrow("display-chars.txt", "无衬线中黑子集")
+def build(src: Path, weight: int, bucket: str, out_name: str, extra: dict[str, float]) -> tuple[int, int]:
+    text = read_chars(bucket)
+    font = TTFont(src, lazy=False)
+    if "fvar" in font:
+        axes = {a.axisTag: a for a in font["fvar"].axes}
+        # 每条轴都要 pin 死，漏一条就还是可变字体
+        loc = {tag: a.defaultValue for tag, a in axes.items()}
+        for tag, val in extra.items():
+            if tag in axes:
+                a = axes[tag]
+                loc[tag] = max(a.minValue, min(a.maxValue, val))
+        if "wght" in axes:
+            w = axes["wght"]
+            loc["wght"] = max(w.minValue, min(w.maxValue, weight))
+        font = instancer.instantiateVariableFont(font, loc, inplace=True, updateFontNames=False)
+
+    opts = subset.Options()
+    opts.flavor = "woff2"
+    opts.desubroutinize = True
+    opts.harfbuzz_repacker = True
+    opts.drop_tables += ["DSIG", "GSUB", "GPOS", "MATH", "BASE", "JSTF"]
+    opts.layout_features = []
+    opts.name_IDs = [1, 2, 3, 4, 6]
+    opts.name_languages = ["*"]
+    opts.notdef_outline = False
+    opts.recalc_bounds = True
+    opts.glyph_names = False
+    opts.hinting = False
+    opts.legacy_kern = False
+
+    subsetter = subset.Subsetter(options=opts)
+    subsetter.populate(text=text)
+    subsetter.subset(font)
+
+    dest = OUT / out_name
+    font.flavorData = None
+    font.flavor = "woff2"
+    font.save(dest)
+    font.close()
+    return len(set(text)), dest.stat().st_size
 
 
-def subset(src: Path, dest: Path, chars: str, extra_args=None):
-    args = [
-        sys.executable,
-        "-m",
-        "fontTools.subset",
-        str(src),
-        f"--text={chars}",
-        "--layout-features=kern,liga,calt,tnum,ccmp,locl",
-        "--flavor=woff2",
-        "--no-hinting",
-        "--desubroutinize",
-        f"--output-file={dest}",
-    ]
-    if extra_args:
-        args += extra_args
-    subprocess.run(args, check=True, capture_output=True)
-    kb = dest.stat().st_size / 1024
-    print(f"{dest.name:30s} {kb:7.1f} KB")
+def main() -> None:
+    OUT.mkdir(parents=True, exist_ok=True)
+    for name in STALE:
+        p = OUT / name
+        if p.exists():
+            p.unlink()
+            print(f"清理 {name}")
+
+    total = 0
+    rows = []
+    for src, weight, bucket, out_name, lic, extra in JOBS:
+        if not src.exists():
+            sys.exit(f"缺少源字体 {src}")
+        n, size = build(src, weight, bucket, out_name, extra)
+        total += size
+        rows.append((out_name, weight, n, size))
+        lic_src = SRC_DS / lic
+        if lic_src.exists():
+            shutil.copyfile(lic_src, OUT / LICENSE_NAME[lic])
+
+    width = max(len(r[0]) for r in rows)
+    for out_name, weight, n, size in rows:
+        print(f"{out_name:<{width}}  wght {weight:<3}  {n:>5} 字  {size / 1024:7.1f} KB")
+    print(f"{'合计':<{width}}                       {total / 1024:7.1f} KB  / 预算 200 KB")
+    if total > 200 * 1024:
+        sys.exit("字体总量超预算")
 
 
-def instance(src: Path, out: Path, axes: dict):
-    """把不需要的可变轴定死，只留下 CSS 真正会调的那一条。"""
-    subprocess.run(
-        [sys.executable, "-m", "fontTools.varLib.instancer", str(src)]
-        + [f"{k}={v}" for k, v in axes.items()]
-        + ["-o", str(out)],
-        check=True,
-        capture_output=True,
-    )
-
-
-def pin_and_subset(src: Path, dest: Path, axes: dict, chars: str):
-    with tempfile.TemporaryDirectory() as td:
-        pinned = Path(td) / "pinned.ttf"
-        instance(src, pinned, axes)
-        subset(pinned, dest, chars)
-
-
-# ---- Fraunces：opsz/SOFT/WONK 定死，wght 轴保留（300–900） -------------------
-# opsz=48 是「大标题」光学尺寸；SOFT=0 保持硬边；WONK=1 留下那点歪脖子 g/y。
-pin_and_subset(
-    DS / "Fraunces.ttf",
-    OUT / "Fraunces.woff2",
-    {"opsz": 48, "SOFT": 0, "WONK": 1, "wght": "100:900"},
-    latin_chars,
-)
-
-# ---- Caveat：手写点缀，只有编号和几句批注 ------------------------------------
-# .hand 恒定 600，保留 wght 轴要多背 ~18 KB delta，直接定死。
-# 字符集只取 <Note> 里真正出现的拉丁字符 + 数字 + 箭头：整份拉丁要 36 KB，
-# 这样只要 4 KB。Caveat 没有汉字，中文批注会落回正文栈（见 --font-hand）。
-hand_text = "".join(re.findall(r"<Note[^>]*>(.*?)</Note>", blob, flags=re.S))
-hand_chars = "".join(
-    sorted({c for c in hand_text if c.isascii() or c in "—–·↑→←"} | set("0123456789 —·↑→"))
-)
-print(f"hand subset: {len(hand_chars)} chars -> {hand_chars!r}")
-pin_and_subset(
-    DS / "Caveat.ttf",
-    OUT / "Caveat.woff2",
-    {"wght": 600},
-    hand_chars,
-)
-
-# ---- Noto Serif SC：中文标题，定到 600，只留标题用字 -------------------------
-pin_and_subset(
-    DS / "NotoSerifSC.ttf",
-    OUT / "NotoSerifSC-Display.woff2",
-    {"wght": 600},
-    serif_chars,
-)
-
-# ---- Noto Sans SC：正文兜底（苹果设备用不到） --------------------------------
-pin_and_subset(NOTO_SANS, OUT / "NotoSansSC-Regular.woff2", {"wght": 400}, cn_chars)
-pin_and_subset(NOTO_SANS, OUT / "NotoSansSC-Semibold.woff2", {"wght": 600}, display_chars)
-
-# ---- 许可证随产物一起发布 ----------------------------------------------------
-shutil.copy(DS / "OFL-Fraunces.txt", OUT / "LICENSE-Fraunces.txt")
-shutil.copy(DS / "OFL-Caveat.txt", OUT / "LICENSE-Caveat.txt")
-shutil.copy(DS / "OFL-NotoSerifSC.txt", OUT / "LICENSE-NotoSerifSC.txt")
-
-total = sum(f.stat().st_size for f in OUT.glob("*.woff2")) / 1024
-print(f"\nTOTAL FONT PAYLOAD: {total:.1f} KB")
+if __name__ == "__main__":
+    main()

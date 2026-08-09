@@ -4,3 +4,6 @@ dist-ssr/
 *.tsbuildinfo
 .DS_Store
 .vite/
+
+# 开发期取景器产物
+.shots/

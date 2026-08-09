@@ -1,75 +1,88 @@
-import { useEffect, useRef } from 'react'
-import { tracksIntro, trackA, trackB } from '../content/site'
-import { Mark } from '../components/ui'
-import { Section } from '../components/Section'
-import { revealChars, revealMask } from '../lib/motion'
+/**
+ * 02 主线。
+ *
+ * 两条带子一升一降形成对角流，交点被一枚手绘圈圈住——这是整页唯一一处
+ * 「两件事其实是一件事」的图解，也是整站唯一使用旋转变换的版式。
+ *
+ * 底下的装备不做徽章墙。徽章墙的问题是：三十六个格子一样大，等于没有信息。
+ * 这里是一段密排的等宽文字流，**真正出现在下面六个仓库技术栈里的那些划底线**，
+ * 其余的就是背景。命中与否由数据算，不手写。
+ */
+
+import { Fragment } from 'react'
+import { Hand } from '../components/Hand'
+import { cssv } from '../lib/css'
+import { projects, stack, trackA, trackB, tracksIntro } from '../content/site'
+
+/** 六个仓库真实用到的技术栈，摊平成一张表。 */
+const USED = projects.flatMap((p) => p.stack).map((s) => s.toLowerCase())
 
 /**
- * 对开页。
- *
- * 「两条主线，一个交点」这句话本身就是版式说明书：把区块做成一张摊开的对开纸，
- * 中缝一条 1px 实线，两侧底色一浅一深，左栏文字右对齐、右栏文字左对齐，全部朝
- * 中缝靠拢——交点不是画一个图标去比喻，是让排版真的在那里相交。
- * 入场时两栏各自从中缝向外揭开。
+ * 命中判定：装备名与技术栈条目互为子串即算数（'Next.js' ⊂ 'Next.js 16'、
+ * 'Agent Skills' ⊃ 'Agent Skill'）。两字以下不做子串匹配，'Go' 会到处误伤。
  */
-function Column({
-  kicker,
-  items,
-  side,
-}: {
-  kicker: string
-  items: { id: string; title: string; body: string }[]
-  side: 'l' | 'r'
-}) {
-  return (
-    <div className={`spread__col spread__col--${side}`}>
-      <p className="spread__kicker">{kicker}</p>
-      <ul className="mt-7 space-y-7">
-        {items.map((t, i) => (
-          <li key={t.id}>
-            <div className="spread__head">
-              <span className="hand text-[1.1rem] text-brand-deep">0{i + 1}</span>
-              <h3 className="serif text-d3">{t.title}</h3>
-            </div>
-            <p className="mt-2 text-ink-light">{t.body}</p>
-          </li>
-        ))}
-      </ul>
-    </div>
-  )
+const isUsed = (item: string) => {
+  const a = item.toLowerCase()
+  if (a.length < 3) return USED.includes(a)
+  return USED.some((b) => b.includes(a) || a.includes(b))
 }
 
+const Band = ({ band, title, items }: { band: 'A' | 'B'; title: string; items: typeof trackA.items }) => (
+  <div className="tracks__band" data-band={band}>
+    <h3>{title}</h3>
+    {items.map((t) => (
+      <div className="track" key={t.id}>
+        <span className="track__t">{t.title}</span>
+        <p className="track__b">{t.body}</p>
+      </div>
+    ))}
+  </div>
+)
+
 export function Tracks() {
-  const root = useRef<HTMLElement>(null)
-  const head = useRef<HTMLHeadingElement>(null)
-
-  useEffect(() => {
-    const el = root.current
-    if (!el) return
-    if (head.current) revealChars(head.current, 0.026)
-    const cols = el.querySelector<HTMLElement>('.spread__grid')
-    if (cols) {
-      revealMask('.spread__col--l', cols, 'r', 0)
-      revealMask('.spread__col--r', cols, 'l', 0)
-    }
-  }, [])
-
   return (
-    <Section id="tracks" tone="cream" label="主线 TWO TRACKS" className="sec--spread" ref={root}>
-      {/* 标题横跨中缝压在对开页上方 */}
-      <div className="max-w-[58ch]">
-        <h2 className="serif text-d2" ref={head}>
-          两条主线，<Mark>一个交点</Mark>
-        </h2>
-        <p className="mt-5 text-lead text-ink-light">{tracksIntro.body}</p>
-      </div>
+    <section
+      id="tracks"
+      className="ch ch-tracks"
+      data-tone="pine"
+      data-edge="fade"
+      style={cssv({ '--bleed': 'var(--highlight)' })}
+    >
+      <div className="wrap">
+        <div className="tracks__head">
+          <h2 className="hd">{tracksIntro.headline}</h2>
+          <p className="lede">{tracksIntro.body}</p>
+        </div>
 
-      <div className="spread__grid mt-[clamp(46px,6vw,86px)]">
-        <div aria-hidden className="spread__seam" />
-        <div aria-hidden className="spread__cross" />
-        <Column kicker={trackA.kicker} items={trackA.items} side="l" />
-        <Column kicker={trackB.kicker} items={trackB.items} side="r" />
+        <div className="tracks__grid">
+          <Band band="A" title={trackA.title} items={trackA.items} />
+          <div className="tracks__cross">
+            <Hand shape="circle" tone="pine" seed="cross">
+              <span>把不确定的能力，接进确定的工程约束</span>
+            </Hand>
+          </div>
+          <Band band="B" title={trackB.title} items={trackB.items} />
+        </div>
+
+        <div className="kit">
+          <div className="kit__head">
+            <h3>{stack.headline}</h3>
+            <p>{stack.body}</p>
+          </div>
+          {stack.clusters.map((c) => (
+            <p className="kit__flow" key={c.id}>
+              <span className="tag">{c.title}</span>
+              <span className="kit__sep">/</span>
+              {c.items.map((it, i) => (
+                <Fragment key={it}>
+                  {i > 0 ? <span className="kit__sep">·</span> : null}
+                  {isUsed(it) ? <b>{it}</b> : <span>{it}</span>}
+                </Fragment>
+              ))}
+            </p>
+          ))}
+        </div>
       </div>
-    </Section>
+    </section>
   )
 }

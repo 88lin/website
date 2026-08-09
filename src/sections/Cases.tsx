@@ -1,100 +1,105 @@
-import { useEffect, useRef } from 'react'
-import { cases, type CaseStudy } from '../content/site'
-import { Mark } from '../components/ui'
-import { Section } from '../components/Section'
-import { revealMask } from '../lib/motion'
-
 /**
- * 阶梯错落。
+ * 04 案例。
  *
- * 三段案例沿对角线依次右移 0 / 8% / 16%，序号做成 --highlight-soft 的巨型背景
- * 数字压在正文后面。刻意取消卡片外框：分组信息全部由缩进量和间距承担，读的时候
- * 眼睛是斜着往下走的，而不是一格一格往下跳。这也是全站唯一一处「标题比正文小」
- * 的区块——版面的重量交给了 01/02/03。
+ * 三张整屏卡片 sticky 叠层，后一张推上来时把前一张压回底色里。sticky 写在 CSS，
+ * JS 只做被压住那张的形变——这样禁用 JS 时它就是三段普通的长内容，不会白屏。
+ *
+ * 每张卡只讲一件事，按「背景 / 卡在哪 / 怎么解」三段走，右栏是能被第三方核到的
+ * 四个数字，加一块手绘框里的取舍：**写清楚放弃了什么**，比列一堆功能有用。
+ *
+ * 不放封面图：三张封面在这个尺寸下只会变成三块彩色噪声，而且会把首屏之外的
+ * 图片预算吃光。数字和字本身就是画面。
  */
-const TONE: Record<CaseStudy['tone'], string> = {
-  brand: 'bg-brand-surface',
-  pop: 'bg-pop-surface',
-  ink: 'bg-ink',
-}
 
-function Case({ c, step }: { c: CaseStudy; step: number }) {
-  return (
-    <article className="case-step" data-step={step} data-no={c.index}>
-
-      <div className="case-step__body pt-[clamp(34px,5vw,72px)]">
-        <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1.5">
-          <h3 className="serif text-d3">{c.name}</h3>
-          <span aria-hidden className={`h-[7px] w-[7px] rounded-full ${TONE[c.tone]}`} />
-          <p className="text-[1.0625rem] text-ink-light">{c.cn}</p>
-        </div>
-
-        {/* 三段正文：标签左置、正文右置，中间只有排印距离，没有线也没有框 */}
-        <div className="mt-[clamp(22px,2.6vw,36px)] grid gap-y-[clamp(18px,2vw,28px)]">
-          {c.sections.map((s) => (
-            <div key={s.label} className="grid gap-x-8 gap-y-1.5 sm:grid-cols-[5.5rem_1fr]">
-              <p className="eyebrow text-ink-faint sm:pt-[0.42rem]">{s.label}</p>
-              <p className="max-w-[60ch] text-[1.0625rem] leading-[1.85] text-ink-light">{s.body}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-[clamp(24px,3vw,40px)] flex flex-wrap items-end justify-between gap-x-10 gap-y-6">
-          <ul className="flex flex-wrap gap-x-[clamp(24px,3vw,48px)] gap-y-5">
-            {c.result.map((r) => (
-              <li key={r.label}>
-                <span className="nums block text-[clamp(1.5rem,2.4vw,2.1rem)] leading-none">
-                  {r.value}
-                </span>
-                <span className="mt-2 block text-sm font-medium text-ink-light">{r.label}</span>
-              </li>
-            ))}
-          </ul>
-          <a
-            href={c.link}
-            target="_blank"
-            rel="noreferrer noopener"
-            className="btn btn--outline btn--sm"
-          >
-            <span>{c.linkLabel}</span>
-            <span aria-hidden className="btn__arrow">
-              &rarr;
-            </span>
-          </a>
-        </div>
-      </div>
-    </article>
-  )
-}
+import { Fragment, useCallback, useRef } from 'react'
+import { Hand } from '../components/Hand'
+import { ArrowOut } from '../components/Icons'
+import { cases, casesIntro } from '../content/cases'
+import { caseStack, useLazyScene, type SceneApi } from '../lib/motion'
+import { Link } from '../router'
 
 export function Cases() {
-  const root = useRef<HTMLElement>(null)
+  const stackRef = useRef<HTMLDivElement | null>(null)
 
-  useEffect(() => {
-    const el = root.current
-    if (!el) return
-    // 一段一段从左边揭开，与阶梯的行进方向一致
-    el.querySelectorAll<HTMLElement>('.case-step').forEach((step) => {
-      revealMask(step, step, 'l', 0)
-    })
+  const build = useCallback(({ gsap, root }: SceneApi) => {
+    const cards = Array.from(root.querySelectorAll<HTMLElement>('.stack-card'))
+    if (cards.length > 1) caseStack(gsap, cards)
   }, [])
 
+  useLazyScene(stackRef, build)
+
   return (
-    <Section id="cases" tone="cream" label="拆解 CASE STUDIES" ref={root}>
-      <div className="flex flex-wrap items-baseline gap-x-[clamp(24px,4vw,64px)] gap-y-3">
-        <h2 className="serif text-[clamp(1.6rem,2.8vw,2.4rem)] leading-tight">
-          怎么<Mark>做的</Mark>
-        </h2>
-        <p className="max-w-[46ch] text-[1.0625rem] text-ink-light">
-          三个项目，各写清楚一件事：背景、卡在哪、最后怎么解。数字都是仓库里能查到的。
-        </p>
+    <section id="cases" className="ch ch-cases ch--open" data-tone="deep">
+      <div className="wrap cases__head">
+        <h2 className="hd">{casesIntro.headline}</h2>
+        <p className="lede">{casesIntro.body}</p>
       </div>
 
-      <div className="mt-[clamp(10px,1.6vw,24px)] grid gap-[clamp(34px,4.5vw,70px)]">
-        {cases.map((c, i) => (
-          <Case key={c.slug} c={c} step={i} />
+      <div className="stack" ref={stackRef}>
+        {cases.map((c) => (
+          <div className="stack-card" key={c.slug}>
+            <div className="wrap">
+              <article className="case" data-tint={c.tone}>
+                {/* 编号是纹理不是内容：5.5% 的墨色读不出来，也不该被读屏念出来 */}
+                <span className="case__no num" data-no={c.no} aria-hidden="true" />
+
+                <div className="case__main">
+                  <div>
+                    <h3 className="case__name">{c.name}</h3>
+                    <span className="case__cn">{c.cn}</span>
+                  </div>
+                  <p className="case__claim">{c.claim}</p>
+                  <dl className="case__secs">
+                    {c.sections.map((s) => (
+                      <div className="case__sec" key={s.label}>
+                        <dt>{s.label}</dt>
+                        <dd>{s.body}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
+
+                <div className="case__side">
+                  <div className="case__figures">
+                    {c.results.map((r) => (
+                      <div className="figure" key={r.label}>
+                        <b>{r.value}</b>
+                        <span>{r.label}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <Hand label="取舍" tone={c.tone} seed={c.slug}>
+                    <div className="hand__in">
+                      {c.tradeoffs.map((t) => (
+                        <Fragment key={t.title}>
+                          <h4>{t.title}</h4>
+                          <p>{t.body}</p>
+                        </Fragment>
+                      ))}
+                    </div>
+                  </Hand>
+
+                  <div className="case__links">
+                    <Link className="btn" to={`/case/${c.slug}/`}>
+                      读完整案例
+                    </Link>
+                    <a
+                      className="btn btn--ghost"
+                      href={c.repo}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                    >
+                      仓库
+                      <ArrowOut />
+                    </a>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </div>
         ))}
       </div>
-    </Section>
+    </section>
   )
 }
