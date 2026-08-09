@@ -1,100 +1,74 @@
-import { useEffect, useRef } from 'react'
-import { cases, type CaseStudy } from '../content/site'
-import { Mark } from '../components/ui'
-import { Section } from '../components/Section'
-import { revealMask } from '../lib/motion'
-
 /**
- * 阶梯错落。
+ * CH.04 案例。
  *
- * 三段案例沿对角线依次右移 0 / 8% / 16%，序号做成 --highlight-soft 的巨型背景
- * 数字压在正文后面。刻意取消卡片外框：分组信息全部由缩进量和间距承担，读的时候
- * 眼睛是斜着往下走的，而不是一格一格往下跳。这也是全站唯一一处「标题比正文小」
- * 的区块——版面的重量交给了 01/02/03。
+ * 三张卡粘在视口上依次叠上来，后一张推上来时前一张缩一点、暗一点，
+ * 像把三块板依次插进同一个槽位。左侧 88px 是一条脊线，卡片就挂在上面。
+ * 每张卡只给论点与四个可核验的数，展开写在子页里——首页不负责讲完。
  */
-const TONE: Record<CaseStudy['tone'], string> = {
-  brand: 'bg-brand-surface',
-  pop: 'bg-pop-surface',
-  ink: 'bg-ink',
-}
 
-function Case({ c, step }: { c: CaseStudy; step: number }) {
-  return (
-    <article className="case-step" data-step={step} data-no={c.index}>
+import { useEffect, useRef } from 'react'
+import { Bay } from '../components/Bay'
+import { Reveal } from '../components/Reveal'
+import { IconSignal } from '../components/Icons'
+import { Link } from '../router'
+import { cases, casesIntro } from '../content/cases'
+import { channels } from '../content/site'
+import { bootCaseStack } from '../lib/motion'
 
-      <div className="case-step__body pt-[clamp(34px,5vw,72px)]">
-        <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1.5">
-          <h3 className="serif text-d3">{c.name}</h3>
-          <span aria-hidden className={`h-[7px] w-[7px] rounded-full ${TONE[c.tone]}`} />
-          <p className="text-[1.0625rem] text-ink-light">{c.cn}</p>
-        </div>
-
-        {/* 三段正文：标签左置、正文右置，中间只有排印距离，没有线也没有框 */}
-        <div className="mt-[clamp(22px,2.6vw,36px)] grid gap-y-[clamp(18px,2vw,28px)]">
-          {c.sections.map((s) => (
-            <div key={s.label} className="grid gap-x-8 gap-y-1.5 sm:grid-cols-[5.5rem_1fr]">
-              <p className="eyebrow text-ink-faint sm:pt-[0.42rem]">{s.label}</p>
-              <p className="max-w-[60ch] text-[1.0625rem] leading-[1.85] text-ink-light">{s.body}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-[clamp(24px,3vw,40px)] flex flex-wrap items-end justify-between gap-x-10 gap-y-6">
-          <ul className="flex flex-wrap gap-x-[clamp(24px,3vw,48px)] gap-y-5">
-            {c.result.map((r) => (
-              <li key={r.label}>
-                <span className="nums block text-[clamp(1.5rem,2.4vw,2.1rem)] leading-none">
-                  {r.value}
-                </span>
-                <span className="mt-2 block text-sm font-medium text-ink-light">{r.label}</span>
-              </li>
-            ))}
-          </ul>
-          <a
-            href={c.link}
-            target="_blank"
-            rel="noreferrer noopener"
-            className="btn btn--outline btn--sm"
-          >
-            <span>{c.linkLabel}</span>
-            <span aria-hidden className="btn__arrow">
-              &rarr;
-            </span>
-          </a>
-        </div>
-      </div>
-    </article>
-  )
-}
+const ch = channels[4]
 
 export function Cases() {
-  const root = useRef<HTMLElement>(null)
+  const stack = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
-    const el = root.current
+    const el = stack.current
     if (!el) return
-    // 一段一段从左边揭开，与阶梯的行进方向一致
-    el.querySelectorAll<HTMLElement>('.case-step').forEach((step) => {
-      revealMask(step, step, 'l', 0)
+    const cards = Array.from(el.querySelectorAll<HTMLElement>('.case-card'))
+    let off: (() => void) | undefined
+    bootCaseStack(cards).then((fn) => {
+      off = fn
     })
+    return () => off?.()
   }, [])
 
   return (
-    <Section id="cases" tone="cream" label="拆解 CASE STUDIES" ref={root}>
-      <div className="flex flex-wrap items-baseline gap-x-[clamp(24px,4vw,64px)] gap-y-3">
-        <h2 className="serif text-[clamp(1.6rem,2.8vw,2.4rem)] leading-tight">
-          怎么<Mark>做的</Mark>
+    <Bay ch={ch}>
+      <div className="bay__head">
+        <h2 id="ch-04-t" className="bay-title">
+          {casesIntro.headline}
         </h2>
-        <p className="max-w-[46ch] text-[1.0625rem] text-ink-light">
-          三个项目，各写清楚一件事：背景、卡在哪、最后怎么解。数字都是仓库里能查到的。
-        </p>
+        <span className="silk-label num">CASE ×3</span>
       </div>
+      <p className="bay__lede">{casesIntro.body}</p>
 
-      <div className="mt-[clamp(10px,1.6vw,24px)] grid gap-[clamp(34px,4.5vw,70px)]">
-        {cases.map((c, i) => (
-          <Case key={c.slug} c={c} step={i} />
-        ))}
+      <div className="cases__grid">
+        <div className="cases__spine" aria-hidden />
+        <div className="cases__stack" ref={stack}>
+          {cases.map((c) => (
+            <Reveal v="seat" as="article" className="case-card plate" data-ground={c.tone} key={c.slug}>
+              <div>
+                <div className="case-card__no num">{c.no}</div>
+                <h3 className="case-card__claim">{c.claim}</h3>
+                <p className="case-card__sum">{c.summary}</p>
+                <Link className="case-card__go" to={`/case/${c.slug}/`}>
+                  <IconSignal />
+                  看完整案例：{c.name}
+                </Link>
+              </div>
+              <div className="case-card__res">
+                {c.results.map((r) => (
+                  <div className="res well" key={r.label}>
+                    <div className="res__v">{r.value}</div>
+                    <div className="res__l" style={{ color: 'inherit', opacity: 0.72 }}>
+                      {r.label}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Reveal>
+          ))}
+        </div>
       </div>
-    </Section>
+    </Bay>
   )
 }
