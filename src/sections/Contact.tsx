@@ -1,52 +1,60 @@
 /**
- * CH.08 接入。
+ * 07 接入。
  *
- * 整页只有一个主 CTA，就是这封邮件。邮箱本身用等宽大字直接印出来，不藏在
- * 一枚按钮后面——地址是可以被复制、被记住的东西，按钮不是。
- * 其余渠道排成一列端子，是补充，不是并列的第二选择。
+ * 收束章：整屏只有一个巨型行动点，其余全部退成一列细线。前面七章都在证明
+ * 「我做过什么」，这一章只需要回答「怎么找到你」——多一个元素都是干扰。
+ *
+ * 敞开章：底色是舞台上的 287° 场，和首屏同角度、方向反过来。线从这里出画。
  */
 
-import { Bay } from '../components/Bay'
-import { Reveal } from '../components/Reveal'
-import { Annot } from '../components/Annot'
-import { channelIcon } from '../components/Icons'
-import { CONTACT_HREF, channels, contact } from '../content/site'
-
-const ch = channels[8]
+import { contact, footer } from '../content/site'
+import { cssv } from '../lib/css'
+import { ArrowOut } from '../components/Icons'
 
 export function Contact() {
   return (
-    <Bay ch={ch} win={{ x: '58%', y: '8%', w: '38%', h: '34%', tag: 'SIGNAL OUT', plate: 'ch-08' }}>
-      <div className="contact__col">
-        <div>
-          <Reveal v="flood" as="h2" id="ch-08-t" className="bay-title">
-            {contact.headline}
-          </Reveal>
-          <p className="bay__lede">{contact.body}</p>
-        </div>
-
-        <p>
-          <Annot k="contact-mail" note="写清问题，我回可执行的判断" place="bottom">
-            <a className="contact__mail" href={CONTACT_HREF}>
-              {contact.primary.value}
-            </a>
-          </Annot>
-        </p>
-
-        <div className="chan">
-          {contact.channels.map((c) => {
-            const Icon = channelIcon[c.id]
-            return (
-              <a href={c.href} target="_blank" rel="noreferrer noopener" key={c.id}>
-                <span className="chan__l">
-                  {Icon ? <Icon size={14} /> : null} {c.label}
-                </span>
-                <span className="chan__v">{c.value}</span>
-              </a>
-            )
-          })}
-        </div>
+    <section
+      id="contact"
+      className="ch ch-contact ch--open"
+      data-tone="berry"
+      data-edge="fade"
+      style={cssv({ '--bleed': 'var(--cream)' })}
+    >
+      <div className="wrap">
+        <h2 className="hd">{contact.headline}</h2>
       </div>
-    </Bay>
+
+      <div className="wrap contact__body">
+        <div className="contact__lead">
+          <p className="lede">{contact.body}</p>
+          <a className="contact__mail" href={contact.primary.href}>
+            {contact.primary.value}
+            <ArrowOut />
+          </a>
+        </div>
+
+        <ul className="contact__ch">
+          {contact.channels.map((c) => (
+            <li key={c.id}>
+              <a href={c.href} target="_blank" rel="noreferrer noopener">
+                {c.label}
+                <em>{c.value}</em>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <footer className="wrap foot">
+        <span>{footer.copyright}</span>
+        <span>{footer.note}</span>
+        <span>
+          <a href={footer.source} target="_blank" rel="noreferrer noopener">
+            本站源码
+          </a>
+        </span>
+        <span className="tag">数据核实于 {footer.asOf}</span>
+      </footer>
+    </section>
   )
 }

@@ -25,8 +25,15 @@ export async function serveDist({ dist, port, prefix = '/website/' }) {
   const server = createServer(async (req, res) => {
     let rel = decodeURIComponent((req.url || '/').split('?')[0])
     if (!rel.startsWith(prefix)) {
-      res.writeHead(302, { Location: prefix })
-      return res.end()
+      // 只有裸根路径才跳进子路径。别的（/robots.txt、/favicon.ico 之类）一律 404，
+      // 跟 GitHub Pages 一致——之前一股脑 302 到首页，Lighthouse 会拿到一份 HTML
+      // 当成 robots.txt 解析，然后报一条并不存在的 SEO 失败。
+      if (rel === '/' || rel === '') {
+        res.writeHead(302, { Location: prefix })
+        return res.end()
+      }
+      res.writeHead(404, { 'content-type': 'text/plain' })
+      return res.end('404')
     }
     rel = rel.slice(prefix.length)
     if (rel === '' || rel.endsWith('/')) rel += 'index.html'

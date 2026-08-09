@@ -20,12 +20,15 @@ const OUT = path.join(ROOT, 'scripts/chars')
 const PORT = 4183
 const ROUTES = ['', 'case/lofi/', 'case/repair/', 'case/video-vip/']
 
-/** CSS font-family 列表的头一项 → 子集桶名。 */
+/** CSS font-family 列表的头一项 → 子集桶名。
+ *  站内每个族名都带 Web 后缀（自托管子集），系统同名字体走 local() 回落，
+ *  不能混进来，否则会把系统字排到的字符也塞进子集。 */
 const BUCKET = {
-  'noto serif sc': 'serif',
-  'noto sans sc': 'sans',
-  'jetbrains mono': 'mono',
-  caveat: 'hand',
+  'noto serif sc web': 'serif',
+  'noto sans sc web': 'sans',
+  'fraunces web': 'num',
+  'jetbrains mono web': 'mono',
+  'caveat web': 'hand',
 }
 
 const collect = () => {
@@ -48,7 +51,9 @@ const collect = () => {
     const weight = parseInt(cs.fontWeight, 10) || 400
     for (const pseudo of ['::before', '::after']) {
       const pc = getComputedStyle(el, pseudo).content
-      if (pc && pc !== 'none' && pc !== 'normal') {
+      // attr()/counter()/url() 在 computed style 里是未求值的字面量，
+      // 直接塞进桶会把 a t r ( ) - 这些字母算成用字。真正要渲染的值另有兜底。
+      if (pc && pc !== 'none' && pc !== 'normal' && !/\b(attr|counter|counters|url|image-set)\(/.test(pc)) {
         push(`${fam}|${weight}`, pc.replace(/^["']|["']$/g, ''))
       }
     }
@@ -103,9 +108,14 @@ const ALWAYS = {
   serif: '，。、·—…「」（）0123456789',
   'sans-regular': '，。、·—…「」（）：；？！／0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
   'sans-semibold': '，。、·—…「」（）0123456789',
+  // Fraunces 只排读数与案例编号，一个汉字都不带
+  num: '0123456789,.',
   mono: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,:;/·—→+-%★⑂ ',
   hand: '，。、·—…「」（）0123456789',
 }
+
+// 每个桶都必须落一个文件：子集脚本按固定表找 chars/*.txt，缺一个就整条管线退出。
+for (const name of Object.keys(ALWAYS)) if (!buckets.has(name)) buckets.set(name, new Set())
 
 await mkdir(OUT, { recursive: true })
 const rows = []

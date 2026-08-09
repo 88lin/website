@@ -29,42 +29,66 @@ OUT = ROOT / "public" / "fonts"
 SRC_DS = Path("/workspace/fonts/ds")
 SRC_NOTO = Path("/workspace/fonts/noto")
 
-# (源文件, 字重, 字符桶, 输出名, 许可证源文件)
+# (源文件, 字重, 字符桶, 输出名, 许可证源文件, 额外定轴)
+# 额外定轴只对多轴可变字体有意义：Fraunces 除 wght 外还有 opsz/SOFT/WONK，
+# 只 pin wght 会把剩下三条轴的 gvar 数据整块留下，白多几十 KB。
 JOBS = [
-    (SRC_DS / "NotoSerifSC.ttf", 900, "serif", "NotoSerifSC-Display.woff2", "OFL-NotoSerifSC.txt"),
-    (SRC_NOTO / "NotoSansSC.ttf", 400, "sans-regular", "NotoSansSC-Regular.woff2", "OFL-NotoSansSC.txt"),
-    (SRC_NOTO / "NotoSansSC.ttf", 650, "sans-semibold", "NotoSansSC-Semibold.woff2", "OFL-NotoSansSC.txt"),
-    (SRC_DS / "JetBrainsMono.ttf", 400, "mono", "JetBrainsMono-Regular.woff2", "OFL-JetBrainsMono.txt"),
-    (SRC_DS / "JetBrainsMono.ttf", 800, "mono", "JetBrainsMono-Bold.woff2", "OFL-JetBrainsMono.txt"),
-    (SRC_DS / "Caveat.ttf", 600, "hand", "Caveat.woff2", "OFL-Caveat.txt"),
+    (SRC_DS / "NotoSerifSC.ttf", 900, "serif", "NotoSerifSC-Display.woff2", "OFL-NotoSerifSC.txt", {}),
+    (SRC_NOTO / "NotoSansSC.ttf", 400, "sans-regular", "NotoSansSC-Regular.woff2", "OFL-NotoSansSC.txt", {}),
+    (SRC_NOTO / "NotoSansSC.ttf", 650, "sans-semibold", "NotoSansSC-Semibold.woff2", "OFL-NotoSansSC.txt", {}),
+    # 读数与案例编号都是巨号字，opsz 拉到 144 才是这套字的显示形态
+    (SRC_DS / "Fraunces.ttf", 900, "num", "Fraunces-Numerals.woff2", "OFL-Fraunces.txt", {"opsz": 144, "SOFT": 0, "WONK": 1}),
+    (SRC_DS / "JetBrainsMono.ttf", 400, "mono", "JetBrainsMono-Regular.woff2", "OFL-JetBrainsMono.txt", {}),
+    (SRC_DS / "Caveat.ttf", 600, "hand", "Caveat.woff2", "OFL-Caveat.txt", {}),
+    (SRC_DS / "ZhiMangXing.ttf", 400, "hand+cjk", "ZhiMangXing.woff2", "OFL-ZhiMangXing.txt", {}),
 ]
 
 LICENSE_NAME = {
     "OFL-NotoSerifSC.txt": "LICENSE-NotoSerifSC.txt",
     "OFL-NotoSansSC.txt": "LICENSE-NotoSansSC.txt",
+    "OFL-Fraunces.txt": "LICENSE-Fraunces.txt",
     "OFL-JetBrainsMono.txt": "LICENSE-JetBrainsMono.txt",
     "OFL-Caveat.txt": "LICENSE-Caveat.txt",
+    "OFL-ZhiMangXing.txt": "LICENSE-ZhiMangXing.txt",
 }
 
-# 站点被 v4 留下的东西：Fraunces 已经不在 CSS 里了，留着只会白占预算。
-STALE = ["Fraunces.woff2", "LICENSE-Fraunces.txt"]
+# v4/v5 留下的旧产物：文件名换了或字重不再被 @font-face 引用，留着只会白占预算。
+STALE = ["Fraunces.woff2", "JetBrainsMono-Bold.woff2"]
 
 
 def read_chars(bucket: str) -> str:
-    f = CHARS / f"{bucket}.txt"
+    """桶名后加 +cjk 表示只取表里的中日韩部分。
+
+    手写层是两个文件拼出来的：Caveat 管拉丁与数字，志莽行书管汉字。
+    两边共用一张字符表，但各自只子集自己那一半，否则志莽行书会把
+    它那套拉丁字形也带进来——那些字形永远轮不到渲染。
+    """
+    cjk = bucket.endswith("+cjk")
+    name = bucket[:-4] if cjk else bucket
+    f = CHARS / f"{name}.txt"
     if not f.exists():
         sys.exit(f"缺少字符表 {f}，先跑 npm run chars")
-    return f.read_text(encoding="utf-8")
+    text = f.read_text(encoding="utf-8")
+    if cjk:
+        text = "".join(ch for ch in text if ord(ch) >= 0x2E80)
+    return text
 
 
-def build(src: Path, weight: int, bucket: str, out_name: str) -> tuple[int, int]:
+def build(src: Path, weight: int, bucket: str, out_name: str, extra: dict[str, float]) -> tuple[int, int]:
     text = read_chars(bucket)
     font = TTFont(src, lazy=False)
     if "fvar" in font:
         axes = {a.axisTag: a for a in font["fvar"].axes}
-        w = axes["wght"]
-        clamped = max(w.minValue, min(w.maxValue, weight))
-        font = instancer.instantiateVariableFont(font, {"wght": clamped}, inplace=True, updateFontNames=False)
+        # 每条轴都要 pin 死，漏一条就还是可变字体
+        loc = {tag: a.defaultValue for tag, a in axes.items()}
+        for tag, val in extra.items():
+            if tag in axes:
+                a = axes[tag]
+                loc[tag] = max(a.minValue, min(a.maxValue, val))
+        if "wght" in axes:
+            w = axes["wght"]
+            loc["wght"] = max(w.minValue, min(w.maxValue, weight))
+        font = instancer.instantiateVariableFont(font, loc, inplace=True, updateFontNames=False)
 
     opts = subset.Options()
     opts.flavor = "woff2"
@@ -102,10 +126,10 @@ def main() -> None:
 
     total = 0
     rows = []
-    for src, weight, bucket, out_name, lic in JOBS:
+    for src, weight, bucket, out_name, lic, extra in JOBS:
         if not src.exists():
             sys.exit(f"缺少源字体 {src}")
-        n, size = build(src, weight, bucket, out_name)
+        n, size = build(src, weight, bucket, out_name, extra)
         total += size
         rows.append((out_name, weight, n, size))
         lic_src = SRC_DS / lic

@@ -1,85 +1,88 @@
 /**
- * CH.02 主线。
+ * 02 主线。
  *
- * 两条业务线不用左右并排的对称卡片讲——那是 PPT 的讲法。这里中间留一条
- * 96px 的总线槽，两侧各自把线接进去，接点是一枚实心圆端子。右侧整体下沉
- * 一档，让两栏错开：对称会让人以为两件事一样重，其实它们是先后关系。
+ * 两条带子一升一降形成对角流，交点被一枚手绘圈圈住——这是整页唯一一处
+ * 「两件事其实是一件事」的图解，也是整站唯一使用旋转变换的版式。
+ *
+ * 底下的装备不做徽章墙。徽章墙的问题是：三十六个格子一样大，等于没有信息。
+ * 这里是一段密排的等宽文字流，**真正出现在下面六个仓库技术栈里的那些划底线**，
+ * 其余的就是背景。命中与否由数据算，不手写。
  */
 
-import { Bay, Lamp } from '../components/Bay'
-import { Reveal } from '../components/Reveal'
-import { channels, trackA, trackB, tracksIntro } from '../content/site'
+import { Fragment } from 'react'
+import { Hand } from '../components/Hand'
+import { cssv } from '../lib/css'
+import { projects, stack, trackA, trackB, tracksIntro } from '../content/site'
 
-const ch = channels[2]
+/** 六个仓库真实用到的技术栈，摊平成一张表。 */
+const USED = projects.flatMap((p) => p.stack).map((s) => s.toLowerCase())
+
+/**
+ * 命中判定：装备名与技术栈条目互为子串即算数（'Next.js' ⊂ 'Next.js 16'、
+ * 'Agent Skills' ⊃ 'Agent Skill'）。两字以下不做子串匹配，'Go' 会到处误伤。
+ */
+const isUsed = (item: string) => {
+  const a = item.toLowerCase()
+  if (a.length < 3) return USED.includes(a)
+  return USED.some((b) => b.includes(a) || a.includes(b))
+}
+
+const Band = ({ band, title, items }: { band: 'A' | 'B'; title: string; items: typeof trackA.items }) => (
+  <div className="tracks__band" data-band={band}>
+    <h3>{title}</h3>
+    {items.map((t) => (
+      <div className="track" key={t.id}>
+        <span className="track__t">{t.title}</span>
+        <p className="track__b">{t.body}</p>
+      </div>
+    ))}
+  </div>
+)
 
 export function Tracks() {
   return (
-    <Bay ch={ch}>
-      <div className="bay__head">
-        <h2 id="ch-02-t" className="bay-title">
-          {tracksIntro.headline}
-        </h2>
-        <span className="silk-label">A / B</span>
-      </div>
-      <p className="bay__lede">{tracksIntro.body}</p>
+    <section
+      id="tracks"
+      className="ch ch-tracks"
+      data-tone="pine"
+      data-edge="fade"
+      style={cssv({ '--bleed': 'var(--highlight)' })}
+    >
+      <div className="wrap">
+        <div className="tracks__head">
+          <h2 className="hd">{tracksIntro.headline}</h2>
+          <p className="lede">{tracksIntro.body}</p>
+        </div>
 
-      <div className="tracks__grid">
-        <Reveal v="wire-l" className="trk">
-          <div className="trk__hd">
-            <Lamp state="live" live />
-            <span className="silk-label">TRACK A</span>
-            <span className="sub-title">{trackA.title}</span>
+        <div className="tracks__grid">
+          <Band band="A" title={trackA.title} items={trackA.items} />
+          <div className="tracks__cross">
+            <Hand shape="circle" tone="pine" seed="cross">
+              <span>把不确定的能力，接进确定的工程约束</span>
+            </Hand>
           </div>
-          {trackA.items.map((it) => (
-            <div className="trk__item silk" key={it.id}>
-              <h4>{it.title}</h4>
-              <p>{it.body}</p>
-            </div>
-          ))}
-        </Reveal>
+          <Band band="B" title={trackB.title} items={trackB.items} />
+        </div>
 
-        <Reveal v="wire-c" className="bus" aria-hidden>
-          <svg viewBox="0 0 96 420" preserveAspectRatio="none">
-            <path
-              d="M0 76 C 40 76, 48 132, 48 210"
-              stroke="var(--fg)"
-              vectorEffect="non-scaling-stroke"
-              opacity="0.85"
-            />
-            <path
-              d="M96 168 C 56 168, 48 176, 48 210"
-              stroke="var(--fg)"
-              vectorEffect="non-scaling-stroke"
-              opacity="0.85"
-            />
-            <path
-              d="M48 210 L 48 420"
-              stroke="var(--fg)"
-              vectorEffect="non-scaling-stroke"
-              opacity="0.32"
-            />
-          </svg>
-          <span className="bus__cross">
-            交点
-            <br />
-            CROSS
-          </span>
-        </Reveal>
-
-        <Reveal v="wire-r" className="trk trk--b">
-          <div className="trk__hd">
-            <Lamp state="live" live />
-            <span className="silk-label">TRACK B</span>
-            <span className="sub-title">{trackB.title}</span>
+        <div className="kit">
+          <div className="kit__head">
+            <h3>{stack.headline}</h3>
+            <p>{stack.body}</p>
           </div>
-          {trackB.items.map((it) => (
-            <div className="trk__item silk" key={it.id}>
-              <h4>{it.title}</h4>
-              <p>{it.body}</p>
-            </div>
+          {stack.clusters.map((c) => (
+            <p className="kit__flow" key={c.id}>
+              <span className="tag">{c.title}</span>
+              <span className="kit__sep">/</span>
+              {c.items.map((it, i) => (
+                <Fragment key={it}>
+                  {i > 0 ? <span className="kit__sep">·</span> : null}
+                  {isUsed(it) ? <b>{it}</b> : <span>{it}</span>}
+                </Fragment>
+              ))}
+            </p>
           ))}
-        </Reveal>
+        </div>
       </div>
-    </Bay>
+    </section>
   )
 }

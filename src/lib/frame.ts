@@ -103,12 +103,12 @@ export const handLead = (key: string) => {
   return `M 2 50 Q ${30 + r() * 20} ${50 - bow}, 98 ${34 + r() * 22}`
 }
 
-/** 标注层用色，按 seed 在四个信号色里轮换，避免整页一个颜色。 */
+/** 标注层用色，按 seed 在四个语义角色里轮换，避免整页一个颜色。 */
 export const ANNOT_COLORS = [
-  'var(--lemon)',
-  'var(--verm-hot)',
-  'var(--jade)',
-  'var(--amber)',
+  'var(--brand)',
+  'var(--pop)',
+  'var(--brand-deep)',
+  'var(--highlight)',
 ] as const
 
 export const annotColor = (key: string) => ANNOT_COLORS[seedOf(key) % ANNOT_COLORS.length]

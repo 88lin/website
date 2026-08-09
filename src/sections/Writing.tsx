@@ -1,65 +1,85 @@
 /**
- * CH.07 写作。
+ * 06 写作。
  *
- * 左边是标签计数的横条图，右边是最近六篇。标签合计比文章数大——一篇文章
- * 挂多个标签，所以这里写「标签」不写「分类」，也把这句话直接印在页面上。
- * 作品集里最容易注水的就是这种统计，注了水就不该在这个站出现。
+ * 全站唯一的多栏文字流：真 columns 排版，报纸感，粗横线开栏。前面五章都是
+ * 「一块一块」的，这一章必须是「一片」——否则八章看下来是同一个骨架换八种颜色。
+ *
+ * 标签条形图直接嵌在栏子中间。这是全站最后一处数字，也是唯一一处
+ * 用长度而不是字号表示大小的地方。
  */
 
-import { Bay } from '../components/Bay'
-import { Reveal } from '../components/Reveal'
-import { IconOut } from '../components/Icons'
-import { channels, writing } from '../content/site'
+import { writing } from '../content/site'
+import { cssv } from '../lib/css'
+import { ArrowOut } from '../components/Icons'
 
-const ch = channels[7]
-const max = Math.max(...writing.tags.map((t) => t.count))
+const MAX_TAG = Math.max(...writing.tags.map((t) => t.count))
 
 export function Writing() {
   return (
-    <Bay ch={ch}>
-      <div className="bay__head">
-        <h2 id="ch-07-t" className="bay-title">
-          {writing.headline}
-        </h2>
-        <span className="silk-label num">
-          {writing.posts} POSTS · {writing.days} DAYS
-        </span>
-      </div>
-      <p className="bay__lede">{writing.body}</p>
+    <section
+      id="writing"
+      className="ch ch-writing"
+      data-tone="paper"
+      data-edge="fade"
+      style={cssv({ '--bleed': 'var(--highlight)' })}
+    >
+      <div className="wrap">
+        <div className="writing__head">
+          <h2 className="hd">{writing.headline}</h2>
+          <p className="lede">{writing.body}</p>
+        </div>
 
-      <div className="writing__grid">
-        <Reveal v="sweep" className="bars">
-          {writing.tags.map((t) => (
-            <div className="bar" key={t.name}>
-              <span className="bar__n">{t.name}</span>
-              <span className="bar__t">
-                <span className="bar__f" style={{ ['--pct' as string]: (t.count / max) * 100 }} />
-              </span>
-              <span className="bar__v num">{t.count}</span>
-            </div>
-          ))}
-          <p className="readout__s" style={{ marginTop: '0.6rem' }}>
-            共 {writing.tagTotal} 个标签，这里只列前 {writing.tags.length} 个。
-          </p>
-        </Reveal>
-
-        <div>
-          <div className="posts">
+        <div className="writing__cols">
+          <div className="writing__blk">
+            <h3>最近六篇</h3>
             {writing.latest.map((p) => (
-              <a href={writing.href} target="_blank" rel="noreferrer noopener" key={p.title}>
-                <span className="posts__t">{p.title}</span>
-                <span className="posts__d">{p.date}</span>
+              <a
+                className="post"
+                key={p.title}
+                href={writing.href}
+                target="_blank"
+                rel="noreferrer noopener"
+              >
+                <b>{p.title}</b>
+                <span>{p.date}</span>
               </a>
             ))}
           </div>
-          <p style={{ marginTop: 'calc(var(--unit) * 3)' }}>
-            <a className="btn btn--ghost" href={writing.href} target="_blank" rel="noreferrer noopener">
+
+          <div className="writing__blk">
+            <h3>标签分布</h3>
+            <div className="bars">
+              {writing.tags.map((t) => (
+                <div className="bar" key={t.name}>
+                  <span>{t.name}</span>
+                  <i style={cssv({ '--f': t.count / MAX_TAG })} />
+                  <u>{t.count}</u>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="writing__blk">
+            <h3>更新频率</h3>
+            <p>
+              {writing.days} 天里 {writing.posts} 篇，平均一个月多一篇。不定期，写完才发。追热点的那种
+              更新频率我做不到，也不打算做——写下来的东西得在半年后还能用。
+            </p>
+          </div>
+
+          <div className="writing__blk">
+            <h3>去哪读</h3>
+            <p>
+              全文都在博客，没有付费墙，没有关注可见。{writing.tagTotal} 个标签里最厚的是工具与教程，
+              基本上是「我自己踩过的坑，写下来省得下次再踩」。
+            </p>
+            <a className="btn" href={writing.href} target="_blank" rel="noreferrer noopener">
               {writing.hrefLabel}
-              <IconOut />
+              <ArrowOut />
             </a>
-          </p>
+          </div>
         </div>
       </div>
-    </Bay>
+    </section>
   )
 }

@@ -6,7 +6,7 @@
  * 没有客户证言、没有营收、没有奖项——这些我没有，就不写。
  */
 
-import type { Ground } from './site'
+import type { Tone } from './site'
 
 export type CaseSection = { label: string; body: string }
 export type CaseResult = { value: string; label: string }
@@ -19,7 +19,7 @@ export type CaseStudy = {
   cn: string
   /** 一句话论点，首页卡片上最大的那行 */
   claim: string
-  tone: Ground
+  tone: Tone
   year: string
   role: string
   stackLine: string
@@ -30,7 +30,6 @@ export type CaseStudy = {
   tradeoffs: { title: string; body: string }[]
   results: CaseResult[]
   provenance: Provenance[]
-  cover: string
   link?: string
   linkLabel?: string
   repo: string
@@ -48,7 +47,7 @@ export const cases: CaseStudy[] = [
     name: 'Lofi Radio Web',
     cn: '专注场景的网页电台',
     claim: '把「打开即听」做成一个界面约束',
-    tone: 'lemon',
+    tone: 'peach',
     year: '2026',
     role: '独立设计与开发',
     stackLine: 'Next.js 16 · React · TypeScript · PWA',
@@ -89,7 +88,6 @@ export const cases: CaseStudy[] = [
       { value: '21 精选电台', from: '仓库内电台配置清单条目数' },
       { value: '0 注册步骤', from: 'lofi.88lin.eu.org 无账号体系，打开即播' },
     ],
-    cover: 'covers/lofi.webp',
     link: 'https://lofi.88lin.eu.org',
     linkLabel: '在线体验',
     repo: 'https://github.com/88lin/lofi-radio-web',
@@ -100,7 +98,7 @@ export const cases: CaseStudy[] = [
     name: 'Computer Repair Skill',
     cn: '跨平台电脑维修 Agent',
     claim: '给 Agent 装上「先取证，再动手」的职业素养',
-    tone: 'jade',
+    tone: 'pine',
     year: '2026',
     role: '技能设计与实现',
     stackLine: 'Agent Skill · Python · Markdown · AGPL-3.0',
@@ -142,7 +140,6 @@ export const cases: CaseStudy[] = [
       { value: 'CI 结构校验', from: '仓库 GitHub Actions 工作流：路由表与 Playbook 结构校验' },
       { value: '7 Star / 1 Fork', from: 'GitHub API：GET /repos/88lin/computer-repair-skill，2026-08-10' },
     ],
-    cover: 'covers/repair.webp',
     link: 'https://repair.88lin.eu.org',
     linkLabel: '官方网站',
     repo: 'https://github.com/88lin/computer-repair-skill',
@@ -153,8 +150,8 @@ export const cases: CaseStudy[] = [
     name: 'video_vip',
     cn: '多平台视频解析脚本',
     claim: '接口一定会挂，所以整件事按「可切换」来设计',
-    tone: 'verm',
-    year: '2023 – 至今',
+    tone: 'berry',
+    year: '2023 起持续维护',
     role: '独立开发与长期维护',
     stackLine: 'JavaScript · 油猴脚本 · 22 站点适配',
     summary:
@@ -195,7 +192,6 @@ export const cases: CaseStudy[] = [
       { value: '22 个站点适配器', from: 'video_vip.user.js v3.1.10 站点配置表，逐个域名各一份' },
       { value: '35 条 @include', from: 'video_vip.user.js v3.1.10 脚本头，覆盖 PC 与移动端入口' },
     ],
-    cover: 'covers/video-vip.webp',
     link: 'https://88lin.github.io/vip/',
     linkLabel: '网页版',
     repo: 'https://github.com/88lin/video_vip',

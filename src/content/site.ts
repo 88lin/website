@@ -13,41 +13,46 @@
 
 export const AS_OF = '2026.08.10'
 
-/* ---------------------------------------------------------------- 机架通道 */
+/* ---------------------------------------------------------------- 章节 */
 
-export type ChannelId =
+/**
+ * 色调只有四个语义角色，全部指向 palettes.css 的 C 组（Mulberry）。
+ * 组件永远写角色名，不写色值，也不写调色板字母——换配色时改 <html data-palette> 一个字母即可。
+ */
+export type Tone = 'berry' | 'deep' | 'peach' | 'pine'
+
+export type ChapterId =
   | 'hero'
   | 'metrics'
   | 'tracks'
   | 'works'
   | 'cases'
   | 'garden'
-  | 'stack'
   | 'writing'
   | 'contact'
 
-export type Ground = 'chassis' | 'chassis-deep' | 'chassis-lift' | 'lemon' | 'jade' | 'amber' | 'verm'
+/**
+ * `tone` 有两个用途：一是章节自己的前景色档位，二是右侧锚点栏——那一列
+ * 短横线是 fixed 的，不在任何章里面，只能靠当前章的 tone 决定自己是黑是白。
+ * `open` 为真表示这一章不铺自己的底色，让舞台的双色场与织带透上来。
+ */
+export type Chapter = { id: ChapterId; label: string; tone: Tone | 'paper'; open?: true }
 
-export type Channel = {
-  id: ChannelId
-  no: string
-  label: string
-  ground: Ground
-  /** 通道当前状态，机架上的灯就按这个亮 */
-  state: 'live' | 'standby'
-}
-
-/** 通道表：既是导航，也是深链接地址（#ch-03 就是作品通道）。 */
-export const channels: Channel[] = [
-  { id: 'hero', no: '00', label: '总线', ground: 'chassis', state: 'live' },
-  { id: 'metrics', no: '01', label: '读数', ground: 'lemon', state: 'live' },
-  { id: 'tracks', no: '02', label: '主线', ground: 'jade', state: 'live' },
-  { id: 'works', no: '03', label: '作品', ground: 'chassis-deep', state: 'live' },
-  { id: 'cases', no: '04', label: '案例', ground: 'chassis-lift', state: 'live' },
-  { id: 'garden', no: '05', label: '花园', ground: 'amber', state: 'live' },
-  { id: 'stack', no: '06', label: '装备', ground: 'chassis', state: 'live' },
-  { id: 'writing', no: '07', label: '写作', ground: 'lemon', state: 'live' },
-  { id: 'contact', no: '08', label: '接入', ground: 'verm', state: 'live' },
+/**
+ * 八章。既是右侧锚点栏的内容，也是 3D 主线上的八个节点。
+ * 刻意不带编号：编号眉标是纯装饰，读者不需要知道自己在第几章。
+ *
+ * 敞开 / 实色交替出现：空间、平面、平面、空间、空间、平面、平面、空间。
+ */
+export const chapters: Chapter[] = [
+  { id: 'hero', label: '主张', tone: 'deep', open: true },
+  { id: 'metrics', label: '读数', tone: 'peach' },
+  { id: 'tracks', label: '主线', tone: 'pine' },
+  { id: 'works', label: '作品', tone: 'berry', open: true },
+  { id: 'cases', label: '案例', tone: 'deep', open: true },
+  { id: 'garden', label: '花园', tone: 'peach' },
+  { id: 'writing', label: '写作', tone: 'paper' },
+  { id: 'contact', label: '接入', tone: 'berry', open: true },
 ]
 
 /* ---------------------------------------------------------------- 身份 */
@@ -71,7 +76,7 @@ export const hero = {
   line2Post: '的',
   line3: '工程结果。',
   sub: '接口会挂，平台会变，需求会改。我做的东西按「可切换」来设计——所以它们还活着。',
-  latin: 'INTERFACE RACK · 88LIN',
+  latin: 'THE THREAD · 88LIN',
   primaryCta: '聊聊合作',
   secondaryCta: '看三个案例',
 }
@@ -92,8 +97,8 @@ export type Metric = {
 }
 
 export const metricsIntro = {
-  headline: '面板读数',
-  body: '这一屏没有一个数是我写上去的形容词。每个数右边写着它从哪个接口取的，你可以自己去拉一遍。',
+  headline: '先看数',
+  body: '这一屏没有一个数是形容词。每个数都写着它从哪个接口取的，你可以自己去拉一遍。',
 }
 
 export const metrics: Metric[] = [
@@ -205,7 +210,7 @@ export type Project = {
   state: ProjectState
   live?: string
   repo: string
-  tone: Ground
+  tone: Tone
 }
 
 export const worksIntro = {
@@ -228,7 +233,7 @@ export const projects: Project[] = [
     state: 'maintained',
     live: 'https://88lin.github.io/vip/',
     repo: 'https://github.com/88lin/video_vip',
-    tone: 'verm',
+    tone: 'berry',
   },
   {
     slug: 'lofi-radio-web',
@@ -244,7 +249,7 @@ export const projects: Project[] = [
     state: 'live',
     live: 'https://lofi.88lin.eu.org',
     repo: 'https://github.com/88lin/lofi-radio-web',
-    tone: 'chassis',
+    tone: 'pine',
   },
   {
     slug: 'computer-repair-skill',
@@ -260,7 +265,7 @@ export const projects: Project[] = [
     state: 'live',
     live: 'https://repair.88lin.eu.org',
     repo: 'https://github.com/88lin/computer-repair-skill',
-    tone: 'jade',
+    tone: 'deep',
   },
   {
     slug: 'gzh-design-skill',
@@ -276,7 +281,7 @@ export const projects: Project[] = [
     state: 'live',
     live: 'https://88lin.github.io/gzh-design-skill/docs/gallery/index.html',
     repo: 'https://github.com/88lin/gzh-design-skill',
-    tone: 'lemon',
+    tone: 'peach',
   },
   {
     slug: 'diataxis-docs-skill',
@@ -291,7 +296,7 @@ export const projects: Project[] = [
     forks: 0,
     state: 'maintained',
     repo: 'https://github.com/88lin/diataxis-docs-skill',
-    tone: 'chassis-deep',
+    tone: 'pine',
   },
   {
     slug: 'wesum-wechat-monitor',
@@ -305,7 +310,7 @@ export const projects: Project[] = [
     forks: 6,
     state: 'maintained',
     repo: 'https://github.com/88lin/wesum-wechat-monitor',
-    tone: 'amber',
+    tone: 'peach',
   },
 ]
 
@@ -372,8 +377,8 @@ export const gardenIntro = {
 /* ---------------------------------------------------------------- 装备 */
 
 export const stack = {
-  headline: '用什么把它做出来',
-  body: '不是徽章墙。这是真正插在机架上、这两年交付项目时反复用到的那一批。',
+  headline: '手上有什么',
+  body: '不是徽章墙，是这两年交付项目时真正反复用到的那一批。划了底线的那些，出现在下面六个仓库的技术栈里。',
   clusters: [
     {
       id: 'ai',
@@ -450,7 +455,7 @@ export const contact = {
 }
 
 export const footer = {
-  copyright: '© 2023 – 2026 茉灵智库 · 88lin',
+  copyright: '© 2023–2026 茉灵智库 · 88lin',
   note: '本站由 Vite + React + Three.js 构建，页面数字全部来自公开接口，源码开源。',
   source: 'https://github.com/88lin/website',
   asOf: AS_OF,

@@ -1,16 +1,18 @@
 /**
  * 动效编排。
  *
- * 全站只有一个「被编排出来的时刻」——继电器切换：
- *   灯先亮 → 3D 信号改道 → 该通道的标注层展开。
- * 其余入场只是把内容接上电，九格 bay 各用各的方式（快门、数位滚、
- * 拉线、滑轨、就位、级联、卡扣、指针扫、泛光），不是同一个淡入向上。
- *
- * 默认状态永远是「已经可见」。减弱动效时这里什么都不做，内容仍然完整。
+ * 三条纪律：
+ *  1) 默认状态永远是「已经可见」。只有挂上 .js 之后才允许把元素藏起来，
+ *     所以禁用 JS、减弱动效、预渲染快照三种情况下内容都是完整的。
+ *  2) 不写 window.addEventListener('scroll')。滚动位置只有两个读法：
+ *     ScrollTrigger，或者一个 rAF 循环。
+ *  3) 每个 ScrollTrigger 都装在 gsap.context() 里，且**按区块懒建**：
+ *     区块进入视口前 1.5 屏才建，离开 2 屏后 revert()。首屏因此只建两章，
+ *     这是移动端 TBT 的主要来源。
  */
 
-import { useEffect, useRef, type RefObject } from 'react'
-import { setChannel, setScroll, setPointer, setAperture } from './bus'
+import { useEffect, useRef, useState, type RefObject } from 'react'
+import { setChapter, setScroll, setPointer } from './bus'
 import { prefersReducedMotion } from './caps'
 
 /* ------------------------------------------------------------ 平滑滚动 */
@@ -22,7 +24,7 @@ export async function bootScroll() {
   const { default: Lenis } = await import('lenis')
   const lenis = new Lenis({
     duration: 1.05,
-    // 指数缓出：起步快、收尾慢，手感接近真的在推一台有阻尼的滑轨
+    // 指数缓出：起步快、收尾慢，手感接近真的在拉一条有阻尼的绳子
     easing: (t: number) => 1 - Math.pow(1 - t, 3.2),
     wheelMultiplier: 0.92,
     touchMultiplier: 1.4,
@@ -41,6 +43,11 @@ export async function bootScroll() {
     const max = Math.max(1, doc.scrollHeight - window.innerHeight)
     setScroll(window.scrollY / max, Math.max(-1, Math.min(1, velocity / 45)))
   })
+
+  // lenis 接管之后，ScrollTrigger 必须被告知「滚动位置由谁说了算」，
+  // 否则 pin 与 scrub 会比页面慢半拍。
+  const { ScrollTrigger } = await import('gsap/ScrollTrigger')
+  lenis.on('scroll', () => ScrollTrigger.update())
 
   return () => {
     cancelAnimationFrame(raf)
@@ -118,31 +125,194 @@ export function useStagger<T extends HTMLElement>(step = 55) {
       kids.forEach((k) => k.classList.add('is-in'))
       return
     }
+    const timers: number[] = []
     const io = new IntersectionObserver(
       (entries) => {
         for (const e of entries) {
           if (!e.isIntersecting) continue
-          kids.forEach((k, i) => window.setTimeout(() => k.classList.add('is-in'), i * step))
+          kids.forEach((k, i) => timers.push(window.setTimeout(() => k.classList.add('is-in'), i * step)))
           io.disconnect()
         }
       },
       { rootMargin: '-10% 0px', threshold: 0.01 },
     )
     io.observe(el)
-    return () => io.disconnect()
+    return () => {
+      timers.forEach(clearTimeout)
+      io.disconnect()
+    }
   }, [step])
   return ref as RefObject<T>
 }
 
-/* ------------------------------------------------------------ 通道跟踪 */
+/* ------------------------------------------------------------ 懒建 trigger */
+
+type Ctx = { revert: () => void }
 
 /**
- * 谁在视口中间，谁就是 live 通道。用 rAF 节流的 scroll 读取而不是
- * IntersectionObserver：需要的是「哪一格占住了中线」，不是「谁露出来了」。
+ * 交给 build 回调的东西。组件侧用它给 useCallback 标类型——不导出这个别名的话，
+ * 每个用到懒建的组件都要重抄一遍 `typeof import('gsap')`。
  */
-export function bootChannelTracking(ids: string[]) {
+export type SceneApi = {
+  gsap: typeof import('gsap').gsap
+  ScrollTrigger: typeof import('gsap/ScrollTrigger').ScrollTrigger
+  root: HTMLElement
+}
+
+/**
+ * 区块级懒装配。进入视口前 1.5 屏才 import gsap 并建 trigger，
+ * 离开 2 屏后 revert()。首屏因此不为下面六章付任何解析与建表成本。
+ *
+ * build 拿到的是一个已经 registerPlugin 过的 gsap 与 ScrollTrigger，
+ * 返回值交给 gsap.context() 管理，卸载时一次性回收。
+ */
+/**
+ * 媒体查询开关。SSR 与首帧一律 false —— 预渲染快照里不该出现任何只有宽屏才成立
+ * 的接管态；水合之后再按真实视口切。用它给「只在宽屏才建的场景」把门。
+ */
+export function useMediaQuery(query: string) {
+  const [on, setOn] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia(query)
+    const sync = () => setOn(mq.matches)
+    sync()
+    mq.addEventListener('change', sync)
+    return () => mq.removeEventListener('change', sync)
+  }, [query])
+  return on
+}
+
+export function useLazyScene(
+  ref: RefObject<HTMLElement | null>,
+  build: (api: SceneApi) => void,
+  enabled = true,
+) {
+  useEffect(() => {
+    const root = ref.current
+    if (!root || !enabled) return
+    if (typeof window === 'undefined' || prefersReducedMotion()) return
+
+    let ctx: Ctx | null = null
+    let dead = false
+
+    const mount = async () => {
+      if (ctx || dead) return
+      const [{ gsap }, { ScrollTrigger }] = await Promise.all([
+        import('gsap'),
+        import('gsap/ScrollTrigger'),
+      ])
+      if (dead) return
+      gsap.registerPlugin(ScrollTrigger)
+      ctx = gsap.context(() => build({ gsap, ScrollTrigger, root }), root)
+    }
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) if (e.isIntersecting) mount()
+      },
+      { rootMargin: '150% 0px 150% 0px' },
+    )
+    io.observe(root)
+
+    return () => {
+      dead = true
+      io.disconnect()
+      ctx?.revert()
+      ctx = null
+    }
+  }, [ref, build, enabled])
+}
+
+/* ------------------------------------------------------------ 案例叠层 */
+
+/**
+ * 案例卡叠层。sticky 定位在 CSS 里（等价于 pin + pinSpacing:false，
+ * 但不需要 pin-spacer，也就不会和 lenis 打架）；这里只做被压住那张的形变：
+ * 后一张推上来时，前一张缩一点、沉一点。
+ *
+ * 退场用的是「沉降遮片」而不是 opacity：opacity 会让上一张卡透过下一张卡
+ * 显形，filter: brightness() 在饱和底色上会把纸压成脏黑，等于偷偷做了个
+ * 深色模式。--sink 盖的是本章底色，读起来是卡片沉回背景里。
+ */
+export function caseStack(
+  gsap: typeof import('gsap').gsap,
+  cards: HTMLElement[],
+) {
+  cards.forEach((c, i) => {
+    c.style.zIndex = String(i + 1)
+    // GSAP 读不到未声明的自定义属性，起始值必须显式落在 style 上
+    c.style.setProperty('--sink', '0')
+  })
+  cards.slice(0, -1).forEach((card, i) => {
+    gsap.to(card, {
+      scale: 0.93,
+      '--sink': 0.55,
+      ease: 'none',
+      scrollTrigger: {
+        trigger: cards[i + 1],
+        start: 'top bottom',
+        end: 'top top',
+        scrub: true,
+      },
+    })
+  })
+}
+
+/* ------------------------------------------------------------ 作品横推 */
+
+/**
+ * 横向推进。跑道（rail）的高度就是行程：一屏 + 需要横移的距离。
+ * sticky 把内容钉在视口，scrub 把 x 从 0 拉到 -distance。
+ * invalidateOnRefresh 让缩放窗口后距离重算，不会推过头或推不到底。
+ */
+export function worksPan(
+  gsap: typeof import('gsap').gsap,
+  rail: HTMLElement,
+  track: HTMLElement,
+) {
+  // scrollWidth 不含溢出内容那一侧的内距——Chrome 在子元素溢出时会把容器的
+  // padding-inline-end 丢掉。照它算出来的行程走完，末卡右缘离视口只剩 8px，
+  // 而开头有整整一个 --gutter 的留白，两头不对称。手动把右内距补回去。
+  const distance = () => {
+    const pad = parseFloat(getComputedStyle(track).paddingInlineEnd) || 0
+    return Math.max(0, track.scrollWidth + pad - window.innerWidth)
+  }
+  const size = () => {
+    rail.style.height = window.innerHeight + distance() + 'px'
+  }
+  size()
+  gsap.to(track, {
+    x: () => -distance(),
+    ease: 'none',
+    scrollTrigger: {
+      trigger: rail,
+      start: 'top top',
+      end: 'bottom bottom',
+      scrub: 1,
+      invalidateOnRefresh: true,
+      onRefreshInit: size,
+    },
+  })
+}
+
+/* ------------------------------------------------------------ 章跟踪 */
+
+/**
+ * 谁占住视口 42% 那条线，谁就是当前章。用 rAF 而不是 IntersectionObserver：
+ * 需要的是「哪一章占住了基准线」，不是「谁露出来了」。
+ * 每帧只读 8 个 getBoundingClientRect，都是只读、同一批次。
+ */
+export function bootChapterTracking(ids: string[]) {
   if (typeof window === 'undefined') return () => {}
+  let raf = 0
+  let lastY = NaN
+  let lastH = NaN
   const read = () => {
+    // 只在滚动位置或视口高度真的变了的时候量。停下来不动时这个循环是空转，
+    // 一次 getBoundingClientRect 都不做。
+    if (window.scrollY === lastY && window.innerHeight === lastH) return
+    lastY = window.scrollY
+    lastH = window.innerHeight
     const mid = window.innerHeight * 0.42
     let best = 0
     for (let i = 0; i < ids.length; i++) {
@@ -155,29 +325,11 @@ export function bootChannelTracking(ids: string[]) {
       }
       if (r.top <= mid) best = i
     }
-    setChannel(best)
-
-    // 顺手广播这一格的机身开口。量的是 DOM，播出去的是语义：
-    // 「洞在视口的哪个位置、多大」。3D 层据此把透镜摆进洞里，不认识这个节点。
-    const bez = document.getElementById(ids[best])?.querySelector('.chassis__bezel')
-    if (!bez) {
-      setAperture(null)
-    } else {
-      const b = bez.getBoundingClientRect()
-      setAperture({
-        x: ((b.left + b.width / 2) / window.innerWidth) * 2 - 1,
-        y: 1 - ((b.top + b.height / 2) / window.innerHeight) * 2,
-        w: (b.width / window.innerWidth) * 2,
-        h: (b.height / window.innerHeight) * 2,
-      })
-    }
+    setChapter(best)
+    // 减弱动效下 lenis 不启动，进度得在这里补一次，织带静态图版才知道停在哪
+    const max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight)
+    setScroll(window.scrollY / max, 0)
   }
-  // 每帧读，而不是只在 scroll 时读。
-  // 开口的位置不止被滚动改变——入场动画落位、sticky 叠层、字体换页、窗口缩放
-  // 都会让那个洞挪地方，而它们一个 scroll 事件都不发。只听 scroll 的话，
-  // 透镜会停在上一次滚动时算出的位置上，看起来就是「玻璃没对准窗口」。
-  // 代价是每帧十来次 getBoundingClientRect，都是只读、同一批次，可以接受。
-  let raf = 0
   const loop = () => {
     raf = requestAnimationFrame(loop)
     read()
@@ -185,48 +337,4 @@ export function bootChannelTracking(ids: string[]) {
   read()
   raf = requestAnimationFrame(loop)
   return () => cancelAnimationFrame(raf)
-}
-
-/* ------------------------------------------------------------ 案例叠层 */
-
-/**
- * 案例卡叠层：后一张推上来时，前一张缩一点、淡一点。
- * sticky 定位在 CSS 里，这里只做被压住那张的形变。
- */
-export async function bootCaseStack(cards: HTMLElement[]) {
-  if (typeof window === 'undefined' || prefersReducedMotion() || cards.length < 2) return () => {}
-  const { gsap } = await import('gsap')
-  const { ScrollTrigger } = await import('gsap/ScrollTrigger')
-  gsap.registerPlugin(ScrollTrigger)
-
-  // 后面的卡永远盖住前面的卡：sticky 元素同处一个层叠上下文，只靠 DOM 顺序
-  // 太脆——一旦有人给某张卡加了 transform 就会翻车。
-  cards.forEach((c, i) => {
-    c.style.zIndex = String(i + 1)
-    // GSAP 读不到未声明的自定义属性，起始值必须显式落在 style 上
-    c.style.setProperty('--sink', '0')
-  })
-
-  // 退场既不用 opacity 也不用 filter。opacity 会让上一张卡透过下一张卡显形；
-  // filter: brightness() 在饱和色底上会把卡片压成脏黑，等于偷偷做了个深色模式。
-  // 这里改成盖一层「机架底色」的veil：卡片是往机架里沉回去，不是被调暗。
-  const tweens = cards.slice(0, -1).map((card, i) =>
-    gsap.to(card, {
-      scale: 0.945,
-      '--sink': 0.62,
-      ease: 'none',
-      scrollTrigger: {
-        trigger: cards[i + 1],
-        start: 'top 88%',
-        end: 'top 18%',
-        scrub: true,
-      },
-    }),
-  )
-  return () => {
-    tweens.forEach((t) => {
-      t.scrollTrigger?.kill()
-      t.kill()
-    })
-  }
 }
