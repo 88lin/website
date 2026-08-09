@@ -1,75 +1,85 @@
-import { useEffect, useRef } from 'react'
-import { tracksIntro, trackA, trackB } from '../content/site'
-import { Mark } from '../components/ui'
-import { Section } from '../components/Section'
-import { revealChars, revealMask } from '../lib/motion'
-
 /**
- * 对开页。
+ * CH.02 主线。
  *
- * 「两条主线，一个交点」这句话本身就是版式说明书：把区块做成一张摊开的对开纸，
- * 中缝一条 1px 实线，两侧底色一浅一深，左栏文字右对齐、右栏文字左对齐，全部朝
- * 中缝靠拢——交点不是画一个图标去比喻，是让排版真的在那里相交。
- * 入场时两栏各自从中缝向外揭开。
+ * 两条业务线不用左右并排的对称卡片讲——那是 PPT 的讲法。这里中间留一条
+ * 96px 的总线槽，两侧各自把线接进去，接点是一枚实心圆端子。右侧整体下沉
+ * 一档，让两栏错开：对称会让人以为两件事一样重，其实它们是先后关系。
  */
-function Column({
-  kicker,
-  items,
-  side,
-}: {
-  kicker: string
-  items: { id: string; title: string; body: string }[]
-  side: 'l' | 'r'
-}) {
-  return (
-    <div className={`spread__col spread__col--${side}`}>
-      <p className="spread__kicker">{kicker}</p>
-      <ul className="mt-7 space-y-7">
-        {items.map((t, i) => (
-          <li key={t.id}>
-            <div className="spread__head">
-              <span className="hand text-[1.1rem] text-brand-deep">0{i + 1}</span>
-              <h3 className="serif text-d3">{t.title}</h3>
-            </div>
-            <p className="mt-2 text-ink-light">{t.body}</p>
-          </li>
-        ))}
-      </ul>
-    </div>
-  )
-}
+
+import { Bay, Lamp } from '../components/Bay'
+import { Reveal } from '../components/Reveal'
+import { channels, trackA, trackB, tracksIntro } from '../content/site'
+
+const ch = channels[2]
 
 export function Tracks() {
-  const root = useRef<HTMLElement>(null)
-  const head = useRef<HTMLHeadingElement>(null)
-
-  useEffect(() => {
-    const el = root.current
-    if (!el) return
-    if (head.current) revealChars(head.current, 0.026)
-    const cols = el.querySelector<HTMLElement>('.spread__grid')
-    if (cols) {
-      revealMask('.spread__col--l', cols, 'r', 0)
-      revealMask('.spread__col--r', cols, 'l', 0)
-    }
-  }, [])
-
   return (
-    <Section id="tracks" tone="cream" label="主线 TWO TRACKS" className="sec--spread" ref={root}>
-      {/* 标题横跨中缝压在对开页上方 */}
-      <div className="max-w-[58ch]">
-        <h2 className="serif text-d2" ref={head}>
-          两条主线，<Mark>一个交点</Mark>
+    <Bay ch={ch}>
+      <div className="bay__head">
+        <h2 id="ch-02-t" className="bay-title">
+          {tracksIntro.headline}
         </h2>
-        <p className="mt-5 text-lead text-ink-light">{tracksIntro.body}</p>
+        <span className="silk-label">A / B</span>
       </div>
+      <p className="bay__lede">{tracksIntro.body}</p>
 
-      <div className="spread__grid mt-[clamp(46px,6vw,86px)]">
-        <div aria-hidden className="spread__seam" />
-        <div aria-hidden className="spread__cross" />
-        <Column kicker={trackA.kicker} items={trackA.items} side="l" />
-        <Column kicker={trackB.kicker} items={trackB.items} side="r" />
+      <div className="tracks__grid">
+        <Reveal v="wire-l" className="trk">
+          <div className="trk__hd">
+            <Lamp state="live" live />
+            <span className="silk-label">TRACK A</span>
+            <span className="sub-title">{trackA.title}</span>
+          </div>
+          {trackA.items.map((it) => (
+            <div className="trk__item silk" key={it.id}>
+              <h4>{it.title}</h4>
+              <p>{it.body}</p>
+            </div>
+          ))}
+        </Reveal>
+
+        <Reveal v="wire-c" className="bus" aria-hidden>
+          <svg viewBox="0 0 96 420" preserveAspectRatio="none">
+            <path
+              d="M0 76 C 40 76, 48 132, 48 210"
+              stroke="var(--fg)"
+              vectorEffect="non-scaling-stroke"
+              opacity="0.85"
+            />
+            <path
+              d="M96 168 C 56 168, 48 176, 48 210"
+              stroke="var(--fg)"
+              vectorEffect="non-scaling-stroke"
+              opacity="0.85"
+            />
+            <path
+              d="M48 210 L 48 420"
+              stroke="var(--fg)"
+              vectorEffect="non-scaling-stroke"
+              opacity="0.32"
+            />
+          </svg>
+          <span className="bus__cross">
+            交点
+            <br />
+            CROSS
+          </span>
+        </Reveal>
+
+        <Reveal v="wire-r" className="trk trk--b">
+          <div className="trk__hd">
+            <Lamp state="live" live />
+            <span className="silk-label">TRACK B</span>
+            <span className="sub-title">{trackB.title}</span>
+          </div>
+          {trackB.items.map((it) => (
+            <div className="trk__item silk" key={it.id}>
+              <h4>{it.title}</h4>
+              <p>{it.body}</p>
+            </div>
+          ))}
+        </Reveal>
       </div>
-    </Section>
+    </Bay>
   )
 }

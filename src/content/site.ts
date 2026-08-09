@@ -1,68 +1,152 @@
 /**
  * 全站唯一数据源。
- * 所有数值均来自真实来源，核实时间 2026-08-08：
- *  - GitHub REST API /users/88lin 与 /users/88lin/repos（star / fork / 仓库数 / followers）
- *  - blog.88lin.eu.org 首页统计（文章数 / 建站天数 / 分类计数）
+ *
+ * 所有数字都能被第三方核验，核实时间 2026-08-10：
+ *  - GitHub REST API  /users/88lin 与 /users/88lin/repos?per_page=100（star / fork / 仓库数 / followers）
+ *  - blog.88lin.eu.org 首页统计条与标签云（文章数 / 建站天数 / 标签计数）
+ *  - video_vip.user.js v3.1.10（解析接口数 / 站点适配器数 / @include 条数，逐行数出来的）
  *  - 各仓库 README 与 description（项目文案逐字或据实改写）
- * 刷新方式见 README「数据刷新」一节。
+ *
+ * `npm run audit` 的第 8 关会重新拉一次上面这些源，跟本文件逐个比对，
+ * 对不上就红。刷新方式见 README「数据刷新」。
  */
 
-export const META_AS_OF = '2026.08'
+export const AS_OF = '2026.08.10'
+
+/* ---------------------------------------------------------------- 机架通道 */
+
+export type ChannelId =
+  | 'hero'
+  | 'metrics'
+  | 'tracks'
+  | 'works'
+  | 'cases'
+  | 'garden'
+  | 'stack'
+  | 'writing'
+  | 'contact'
+
+export type Ground = 'chassis' | 'chassis-deep' | 'chassis-lift' | 'lemon' | 'jade' | 'amber' | 'verm'
+
+export type Channel = {
+  id: ChannelId
+  no: string
+  label: string
+  ground: Ground
+  /** 通道当前状态，机架上的灯就按这个亮 */
+  state: 'live' | 'standby'
+}
+
+/** 通道表：既是导航，也是深链接地址（#ch-03 就是作品通道）。 */
+export const channels: Channel[] = [
+  { id: 'hero', no: '00', label: '总线', ground: 'chassis', state: 'live' },
+  { id: 'metrics', no: '01', label: '读数', ground: 'lemon', state: 'live' },
+  { id: 'tracks', no: '02', label: '主线', ground: 'jade', state: 'live' },
+  { id: 'works', no: '03', label: '作品', ground: 'chassis-deep', state: 'live' },
+  { id: 'cases', no: '04', label: '案例', ground: 'chassis-lift', state: 'live' },
+  { id: 'garden', no: '05', label: '花园', ground: 'amber', state: 'live' },
+  { id: 'stack', no: '06', label: '装备', ground: 'chassis', state: 'live' },
+  { id: 'writing', no: '07', label: '写作', ground: 'lemon', state: 'live' },
+  { id: 'contact', no: '08', label: '接入', ground: 'verm', state: 'live' },
+]
+
+/* ---------------------------------------------------------------- 身份 */
 
 export const profile = {
   name: '茉灵智库',
   handle: '88lin',
   role: 'AI 研究者与 Agent 工程实践者',
-  latinTagline: 'Following the AI frontier, and turning it into real, shippable engineering.',
+  latinTagline: 'Turning frontier AI into shipped, maintainable engineering.',
   location: '中国 · 浙江',
   since: '2022',
+  githubSince: '2022-08-13',
 }
 
-/**
- * 主标题拆成三行阶梯，断行位置是排过的：
- * 「把前沿 AI 变成 / 看得见的 / 工程。」——「的」结尾合法，「工程。」独占一行成为落点。
- */
 export const hero = {
   line1: '把前沿 AI 变成',
-  line2Mark: '看得见',
+  line2Pre: '可',
+  line2Mark: '交付',
+  line2Mid: '、可',
+  line2Circle: '维护',
   line2Post: '的',
-  line3: '工程。',
-  sub: 'AI Agent 工程 × 创意前端。从模型能力到可维护的界面，我负责中间那一段。',
+  line3: '工程结果。',
+  sub: '接口会挂，平台会变，需求会改。我做的东西按「可切换」来设计——所以它们还活着。',
+  latin: 'INTERFACE RACK · 88LIN',
   primaryCta: '聊聊合作',
-  secondaryCta: '看作品',
+  secondaryCta: '看三个案例',
 }
 
 export const CTA_LABEL = '聊聊合作'
+export const CONTACT_EMAIL = '431761794@qq.com'
 export const CONTACT_HREF = 'mailto:431761794@qq.com?subject=%E5%90%88%E4%BD%9C%E5%92%A8%E8%AF%A2'
 
-export const nav = [
-  { label: '作品', href: '#work' },
-  { label: '案例', href: '#cases' },
-  { label: '花园', href: '#garden' },
-  { label: '写作', href: '#writing' },
-]
+/* ---------------------------------------------------------------- 读数 */
 
-export type Metric = { value: string; label: string; sub: string }
+export type Metric = {
+  value: string
+  unit?: string
+  label: string
+  sub: string
+  /** 这个数从哪来，鼠标移上去与案例页的「数字出处」都用它 */
+  source: string
+}
+
+export const metricsIntro = {
+  headline: '面板读数',
+  body: '这一屏没有一个数是我写上去的形容词。每个数右边写着它从哪个接口取的，你可以自己去拉一遍。',
+}
 
 export const metrics: Metric[] = [
-  { value: '4,667', label: '累计 Star', sub: '21 个原创仓库合计' },
-  { value: '500', label: 'Fork', sub: '被复用与二次开发' },
-  { value: '21', label: '原创开源仓库', sub: '另有 81 个 fork' },
-  { value: '55', label: '博客文章', sub: 'blog.88lin.eu.org' },
-  { value: '1,781', label: '建站天数', sub: '持续更新中' },
+  {
+    value: '4,684',
+    label: '累计 Star',
+    sub: '22 个原创仓库合计',
+    source: 'GET /users/88lin/repos → Σ stargazers_count (fork=false)',
+  },
+  {
+    value: '502',
+    label: '被 Fork',
+    sub: '有人真的拿去改了',
+    source: 'GET /users/88lin/repos → Σ forks_count (fork=false)',
+  },
+  {
+    value: '22',
+    label: '原创仓库',
+    sub: '另有 81 个 fork，共 103 个公开仓库',
+    source: 'GET /users/88lin/repos → count(fork=false)',
+  },
+  {
+    value: '144',
+    label: '关注者',
+    sub: '没有互关任务，只有 7 个 following',
+    source: 'GET /users/88lin → followers',
+  },
+  {
+    value: '55',
+    label: '博客文章',
+    sub: '工具、教程、资源，写完就能抄走用',
+    source: 'blog.88lin.eu.org 首页统计条',
+  },
+  {
+    value: '1,784',
+    label: '建站天数',
+    sub: '2022 年 8 月 13 日至今，没断过',
+    source: 'blog.88lin.eu.org 首页统计条',
+  },
 ]
 
-/* ---------------------------------------------------------------- 双主线 */
+/* ---------------------------------------------------------------- 两条主线 */
 
 export type Track = { id: string; title: string; body: string }
 
 export const tracksIntro = {
   headline: '两条主线，一个交点',
-  body: '我追踪 AI 领域的最新进展，但更在意它们能不能落地：用 AI Agent 工作流把真实项目中的复杂需求，拆解成可交付、可维护、可复盘的工程结果。前沿跑得快，地基更要稳。',
+  body: '左边这条负责让 AI 真的能改到线上，右边这条负责让人愿意看、看得懂、用得下去。交点是同一件事：把不确定的能力，接进确定的工程约束里。',
 }
 
 export const trackA = {
-  kicker: 'AI Agent 工程',
+  id: 'A',
+  title: 'AI Agent 工程',
   items: [
     {
       id: 'agent',
@@ -83,12 +167,13 @@ export const trackA = {
 }
 
 export const trackB = {
-  kicker: '创意前端',
+  id: 'B',
+  title: '创意前端',
   items: [
     {
       id: 'webgl',
       title: 'WebGL 与实时渲染',
-      body: 'Three.js 场景、自定义着色器、粒子与折射材质。用一块画布承载整页叙事，而不是堆插件。',
+      body: 'Three.js 场景、自定义着色器、GPGPU 粒子与色散折射。用一块画布承载整页叙事，而不是堆插件。',
     },
     {
       id: 'system',
@@ -98,12 +183,14 @@ export const trackB = {
     {
       id: 'perf',
       title: '性能与可访问性',
-      body: '预算先行：LCP、CLS、包体积、对比度与减弱动效降级，都在构建期用脚本卡住。',
+      body: '预算先行：LCP、CLS、包体积、对比度与减弱动效降级，全部在构建期用脚本卡住。',
     },
   ] as Track[],
 }
 
-/* ---------------------------------------------------------------- 作品 */
+/* ---------------------------------------------------------------- 作品通道 */
+
+export type ProjectState = 'live' | 'maintained' | 'archived'
 
 export type Project = {
   slug: string
@@ -115,12 +202,34 @@ export type Project = {
   stack: string[]
   stars: number
   forks: number
+  state: ProjectState
   live?: string
   repo: string
-  cover: string
+  tone: Ground
+}
+
+export const worksIntro = {
+  headline: '作品通道',
+  body: '六路，按 star 排。状态灯是真的：还在改的亮着，只维护不加功能的是待机。横向拖动。',
 }
 
 export const projects: Project[] = [
+  {
+    slug: 'video_vip',
+    name: 'video_vip',
+    cn: '多平台视频解析脚本',
+    year: '2023',
+    kind: '长期维护',
+    blurb:
+      '2023 年写的油猴脚本，现在是我 star 最多的仓库。18 路解析接口可以随时切换，22 个站点各有独立的播放器容器与遮罩清理规则。它教会我的是：接口一定会挂，可切换才是功能。',
+    stack: ['JavaScript', '油猴脚本', '多端适配'],
+    stars: 4581,
+    forks: 471,
+    state: 'maintained',
+    live: 'https://88lin.github.io/vip/',
+    repo: 'https://github.com/88lin/video_vip',
+    tone: 'verm',
+  },
   {
     slug: 'lofi-radio-web',
     name: 'Lofi Radio Web',
@@ -128,13 +237,14 @@ export const projects: Project[] = [
     year: '2026',
     kind: '创意前端',
     blurb:
-      'macOS 灵动岛式播放器，21 个精选电台，打开即听，无需注册或下载。支持 PWA 安装、睡眠定时与专注时钟。',
+      'macOS 灵动岛式播放器，21 个精选电台，打开即听，不用注册也不用下载。支持 PWA 安装、睡眠定时与专注时钟。',
     stack: ['Next.js 16', 'React', 'TypeScript', 'PWA'],
-    stars: 87,
+    stars: 88,
     forks: 23,
+    state: 'live',
     live: 'https://lofi.88lin.eu.org',
     repo: 'https://github.com/88lin/lofi-radio-web',
-    cover: 'cover-lofi',
+    tone: 'chassis',
   },
   {
     slug: 'computer-repair-skill',
@@ -147,9 +257,10 @@ export const projects: Project[] = [
     stack: ['Agent Skill', 'Python', 'Markdown', 'AGPL-3.0'],
     stars: 7,
     forks: 1,
+    state: 'live',
     live: 'https://repair.88lin.eu.org',
     repo: 'https://github.com/88lin/computer-repair-skill',
-    cover: 'cover-repair',
+    tone: 'jade',
   },
   {
     slug: 'gzh-design-skill',
@@ -158,26 +269,14 @@ export const projects: Project[] = [
     year: '2026',
     kind: 'Agent 工程',
     blurb:
-      '把 Markdown 一键排成可直接粘进公众号编辑器的精致 HTML。8 套主题 + 主题生成器，样式全内联不掉格式，双关卡脚本校验。',
+      '把 Markdown 一键排成能直接粘进公众号编辑器的 HTML。8 套主题加一个主题生成器，样式全内联不掉格式，两道脚本关卡校验。',
     stack: ['Agent Skill', 'HTML', 'Python Lint'],
     stars: 0,
     forks: 0,
+    state: 'live',
     live: 'https://88lin.github.io/gzh-design-skill/docs/gallery/index.html',
     repo: 'https://github.com/88lin/gzh-design-skill',
-    cover: 'cover-gzh',
-  },
-  {
-    slug: 'wesum-wechat-monitor',
-    name: 'WeSum',
-    cn: '公众号智能摘要推送',
-    year: '2026',
-    kind: 'AI 管道',
-    blurb: '微信公众号内容监控与智能总结摘要推送助手，把订阅源变成每日可读的结构化简报。',
-    stack: ['Python', 'LLM', '定时任务'],
-    stars: 2,
-    forks: 6,
-    repo: 'https://github.com/88lin/wesum-wechat-monitor',
-    cover: 'cover-wesum',
+    tone: 'lemon',
   },
   {
     slug: 'diataxis-docs-skill',
@@ -186,137 +285,34 @@ export const projects: Project[] = [
     year: '2026',
     kind: 'Agent 工程',
     blurb:
-      '基于 Diataxis 框架的技术文档写作、分类、拆分与审查技能：让 Agent 判断一篇文档该是教程、指南、参考还是解释。',
+      '基于 Diataxis 框架的文档写作、分类、拆分与审查技能：让 Agent 判断一篇文档到底该是教程、指南、参考还是解释。',
     stack: ['Agent Skill', 'Diataxis', 'Python'],
-    stars: 1,
+    stars: 2,
     forks: 0,
+    state: 'maintained',
     repo: 'https://github.com/88lin/diataxis-docs-skill',
-    cover: 'cover-diataxis',
+    tone: 'chassis-deep',
   },
   {
-    slug: 'video_vip',
-    name: 'video_vip',
-    cn: '多平台视频解析脚本',
-    year: '2023',
-    kind: '长期维护',
-    blurb:
-      '早期项目，也是目前 star 最多的一个。集成多个第三方解析接口并做容错切换，适配 PC 与移动端，长期维护更新。它教会我的是接口会挂、平台会变，而维护成本才是真成本。',
-    stack: ['JavaScript', '油猴脚本', '多端适配'],
-    stars: 4566,
-    forks: 470,
-    repo: 'https://github.com/88lin/video_vip',
-    cover: 'cover-video',
-  },
-]
-
-/* ---------------------------------------------------------------- 深度案例 */
-
-export type CaseStudy = {
-  slug: string
-  index: string
-  name: string
-  cn: string
-  tone: 'brand' | 'pop' | 'ink'
-  sections: { label: string; body: string }[]
-  result: { value: string; label: string }[]
-  link: string
-  linkLabel: string
-}
-
-export const cases: CaseStudy[] = [
-  {
-    slug: 'lofi',
-    index: '01',
-    name: 'Lofi Radio Web',
-    cn: '把「打开即听」做成一个界面约束',
-    tone: 'brand',
-    sections: [
-      {
-        label: '背景',
-        body: '专注场景的背景音需求很稳定，但主流音乐应用都要登录、有推荐流、有社交入口，注意力反而被抢走。目标是做一个打开网页就出声、之后不再打扰你的电台。',
-      },
-      {
-        label: '难点',
-        body: '一是播放器必须小到不占视线，又要在切台、缓冲、断流时给出明确反馈；二是 21 路外部音频源的可用性不一致，需要在不打断用户的前提下静默重试与切换；三是要在移动端保持后台可播与安装态体验。',
-      },
-      {
-        label: '方案',
-        body: '借鉴 macOS 灵动岛：默认收拢成一枚窄条，只显示当前电台与波形，悬停或点击才展开完整控制。用 PWA 做独立窗口与离线壳，睡眠定时与专注时钟直接长在播放器上，让它成为专注流程的一部分而不是一个额外应用。',
-      },
-    ],
-    result: [
-      { value: '87', label: 'GitHub Star' },
-      { value: '23', label: 'Fork' },
-      { value: '21', label: '精选电台' },
-      { value: '0', label: '注册步骤' },
-    ],
-    link: 'https://lofi.88lin.eu.org',
-    linkLabel: '在线体验',
-  },
-  {
-    slug: 'repair',
-    index: '02',
-    name: 'Computer Repair Skill',
-    cn: '给 Agent 装上「先取证，再动手」的职业素养',
-    tone: 'pop',
-    sections: [
-      {
-        label: '背景',
-        body: 'C 盘爆满、系统卡顿、流氓软件、数据恢复，这类问题用自然语言描述很容易，但通用 Agent 常常跳过取证直接给命令，在真机上执行是有破坏性的。',
-      },
-      {
-        label: '难点',
-        body: '既要覆盖 Windows / macOS / Linux 三套完全不同的排查路径，又不能把所有知识一次性塞进上下文；同时必须区分只读诊断与写操作，让删除、提权、分区、服务修改这类动作永远先经过人确认。',
-      },
-      {
-        label: '方案',
-        body: '把知识拆成 62 个专项 Playbook，通过路由索引按问题按需加载，无关内容不进上下文。执行层设两条硬规则：证据优先，先读系统状态、日志与硬件事实再建立候选原因；只读优先，任何改变状态的操作都要先给出影响面、回滚方案与验证步骤。整套技能是纯 Markdown 与 YAML 资源，不绑定任何桌面程序或专用云端 API，并接入 CI 做结构校验。',
-      },
-    ],
-    result: [
-      { value: '62', label: '专项 Playbook' },
-      { value: '3', label: '覆盖操作系统' },
-      { value: 'CI', label: '结构校验' },
-      { value: '0', label: '需装桌面端' },
-    ],
-    link: 'https://repair.88lin.eu.org',
-    linkLabel: '官方网站',
-  },
-  {
-    slug: 'gzh',
-    index: '03',
-    name: 'gzh-design-skill',
-    cn: '在一个到处是限制的编辑器里做设计系统',
-    tone: 'ink',
-    sections: [
-      {
-        label: '背景',
-        body: '公众号编辑器会过滤 style 标签、class、grid 与 position，粘贴进去经常掉格式。想要稳定的排版质量，只能把设计约束前移到生成阶段。',
-      },
-      {
-        label: '难点',
-        body: '样式必须全部内联且只用受支持的写法；同时排版又不能因此变得廉价，要有引言卡、目录、编号章节、代码块、图片与动图角标、脚注式超链接这些真正的组件；最后还要保证 Agent 每次生成的质量可复现。',
-      },
-      {
-        label: '方案',
-        body: '把每套主题做成自成体系的组件库：设计变量 + 数十个精细组件 + 视觉层级表 + 文章类型配方表，共 8 套，另配一个可用一句话或一张参考图生成新主题的生成器。质量用双关卡守住，component_lint.py 校验组件库源头，validate_gzh_html.py 校验最终产物，构成可复现的改、验、修闭环。',
-      },
-    ],
-    result: [
-      { value: '8', label: '成套主题' },
-      { value: '2', label: '道校验关卡' },
-      { value: '100%', label: '样式内联' },
-      { value: '1', label: '键复制粘贴' },
-    ],
-    link: 'https://88lin.github.io/gzh-design-skill/docs/gallery/index.html',
-    linkLabel: '主题画廊',
+    slug: 'wesum-wechat-monitor',
+    name: 'WeSum',
+    cn: '公众号智能摘要推送',
+    year: '2026',
+    kind: 'AI 管道',
+    blurb: '微信公众号内容监控与智能摘要推送助手，把一堆订阅源压成每天可读的结构化简报。',
+    stack: ['Python', 'LLM', '定时任务'],
+    stars: 2,
+    forks: 6,
+    state: 'maintained',
+    repo: 'https://github.com/88lin/wesum-wechat-monitor',
+    tone: 'amber',
   },
 ]
 
 /* ---------------------------------------------------------------- 数字花园 */
 
-export type GardenItem = { name: string; href: string; group: GardenGroup }
 export type GardenGroup = '特效' | '工具' | '内容' | '组件'
+export type GardenItem = { name: string; href: string; group: GardenGroup }
 
 const GH = 'https://88lin.github.io/'
 
@@ -368,17 +364,16 @@ export const garden: GardenItem[] = [
 
 export const gardenIntro = {
   headline: '数字花园',
-  body: '这些年顺手做的小页面，特效、工具、Notion 组件与内容站，全都还活着。挑一类看看。',
+  body: '这些年顺手做的小页面：特效、工具、Notion 组件、内容站。没有一个是 demo，全都还挂在线上跑着。',
   hub: 'https://88lin.github.io',
+  hubLabel: '导航站',
 }
 
-/* ---------------------------------------------------------------- 能力 */
+/* ---------------------------------------------------------------- 装备 */
 
 export const stack = {
   headline: '用什么把它做出来',
-  /** 逐行上推的入场需要显式断行点，不能靠自动换行 */
-  headlineLines: ['用什么', '把它做出来'],
-  body: '不是徽章墙。下面是我真正拿来交付项目的那一批。',
+  body: '不是徽章墙。这是真正插在机架上、这两年交付项目时反复用到的那一批。',
   clusters: [
     {
       id: 'ai',
@@ -407,30 +402,56 @@ export const stack = {
 
 export const writing = {
   headline: '写下来的部分',
-  body: '博客写的是能直接抄走用的东西：技术教程、软件工具、避坑指南与学习思考。不追热点，追可复用。',
+  body: '博客写的是能直接抄走用的东西：软件资源、AI 工具、效率方法、学习资料。不追热点，追可复用。下面是标签计数，一篇文章可以挂多个标签，所以合计比文章数大。',
   href: 'https://blog.88lin.eu.org',
   hrefLabel: 'blog.88lin.eu.org',
-  days: '1,781',
-  /** 文章清单、分类与年份分布见 content/writing.ts（机器生成，来自博客数据库）。 */
+  posts: 55,
+  days: 1784,
+  /** blog.88lin.eu.org 首页标签云，2026-08-10 抓取 */
+  tags: [
+    { name: '工具', count: 29 },
+    { name: '教程', count: 24 },
+    { name: '热门', count: 13 },
+    { name: '软件资源', count: 11 },
+    { name: '必看', count: 9 },
+    { name: 'AI工具', count: 8 },
+    { name: '生活', count: 8 },
+    { name: '健康', count: 6 },
+    { name: '个人成长', count: 4 },
+    { name: '思考', count: 4 },
+    { name: '省钱攻略', count: 3 },
+    { name: '学术论文', count: 3 },
+    { name: '学习工具', count: 3 },
+  ],
+  tagTotal: 27,
+  latest: [
+    { title: 'Adobe 全家桶不限速下载指南', date: '2026-08-08' },
+    { title: '全网 VIP 视频免费看教程', date: '2026-08-06' },
+    { title: '实用生活指南', date: '2026-07-31' },
+    { title: '一键屏蔽流氓软件', date: '2026-07-31' },
+    { title: 'Windows 系统问题排查与修复', date: '2026-07-31' },
+    { title: '电脑蓝屏终极解决办法', date: '2026-07-31' },
+  ],
 }
 
-/* ---------------------------------------------------------------- 联系 */
+/* ---------------------------------------------------------------- 接入 */
 
 export const contact = {
   headline: '有想做的东西？',
-  body: '前端交互、WebGL 视觉、Agent 工作流与知识库落地，都可以直接聊。写清楚你想解决的问题就行，我会回一份可执行的判断。',
+  body: '前端交互、WebGL 视觉、Agent 工作流与知识库落地，都可以直接聊。写清楚你想解决什么问题，我会回一份可执行的判断，不收咨询费。',
+  primary: { label: '邮箱', value: CONTACT_EMAIL, href: CONTACT_HREF },
   channels: [
-    { id: 'email', label: '邮箱', value: '431761794@qq.com', href: 'mailto:431761794@qq.com' },
-    { id: 'qq', label: 'QQ', value: '2528251483', href: 'https://qm.qq.com/q/Q46OjlCcY8' },
     { id: 'github', label: 'GitHub', value: '@88lin', href: 'https://github.com/88lin' },
     { id: 'blog', label: '博客', value: 'blog.88lin.eu.org', href: 'https://blog.88lin.eu.org' },
     { id: 'bilibili', label: '哔哩哔哩', value: 'Hathaway', href: 'https://space.bilibili.com/1412014683' },
     { id: 'wechat', label: '公众号', value: '茉灵智库', href: 'https://go.88lin.eu.org/gzh' },
+    { id: 'hub', label: '导航站', value: '88lin.github.io', href: 'https://88lin.github.io' },
   ],
 }
 
 export const footer = {
-  copyright: '© 2023–2026 茉灵智库 · 88lin',
-  note: '本站由 Vite + React + Tailwind 构建，视觉基准来自 88lin/mydesign-system，源码开源。',
+  copyright: '© 2023 – 2026 茉灵智库 · 88lin',
+  note: '本站由 Vite + React + Three.js 构建，页面数字全部来自公开接口，源码开源。',
   source: 'https://github.com/88lin/website',
+  asOf: AS_OF,
 }
