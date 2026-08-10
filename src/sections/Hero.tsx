@@ -14,7 +14,7 @@
 
 import { useEffect, useRef } from 'react'
 import { Circle } from '../components/Ink'
-import { AS_OF, CONTACT_HREF, hero, metrics, profile } from '../content/site'
+import { AS_OF, CONTACT_HREF, garden, hero, metrics, profile, projects } from '../content/site'
 import { onSignal } from '../lib/bus'
 import { prefersReducedMotion } from '../lib/caps'
 
@@ -104,12 +104,12 @@ export function Hero() {
             <hr className="s-pop__hr" />
             <div className="s-pop__two">
               <div>
-                <b>4,684</b>
-                <s>STARS</s>
+                <b>{garden.length}</b>
+                <s>SITES ONLINE</s>
               </div>
               <div>
-                <b>502</b>
-                <s>FORKS</s>
+                <b>{projects.length}</b>
+                <s>MAINTAINED</s>
               </div>
             </div>
           </aside>
