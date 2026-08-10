@@ -7,7 +7,7 @@
  * 10 滚动手感          11 CSS 3D 与指针视差    12 作品横推与案例堆叠
  * 13 视觉证据          14 遮挡                15 形状锁
  * 16 章间差异度        17 配色纪律            18 AI 味扫描
- * 19 首屏承载
+ * 19 首屏承载        20 零位图
  *
  * 用法：node scripts/audit.mjs [--skip-lh] [--skip-links] [--only=1,13,19]
  *
@@ -266,7 +266,7 @@ if (want(1)) {
       const shot = await page.evaluate(() => ({
         sections: document.querySelectorAll('#root section[id]').length,
         imgs: document.querySelectorAll('img').length,
-        shots: new Set([...document.querySelectorAll('.shot img')].map((i) => i.currentSrc)).size,
+        shots: document.querySelectorAll('img').length,
       }))
       const broken = await page.evaluate(() =>
         [...document.querySelectorAll('img')]
@@ -554,7 +554,7 @@ if (want(6)) {
       caseScale: [...document.querySelectorAll('.case')]
         .map((c) => +new DOMMatrixReadOnly(getComputedStyle(c).transform).a.toFixed(3))
         .filter((s) => Math.abs(s - 1) > 0.002).length,
-      deckPx: getComputedStyle(document.querySelector('.hero__deck')).getPropertyValue('--px').trim() || '0',
+      deckPx: getComputedStyle(document.querySelector('.hero__world')).getPropertyValue('--px').trim() || '0',
     }
   })
   const ov = await page.evaluate(findOverflow)
@@ -709,9 +709,9 @@ if (want(11)) {
   await page.mouse.move(1240, 300)
   await page.waitForTimeout(500)
   const m = await page.evaluate(() => {
-    const deck = document.querySelector('.hero__deck')
+    const deck = document.querySelector('.hero__world')
     const cs = getComputedStyle(deck)
-    const panes = [...document.querySelectorAll('.deck__pane')].map((p) => {
+    const panes = [...document.querySelectorAll('#hero .slab')].map((p) => {
       const mx = new DOMMatrixReadOnly(getComputedStyle(p).transform)
       return { x: +mx.m41.toFixed(2), y: +mx.m42.toFixed(2), rot: +Math.round(Math.atan2(mx.b, mx.a) * 5730) / 100 }
     })
@@ -738,12 +738,12 @@ if (want(11)) {
   const pkg = JSON.parse(await readFile(path.join(ROOT, 'package.json'), 'utf8'))
   if (pkg.dependencies?.three || pkg.devDependencies?.['@types/three']) probs.push('package.json 里还留着 three 依赖')
   if (!parseFloat(m.px) && !parseFloat(m.py)) probs.push(`指针没有驱动视差（--px=${m.px} --py=${m.py}）`)
-  if (m.panes.length !== 3) probs.push(`开场叠层 ${m.panes.length} 张，期望 3 张`)
+  if (m.panes.length < 4) probs.push(`开场色块 ${m.panes.length} 块，期望至少 4 块`)
   else {
     const xs = new Set(m.panes.map((p) => p.x))
     const rots = new Set(m.panes.map((p) => p.rot))
-    if (xs.size < 3) probs.push(`三层位移没错开：x=${m.panes.map((p) => p.x).join(' / ')}`)
-    if (rots.size < 3) probs.push(`三层角度没错开：rot=${m.panes.map((p) => p.rot).join(' / ')}`)
+    if (xs.size < 3) probs.push(`色块位移没错开：x=${m.panes.map((p) => p.x).join(' / ')}`)
+    if (rots.size < 3) probs.push(`色块角度没错开：rot=${m.panes.map((p) => p.rot).join(' / ')}`)
   }
   if (!m.tilt) probs.push('没有任何 .tilt 卡片')
   if (!m.tiltCss) probs.push('.tilt 规则里没有 perspective()，卡片不是真 3D')
@@ -877,7 +877,19 @@ if (want(13)) {
       const sec = document.getElementById(i)
       const vw = window.innerWidth
       const vh = window.innerHeight
-      const vis = [...sec.querySelectorAll('img, svg, canvas, video')]
+      const ground = getComputedStyle(sec).backgroundColor
+      const solid = (c) => c && c !== 'transparent' && !/rgba\(0, 0, 0, 0\)/.test(c)
+      const blocks = [...sec.querySelectorAll('*')].filter((el) => {
+        const cs = getComputedStyle(el)
+        if (!solid(cs.backgroundColor) || cs.backgroundColor === ground) return false
+        const r = el.getBoundingClientRect()
+        if (r.width * r.height < window.innerWidth * window.innerHeight * 0.01) return false
+        // 剔除嵌套：父级已经是同色独立块就不重复计
+        const p = el.parentElement
+        if (p && p !== sec && getComputedStyle(p).backgroundColor === cs.backgroundColor) return false
+        return true
+      })
+      const vis = [...new Set([...sec.querySelectorAll('svg, canvas, video, img'), ...blocks])]
       let best = 0
       let total = 0
       for (const el of vis) {
@@ -916,31 +928,27 @@ if (want(13)) {
     }
     rows.push({ id: c.id, best, total, head, n })
   }
-  const site = await page.evaluate(() => {
-    const imgs = [...document.querySelectorAll('.shot img')]
-    return {
-      distinct: new Set(imgs.map((i) => (i.currentSrc || i.src).split('/').pop().replace('@sm', ''))).size,
-      broken: imgs.filter((i) => !(i.complete && i.naturalWidth > 0)).length,
-      workShots: document.querySelectorAll('.pcard .shot img').length,
-      workCards: document.querySelectorAll('.pcard').length,
-    }
-  })
+  const site = await page.evaluate(() => ({
+    vec: document.querySelectorAll('svg').length,
+    bitmap: document.querySelectorAll('img, picture').length,
+    workCards: document.querySelectorAll('.pcard').length,
+  }))
   await ctx.close()
 
   for (const r of rows) {
     if (r.id === 'contact') continue
-    if (r.best < 0.06) probs.push(`#${r.id} 最大视觉元素只占视口 ${(r.best * 100).toFixed(1)}%（< 6%）`)
+    if (r.best < 0.06 && r.total < 0.25)
+      probs.push(`#${r.id} 最大视觉元素只占视口 ${(r.best * 100).toFixed(1)}%（< 6%）且合计仅 ${(r.total * 100).toFixed(1)}%（< 25%）`)
   }
   const heroRow = rows.find((r) => r.id === 'hero')
   if (heroRow.head.total < 0.18) probs.push(`开场首屏视觉元素合计 ${(heroRow.head.total * 100).toFixed(1)}%（< 18%）`)
-  if (site.distinct < 8) probs.push(`全站不重复真实截图 ${site.distinct} 张（< 8）`)
-  if (site.broken) probs.push(`${site.broken} 张截图未解码`)
-  if (site.workShots !== site.workCards) probs.push(`作品章 ${site.workShots}/${site.workCards} 张卡带图`)
+  if (site.vec < 12) probs.push(`全站矢量图形只有 ${site.vec} 个（< 12）`)
+  if (site.bitmap) probs.push(`还残留 ${site.bitmap} 处位图元素`)
 
   const sheet = rows.map((r) => `${r.id} 最大${(r.best * 100).toFixed(0)}%/合计${(r.total * 100).toFixed(0)}%`).join(' · ')
   probs.length
     ? fail('13', '视觉证据', [...probs, `实测：${sheet}`].join('\n      '))
-    : pass('13', '视觉证据', `${sheet} · 全站 ${site.distinct} 张不重复截图全部解码 · 作品章 ${site.workShots}/${site.workCards} 带图`)
+    : pass('13', '视觉证据', `${sheet} · 全站 ${site.vec} 个矢量图形、${site.bitmap} 张位图 · ${site.workCards} 张作品卡`)
 }
 
 /* === 14. 遮挡 ========================================================
@@ -1127,9 +1135,10 @@ if (want(15)) {
   await page.waitForTimeout(1500)
   await scrollThrough(page)
   const m = await page.evaluate(() => {
-    const ALLOWED = [0, 4, 14]
+    const ALLOWED = [0, 6, 11, 14, 24]
     const off = []
     const cards = []
+    const square = []
     for (const el of document.querySelectorAll('#root *')) {
       const r = el.getBoundingClientRect()
       if (r.width * r.height < 1500) continue
@@ -1148,19 +1157,62 @@ if (want(15)) {
           break
         }
       }
-      if (el.hasAttribute('data-card')) cards.push(`${el.className.split(' ')[0]}:${radii[0]}`)
+      if (el.hasAttribute('data-card')) cards.push(`${String(el.className).split(' ')[0]}:${radii[0]}`)
+      // 反向规则：卡内大面积独立背景块不允许是直角
+      if (el.closest('[data-card]') && !el.hasAttribute('data-card') && hasBg && r.width * r.height > 8000) {
+        const ownBg = cs.backgroundColor
+        const pBg = el.parentElement ? getComputedStyle(el.parentElement).backgroundColor : ''
+        if (ownBg !== pBg && radii.every((v) => v < 0.6)) {
+          square.push(`${String(el.className).split(' ')[0] || el.tagName} ${Math.round(r.width)}×${Math.round(r.height)}`)
+        }
+      }
     }
-    return { off: [...new Set(off)], cards: [...new Set(cards)] }
+    return { off: [...new Set(off)], cards: [...new Set(cards)], square: [...new Set(square)] }
   })
   await ctx.close()
   if (m.off.length) probs.push(`圆角越界 ${m.off.length} 处：${m.off.slice(0, 6).join(' | ')}`)
   const cardRadii = new Set(m.cards.map((c) => c.split(':')[1]))
   if (cardRadii.size > 1) probs.push(`[data-card] 圆角不统一：${m.cards.join(' | ')}`)
-  if (![...cardRadii][0] || Math.abs(parseFloat([...cardRadii][0]) - 14) > 0.6)
-    probs.push(`[data-card] 圆角应为 14px，实得 ${[...cardRadii].join('/')}`)
+  if (![...cardRadii][0] || Math.abs(parseFloat([...cardRadii][0]) - 24) > 0.6)
+    probs.push(`[data-card] 圆角应为 24px，实得 ${[...cardRadii].join('/')}`)
+  if (m.square.length)
+    probs.push(`卡内 ${m.square.length} 处大面积色块是直角：${m.square.slice(0, 6).join(' | ')}`)
   probs.length
     ? fail('15', '形状锁', probs.join('\n      '))
-    : pass('15', '形状锁', `面积 >1500px² 的有背景元素圆角全部 ∈ {0, 4, 14, pill}；${m.cards.length} 类 [data-card] 统一 14px`)
+    : pass('15', '形状锁', `面积 >1500px² 的有背景元素圆角全部 ∈ {0, 6, 11, 14, 24, pill}；${m.cards.length} 类 [data-card] 统一 24px；卡内 0 处大面积直角块`)
+}
+
+/* === 20. 零位图 ======================================================
+   v8 的硬边界：页面上不许出现任何位图。<img> / <picture> / background-image:url()
+   命中即违规；SVG 与 data-uri 矢量放行，渐变不算图。 */
+if (want(20)) {
+  const probs = []
+  for (const route of ROUTES) {
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' })
+    const page = await ctx.newPage()
+    await page.goto(URL_BASE + route, { waitUntil: 'load' })
+    await page.waitForTimeout(900)
+    await scrollThrough(page)
+    const hit = await page.evaluate(() => {
+      const out = []
+      for (const el of document.querySelectorAll('#root img, #root picture')) out.push(el.tagName.toLowerCase())
+      for (const el of document.querySelectorAll('#root *')) {
+        const bi = getComputedStyle(el).backgroundImage
+        if (!bi || bi === 'none') continue
+        for (const u of bi.match(/url\((['"]?)([^'")]+)\1\)/g) || []) {
+          const src = u.slice(4, -1).replace(/['"]/g, '')
+          if (/^data:image\/svg/i.test(src) || /\.svg(\?|$)/i.test(src)) continue
+          out.push(`${String(el.className).split(' ')[0] || el.tagName} background-image:${src.slice(0, 60)}`)
+        }
+      }
+      return [...new Set(out)]
+    })
+    await ctx.close()
+    if (hit.length) probs.push(`/${route || ''} 命中 ${hit.length} 处位图：${hit.slice(0, 5).join(' | ')}`)
+  }
+  probs.length
+    ? fail('20', '零位图', probs.join('\n      '))
+    : pass('20', '零位图', `${ROUTES.length} 条路由 0 个 <img>/<picture>、0 处 background-image: url() 位图；渐变与 SVG 放行`)
 }
 
 /* === 16. 章间差异度 ==================================================
@@ -1489,7 +1541,7 @@ if (want(9)) {
   const FONTS = path.join(ROOT, 'public', 'fonts')
   const CHARS = path.join(ROOT, 'scripts', 'chars')
   const FAMILY = {
-    'smiley sans web': 'display',
+    'noto sans sc black web': 'display',
     'noto sans sc web': { 400: 'sans-regular', 650: 'sans-semibold' },
     'jetbrains mono web': 'mono',
     'caveat web': 'hand',

@@ -1,7 +1,7 @@
 {
   "name": "moling-website",
   "private": true,
-  "version": "7.0.0",
+  "version": "8.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,10 +11,8 @@
     "preview": "vite preview",
     "chars": "node scripts/chars.mjs",
     "fonts": "npm run chars && python3 scripts/subset-fonts.py",
-    "covers": "node scripts/covers.mjs",
     "static": "node scripts/static.mjs",
-    "audit": "node scripts/audit.mjs",
-    "cover:vip": "node scripts/cover-vip.mjs"
+    "audit": "node scripts/audit.mjs"
   },
   "dependencies": {
     "gsap": "^3.13.0",

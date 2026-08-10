@@ -15,13 +15,12 @@
     <meta name="theme-color" content="#FEFCF6" />
     <link rel="canonical" href="https://88lin.github.io/website/" />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
-    <!-- 只预载展示字这一个子集。它排的是 LCP 元素（首屏那三行巨字），约 30 KB，
-         提前发能让首屏一次成型。**正文与等宽不预载**：实测把首屏字体一起预载会
-         在 1.6 Mbps 节流下抢掉 LCP 的带宽，LCP 从 1.88s 掉到 2.56s，为了一笔
-         0.006 的 CLS 赔 0.7 秒首屏，不划算。font 预载必须带 crossorigin，同源也不例外。 -->
-    <link rel="preload" as="font" type="font/woff2" href="./fonts/SmileySans-Display.woff2" crossorigin />
-    <!-- 第二条例外：手写体只有 2 KB 出头，但首屏那句旁批就用它。不预载的话它会在
-         首屏画完之后才换字，制造全站唯一一处 CLS。2 KB 抢不走 LCP 的带宽。 -->
+    <!-- v8 起展示字换成思源黑 Black（22.6 KB 的中日韩子集），**不再预载**：
+         实测把中日韩字体一起预载会在 1.6 Mbps 节流下抢掉 LCP 的带宽，为了一笔
+         很小的 CLS 赔上半秒首屏，不划算。它走 font-display: swap，先用系统字顶。
+         唯一的例外是手写体：只有 2 KB 出头，但首屏那句旁批就用它，不预载的话会在
+         首屏画完之后才换字，制造全站唯一一处 CLS。font 预载必须带 crossorigin，
+         同源也不例外。 -->
     <link rel="preload" as="font" type="font/woff2" href="./fonts/Caveat.woff2" crossorigin />
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="zh_CN" />

@@ -72,13 +72,6 @@ export const hero = {
   secondaryCta: '看三个案例',
 }
 
-/** 首屏那叠真实界面。顺序即层序：0 在最前。 */
-export const heroShots = [
-  { cover: 'video-vip', alt: 'video_vip 解析站首页截图', label: 'video_vip' },
-  { cover: 'lofi', alt: 'Lofi Radio 播放界面截图', label: 'Lofi Radio' },
-  { cover: 'gzh', alt: '公众号排版技能主题画廊截图', label: 'gzh-design-skill' },
-] as const
-
 export const CTA_LABEL = '聊聊合作'
 export const CONTACT_EMAIL = '431761794@qq.com'
 export const CONTACT_HREF = 'mailto:431761794@qq.com?subject=%E5%90%88%E4%BD%9C%E5%92%A8%E8%AF%A2'
@@ -209,10 +202,6 @@ export type Project = {
   live?: string
   repo: string
   tint: Tint
-  /** public/covers/<cover>.webp，构建期抓的真实页面截图 */
-  cover: string
-  /** og = GitHub 官方社交预览卡（2:1，整张放进容器，不裁） */
-  coverKind: 'shot' | 'og'
 }
 
 export const worksIntro = {
@@ -236,8 +225,6 @@ export const projects: Project[] = [
     live: 'https://88lin.github.io/vip/',
     repo: 'https://github.com/88lin/video_vip',
     tint: 'coral',
-    cover: 'video-vip',
-    coverKind: 'shot',
   },
   {
     slug: 'lofi-radio-web',
@@ -254,8 +241,6 @@ export const projects: Project[] = [
     live: 'https://lofi.88lin.eu.org',
     repo: 'https://github.com/88lin/lofi-radio-web',
     tint: 'blue',
-    cover: 'lofi',
-    coverKind: 'shot',
   },
   {
     slug: 'computer-repair-skill',
@@ -272,8 +257,6 @@ export const projects: Project[] = [
     live: 'https://repair.88lin.eu.org',
     repo: 'https://github.com/88lin/computer-repair-skill',
     tint: 'yellow',
-    cover: 'repair',
-    coverKind: 'shot',
   },
   {
     slug: 'gzh-design-skill',
@@ -290,8 +273,6 @@ export const projects: Project[] = [
     live: 'https://88lin.github.io/gzh-design-skill/docs/gallery/index.html',
     repo: 'https://github.com/88lin/gzh-design-skill',
     tint: 'coral',
-    cover: 'gzh',
-    coverKind: 'shot',
   },
   {
     slug: 'diataxis-docs-skill',
@@ -307,8 +288,6 @@ export const projects: Project[] = [
     state: 'maintained',
     repo: 'https://github.com/88lin/diataxis-docs-skill',
     tint: 'blue',
-    cover: 'diataxis',
-    coverKind: 'og',
   },
   {
     slug: 'wesum-wechat-monitor',
@@ -323,8 +302,6 @@ export const projects: Project[] = [
     state: 'maintained',
     repo: 'https://github.com/88lin/wesum-wechat-monitor',
     tint: 'yellow',
-    cover: 'wesum',
-    coverKind: 'og',
   },
 ]
 
@@ -381,22 +358,6 @@ export const garden: GardenItem[] = [
   { name: '窗外动画', href: GH + 'notion/7/', group: '组件' },
 ]
 
-/**
- * 花园里能抓到可用截图的条目。按 name 索引：抓不出内容的（纯 canvas 特效、
- * 弱登录页）一张都不放占位图，宁可只给名字。「特效」整组 14 项都在此列。
- */
-export const gardenCovers: Record<string, string> = {
-  古诗起名: 'gushi',
-  科研海报生成器: 'poster-gen',
-  文字卡片: 'textcard',
-  元素周期表: 'periodic',
-  打印纸设计: 'paperstudio',
-  深度研究: 'research',
-}
-
-/** 精选六项：花园里唯一带图展示的那一排，顺序即版面顺序。 */
-export const gardenFeatured = ['古诗起名', '科研海报生成器', '文字卡片', '元素周期表', '打印纸设计', '深度研究']
-
 export const gardenIntro = {
   headline: '数字花园',
   body: '这些年顺手做的小页面：特效、工具、Notion 组件、内容站。没有一个是 demo，全都还挂在线上跑着。',
@@ -436,17 +397,25 @@ export const stack = {
 /* ---------------------------------------------------------------- 写作 */
 
 /** 手艺章的证据条：两张真实页面，横条裁切，不做成卡片。 */
+
+/**
+ * 手艺章的两处实物。v8 起零位图：这里不再存截图名，只存链接与说明，
+ * 版面上的图形由组件现画 SVG，画的是真实结构（色板取自 palettes.css 的 A 组，
+ * 节点图画的是导航站实际收录的四类小站）。
+ */
 export const craftEvidence = [
   {
-    cover: 'designsystem',
-    alt: '自建设计系统组件库预览页截图',
-    caption: '自建设计系统：组件、配色、手绘框，本站用的就是它',
+    id: 'ds',
+    title: '自建设计系统',
+    caption: '组件、配色、手绘虚线框，本站用的就是它。色板是 A 组 Classic，十组可切。',
+    linkLabel: 'components-preview',
     href: 'https://88lin.github.io/mydesign-system/components-preview.html',
   },
   {
-    cover: 'hub',
-    alt: '导航站首页截图',
-    caption: '导航站：所有小站的总入口',
+    id: 'hub',
+    title: '导航站',
+    caption: '41 个小站的总入口，按特效、工具、内容、组件四类收口。',
+    linkLabel: '88lin.github.io',
     href: 'https://88lin.github.io',
   },
 ] as const
