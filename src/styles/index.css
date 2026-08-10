@@ -1898,12 +1898,15 @@ ol {
     display: none;
   }
 
+  /* 窄屏把阶梯收窄：0.4/0.9em 在 390px 上约等于 30px 缩进，
+     第三行又最短，整块会被读成「居中」。收到 0.16/0.34em，
+     保留参差但让左边缘明确挂住。 */
   .hero__l:nth-child(2) {
-    margin-inline-start: 0.4em;
+    margin-inline-start: 0.16em;
   }
 
   .hero__l:nth-child(3) {
-    margin-inline-start: 0.9em;
+    margin-inline-start: 0.34em;
   }
 
   .work__vp {
