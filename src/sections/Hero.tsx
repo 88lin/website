@@ -18,11 +18,13 @@ import { AS_OF, CONTACT_HREF, hero, metrics, profile } from '../content/site'
 import { onSignal } from '../lib/bus'
 import { prefersReducedMotion } from '../lib/caps'
 
+/** 顺序跟 site.ts 的 chapters 一致。v9 把「能做什么」提到了作品前面，
+    顶栏也得跟着换，否则点导航是往回跳。 */
 const NAV = [
-  { id: 'work', label: '作品' },
+  { id: 'craft', label: '能做什么' },
+  { id: 'work', label: '做过什么' },
   { id: 'cases', label: '怎么做的' },
-  { id: 'craft', label: '手艺' },
-  { id: 'notes', label: '在写' },
+  { id: 'notes', label: '在写在跑' },
 ]
 
 /** 纸板上那三行是 video_vip 里真实在用的降级策略，不是示意图。 */

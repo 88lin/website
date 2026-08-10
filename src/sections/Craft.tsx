@@ -1,42 +1,31 @@
 /**
- * 04 手艺 · 交汇图。
+ * 02 能做什么 · 交汇图 + 服务。
  *
- * 这一章一张卡都不用做主角。前面两章连着两屏都是卡了，再堆一屏卡，
- * 六章就又变成一个模子。这里的主角是一张几何图：两条主线朝同一个点收。
- * 收敛这件事本身就是论点，所以它必须是画出来的，不是写出来的。
+ * v8 这一章塞了六个子模块：收敛图、两栏 dl、跑马灯、两张证据卡、六行数字口径表。
+ * 谁都不突出，整章读起来像一个杂物抽屉。v9 砍到三段，并且换了它在全站的位置 ——
+ * 从第四章提到第二章，因为它是唯一一段能回答「你能替我做什么」的内容。
  *
- * 四个部分各回答一件事：
- *  1) 两条线为什么会交在一起（那张收敛图 + 一句手写旁批）。
- *  2) 每条线上具体在做什么（左右两栏，各三件）。
- *  3) 手上有什么（36 项跑马灯，不是徽章墙，也不是横滚章）。
- *  4) 前面所有数字的口径（一张表，值、名、限定、接口路径四列）。
+ *  ① 交汇图：两条主线做成两块实体色块，各自带三枚能力胶囊，朝中间的菱形交点收。
+ *     收敛这件事本身就是论点，所以它必须是画出来的，不是写出来的。
+ *  ② 我能接什么活：三张服务卡，每张写清交付物和适合谁。这是「不拿仓库说事」的正面替代。
+ *  ③ 手上有什么：36 项跑马灯，压成单行。
  *
- * 零位图：两处实物用现画的矢量代替截图。左边是设计系统 A 组色板的八个主色，
- * 右边是导航站四类小站的节点图，节点数就是 garden 里的真实条目数。
+ * 砍掉的两块各有理由：六行数字口径表和 notes 章的统计条重复；导航站证据卡和
+ * notes 章的小站精选重复。同一件事在一页里说两遍，两遍都会变弱。
+ *
+ * 零位图：设计系统那处实物用现画的色板矢量代替截图，八格取自 palettes.css 的当前组。
  */
 
 import { ArrowOut } from '../components/Icons'
 import { Annot } from '../components/Ink'
-import {
-  craftEvidence,
-  garden,
-  metrics,
-  stack,
-  trackA,
-  trackB,
-  tracksIntro,
-  type GardenGroup,
-} from '../content/site'
+import { craftEvidence, services, servicesIntro, stack, trackA, trackB, tracksIntro } from '../content/site'
 import { useStagger } from '../lib/motion'
 
 const ALL = stack.clusters.flatMap((c) => c.items)
 /** 跑马灯靠 translate3d(-50%) 循环，所以内容必须是严格的两份。 */
 const BELT = [...ALL, ...ALL]
 
-const GROUPS: GardenGroup[] = ['特效', '工具', '内容', '组件']
-const COUNT = GROUPS.map((g) => garden.filter((x) => x.group === g).length)
-
-/** 设计系统 A 组 Classic 的八个主色，取自 palettes.css，不另配色值。 */
+/** 当前色板的八个主色，取自 palettes.css，组件不另配色值。 */
 const SWATCH = [
   '--brand',
   '--brand-deep',
@@ -48,48 +37,19 @@ const SWATCH = [
   '--cream-dark',
 ]
 
-/** 四个簇的锚点，顺序与 GROUPS 一致。 */
-const ANCHOR = [
-  [50, 26],
-  [270, 26],
-  [50, 94],
-  [270, 94],
-]
-
-const FILL = ['var(--brand-deep)', 'var(--pop-deep)', 'var(--warning)', 'var(--ink)']
-
-/** 把 n 个点摆成每行 5 个的小方阵，围着锚点居中。 */
-function cluster(cx: number, cy: number, n: number) {
-  const rows = Math.ceil(n / 5)
-  const out: { x: number; y: number }[] = []
-  for (let i = 0; i < n; i += 1) {
-    const r = Math.floor(i / 5)
-    const inRow = Math.min(5, n - r * 5)
-    const c = i % 5
-    out.push({
-      x: cx + (c - (inRow - 1) / 2) * 10,
-      y: cy + (r - (rows - 1) / 2) * 10,
-    })
-  }
-  return out
-}
+const DS = craftEvidence.find((e) => e.id === 'ds')!
 
 function Swatches() {
   return (
-    <svg
-      className="craft__sw"
-      viewBox="0 0 320 56"
-      role="img"
-      aria-label="设计系统 A 组 Classic 的八个主色"
-    >
+    <svg className="craft__sw" viewBox="0 0 320 44" role="img" aria-label="设计系统当前色板的八个主色">
       {SWATCH.map((v, i) => (
         <rect
           key={v}
           x={2 + i * 40}
-          y={6}
+          y={4}
           width={36}
-          height={44}
-          rx={6}
+          height={36}
+          rx={10}
           fill={`var(${v})`}
           stroke="currentColor"
           strokeOpacity="0.16"
@@ -99,87 +59,85 @@ function Swatches() {
   )
 }
 
-function HubGraph() {
-  const total = COUNT.reduce((a, b) => a + b, 0)
-  const label = GROUPS.map((g, i) => `${g} ${COUNT[i]}`).join('，')
+/**
+ * 交汇图。两条轨是实体色块（不是描边线），朝中间的菱形节点收。
+ * 轨上的六个能力点由 trackA / trackB 派生，不在这里另写一份。
+ */
+function Junction() {
   return (
-    <svg
-      className="craft__sw"
-      viewBox="0 0 320 120"
-      role="img"
-      aria-label={`导航站收录 ${total} 个小站，分四类：${label}`}
-    >
-      {ANCHOR.map(([x, y], i) => (
-        <line
-          key={`l${i}`}
-          x1={160}
-          y1={60}
-          x2={x}
-          y2={y}
-          stroke="currentColor"
-          strokeOpacity="0.28"
-          strokeWidth="2"
-        />
-      ))}
-      {ANCHOR.map(([x, y], i) =>
-        cluster(x, y, COUNT[i]).map((p, j) => (
-          <circle key={`d${i}-${j}`} cx={p.x} cy={p.y} r="3.6" fill={FILL[i]} />
-        )),
-      )}
-      <circle cx="160" cy="60" r="10" fill="var(--ink)" />
-    </svg>
+    <div className="jx">
+      <svg className="jx__svg" viewBox="0 0 1200 200" aria-hidden="true" preserveAspectRatio="none">
+        <path className="jx__band jx__band--a" d="M 0 24 C 300 24 380 88 596 96 L 596 128 C 360 120 280 56 0 56 Z" />
+        <path className="jx__band jx__band--b" d="M 1200 24 C 900 24 820 88 604 96 L 604 128 C 840 120 920 56 1200 56 Z" />
+      </svg>
+
+      <div className="jx__grid">
+        {[trackA, trackB].map((t, side) => (
+          <div className="slab jx__trk" key={t.id} data-side={side === 0 ? 'a' : 'b'}>
+            <p className="jx__no">{side === 0 ? 'TRACK A' : 'TRACK B'}</p>
+            <h3 className="jx__title">{t.title}</h3>
+            <ul className="jx__caps">
+              {t.items.map((it, i) => (
+                <li key={it.id}>
+                  <span className="pill pill--cap" data-k={i}>
+                    {it.title}
+                  </span>
+                  <span className="jx__body">{it.body}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+
+      <div className="slab jx__node">
+        <b>可交付的产品</b>
+        <s>THE JOIN</s>
+      </div>
+    </div>
   )
 }
 
 export function Craft() {
-  const rows = useStagger<HTMLDivElement>(55)
+  const rows = useStagger<HTMLDivElement>(70)
 
   return (
     <section id="craft" className="ch ch--craft" data-tone="yellow" aria-labelledby="craft-h">
       <div className="wrap">
         <div className="craft__head">
-          <p className="eyebrow">TWO TRACKS</p>
+          <p className="eyebrow">TWO TRACKS · ONE JOIN</p>
           <h2 className="ch-title" id="craft-h">
             {tracksIntro.headline}
           </h2>
           <p className="ch-lede">{tracksIntro.body}</p>
         </div>
 
-        <div className="craft__join">
-          <div className="craft__joinlab">
-            <span>{trackA.title}</span>
-            <span>{trackB.title}</span>
-          </div>
-          <svg className="craft__joinsvg" viewBox="0 0 1200 170" aria-hidden="true">
-            <path className="ln ln-b" d="M 60 16 C 240 60 420 110 588 148" />
-            <path className="ln ln-c" d="M 1140 16 C 960 60 780 110 612 148" />
-            <circle className="dot" cx="60" cy="16" r="7" />
-            <circle className="dot" cx="238" cy="61" r="7" />
-            <circle className="dot" cx="413" cy="106" r="7" />
-            <circle className="dot" cx="1140" cy="16" r="7" />
-            <circle className="dot" cx="962" cy="61" r="7" />
-            <circle className="dot" cx="787" cy="106" r="7" />
-            <circle className="hub" cx="600" cy="152" r="12" />
-          </svg>
-          <Annot seed="craft-join">
-            交点只有一条：能力可以不确定，接口和退路必须确定
-          </Annot>
-        </div>
+        <Junction />
 
-        <div className="craft__cross">
-          {[trackA, trackB].map((t) => (
-            <div className="craft__trk" key={t.id}>
-              <h3>{t.title}</h3>
-              <dl>
-                {t.items.map((it) => (
-                  <div key={it.id}>
-                    <dt>{it.title}</dt>
-                    <dd>{it.body}</dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
-          ))}
+        <Annot seed="craft-join">交点只有一条：能力可以不确定，接口和退路必须确定</Annot>
+
+        <div className="craft__svc">
+          <div className="craft__svchead">
+            <h3 className="craft__h3">{servicesIntro.headline}</h3>
+            <p className="craft__lede2">{servicesIntro.body}</p>
+          </div>
+          <div className="svc" ref={rows}>
+            {services.map((s) => (
+              <article className="slab svc__card rise" data-card="" data-stagger="" data-tint={s.tint} key={s.id}>
+                <p className="svc__no">{s.no}</p>
+                <h4 className="svc__title">{s.title}</h4>
+                <p className="svc__body">{s.body}</p>
+                <ul className="svc__del">
+                  {s.deliverables.map((d, i) => (
+                    <li className="pill pill--tag" data-k={i} key={d}>
+                      {d}
+                    </li>
+                  ))}
+                </ul>
+                <p className="svc__fit">{s.fit}</p>
+              </article>
+            ))}
+          </div>
         </div>
 
         <div className="craft__kit">
@@ -192,31 +150,15 @@ export function Craft() {
           </ul>
         </div>
 
-        <div className="craft__evd">
-          {craftEvidence.map((e) => (
-            <div className="slab craft__card" data-card="" key={e.id}>
-              <h3>{e.title}</h3>
-              <p>{e.caption}</p>
-              {e.id === 'ds' ? <Swatches /> : <HubGraph />}
-              <a className="craft__more" href={e.href} target="_blank" rel="noreferrer noopener">
-                {e.linkLabel} <ArrowOut />
-              </a>
-            </div>
-          ))}
-        </div>
-
-        <div className="craft__cal">
-          <h3>每个数从哪来</h3>
-          <div className="craft__rows" ref={rows}>
-            {metrics.map((m) => (
-              <div className="craft__row rise" data-stagger="" key={m.label}>
-                <b className="craft__rv">{m.value}</b>
-                <span className="craft__rl">{m.label}</span>
-                <span className="craft__rs">{m.sub}</span>
-                <code className="craft__ro">{m.source}</code>
-              </div>
-            ))}
-          </div>
+        <div className="craft__ds">
+          <Swatches />
+          <p className="craft__dstxt">
+            <b>{DS.title}</b>
+            {DS.caption}
+          </p>
+          <a className="pill pill--src" href={DS.href} target="_blank" rel="noreferrer noopener">
+            {DS.linkLabel} <ArrowOut />
+          </a>
         </div>
       </div>
     </section>

@@ -1,27 +1,17 @@
 /**
- * 05 在写 · 花园与博客。
+ * 05 在写 + 在跑。
  *
- * v7 这一章靠六张缩略图撑场面，图一删就塌。v8 换成一堵 41 块的彩色底卡墙：
- * 每块是一个真实在线的小站，跨度按 4/3/3/2 轮换，同一行不出现两块等宽——
- * 既避开「一行三张等宽卡」的模板感，也让这堵墙自己就是数量的证据。
+ * v8 这一章铺了 40 块彩色底卡。数量本身当过论据，但四十块挤在一屏谁也看不清，
+ * 而且用户本来就有一个导航站在做同一件事，等于把导航站抄了一遍还抄丑了。
+ * v9 每类挑一个，附一句「为什么是它」，剩下的交给导航站。
  *
- * 底卡颜色按七组 AA 达标的面色/字色组合轮换，不是随机上色：
- * 每一格的字色是跟着面色定死的，不存在浅字压浅底。
+ * 另一处是实打实的缺陷：v8 的博客六篇只有标题和日期，点不开。数据源里当时
+ * 根本没存链接。v9 每篇都带永久链接，整块条目是 <a>，不是标题旁边挂个小箭头。
  */
 
 import { ArrowOut } from '../components/Icons'
-import { garden, gardenIntro, writing, type GardenGroup } from '../content/site'
+import { gardenFeatured, gardenIntro, writing, type GardenGroup } from '../content/site'
 import { useStagger } from '../lib/motion'
-
-/** 12 栏里的跨度。四种行型轮换：每行都收口成 12，但宽块的位置逐行挪，
- *  一行内最多两块等宽——避免整堵墙退化成「第一列宽、其余等分」的表格。 */
-const ROWS = [
-  [4, 3, 3, 2],
-  [3, 4, 2, 3],
-  [2, 3, 4, 3],
-  [3, 2, 3, 4],
-]
-const spanOf = (i: number) => ROWS[Math.floor(i / 4) % ROWS.length][i % 4]
 
 /** 组名的等宽字缩写：JetBrains Mono 没有汉字，角标只能走拉丁。 */
 const TAG: Record<GardenGroup, string> = {
@@ -32,7 +22,8 @@ const TAG: Record<GardenGroup, string> = {
 }
 
 export function Notes() {
-  const wall = useStagger<HTMLDivElement>(28)
+  const wall = useStagger<HTMLDivElement>(60)
+  const list = useStagger<HTMLUListElement>(50)
 
   return (
     <section id="notes" className="ch ch--notes" data-tone="paper" aria-labelledby="notes-h">
@@ -43,30 +34,43 @@ export function Notes() {
             {gardenIntro.headline}
           </h2>
           <p className="ch-lede">{gardenIntro.body}</p>
-          <a className="notes__hub" href={gardenIntro.hub} target="_blank" rel="noreferrer noopener">
-            {gardenIntro.hubLabel} {gardenIntro.hub.replace('https://', '')}
-            <ArrowOut />
-          </a>
         </div>
 
         <div className="garden" ref={wall}>
-          {garden.map((it, i) => (
+          {gardenFeatured.map((it, i) => (
             <a
               className="slab gcell rise"
               data-stagger=""
-              data-c={i % 7}
+              data-c={i % 6}
               key={it.name}
               href={it.href}
               target="_blank"
               rel="noreferrer noopener"
-              style={{ '--sp': spanOf(i) } as React.CSSProperties}
             >
-              <b>{it.name}</b>
-              <s>
-                {String(i + 1).padStart(2, '0')} {TAG[it.group]}
-              </s>
+              <s className="gcell__tag">{TAG[it.group]}</s>
+              <b className="gcell__name">{it.name}</b>
+              <span className="gcell__why">{it.why}</span>
+              <span className="gcell__go" aria-hidden="true">
+                <ArrowOut />
+              </span>
             </a>
           ))}
+
+          <a
+            className="slab gcell gcell--hub"
+            href={gardenIntro.hub}
+            target="_blank"
+            rel="noreferrer noopener"
+          >
+            <s className="gcell__tag">ALL {gardenIntro.total}</s>
+            <b className="gcell__name">其余 {gardenIntro.rest} 个在导航站</b>
+            <span className="gcell__why">
+              {gardenIntro.hubLabel} {gardenIntro.hub.replace('https://', '')}
+            </span>
+            <span className="gcell__go" aria-hidden="true">
+              <ArrowOut />
+            </span>
+          </a>
         </div>
 
         <div className="notes__blog">
@@ -79,27 +83,28 @@ export function Notes() {
             <p>{writing.body}</p>
             <ul className="notes__tags">
               {writing.tags.map((t) => (
-                <li className="chip" key={t.name}>
+                <li className="pill pill--tag" data-k={t.count % 3} key={t.name}>
                   {t.name}
                   <b>{t.count}</b>
                 </li>
               ))}
             </ul>
-            <a
-              className="btn btn--ink btn--sm"
-              href={writing.href}
-              target="_blank"
-              rel="noreferrer noopener"
-            >
+            <a className="pill pill--go" href={writing.href} target="_blank" rel="noreferrer noopener">
               {writing.hrefLabel} <ArrowOut />
             </a>
           </div>
 
-          <ul className="notes__list">
+          {/* 整条是链接。v8 这里是六个 <li><b>标题</b><s>日期</s></li>，点不开。 */}
+          <ul className="notes__list" ref={list}>
             {writing.latest.map((p) => (
-              <li key={p.title}>
-                <b>{p.title}</b>
-                <s>{p.date}</s>
+              <li className="rise" data-stagger="" key={p.title}>
+                <a href={p.href} target="_blank" rel="noreferrer noopener">
+                  <s>{p.date}</s>
+                  <b>{p.title}</b>
+                  <span className="notes__go" aria-hidden="true">
+                    <ArrowOut />
+                  </span>
+                </a>
               </li>
             ))}
           </ul>

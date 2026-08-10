@@ -169,7 +169,12 @@ export function useMediaQuery(query: string) {
 
 export function useLazyScene(
   ref: RefObject<HTMLElement | null>,
-  build: (api: SceneApi) => void,
+  /**
+   * 返回值会被 gsap.context 当作卸载钩子调用。凡是 build 里手写过的内联样式
+   * 与 classList，都必须在这里还原 —— context.revert() 只认它自己 tween 过的属性，
+   * 手写的 `el.style.height` 它一概不管，v8 的移动端空白就是这么来的。
+   */
+  build: (api: SceneApi) => void | (() => void),
   enabled = true,
 ) {
   useEffect(() => {
@@ -292,4 +297,17 @@ export function worksPan(
       onRefreshInit: size,
     },
   })
+
+  /**
+   * 卸载钩子。上面那句 `rail.style.height = ...` 是手写的内联样式，
+   * gsap 的 context.revert() 不会碰它 —— 这正是 v8 移动端「空白占满一页」的成因：
+   * 视口一旦宽过断点（手机横屏就够了）跑道被钉成两千多像素高，
+   * 转回竖屏时 CSS 已经切成竖排，那句内联高度却还在，于是留下一大截死白。
+   * 这里连同 pan 态的 class 一起还原。
+   */
+  return () => {
+    rail.style.removeProperty('height')
+    track.style.removeProperty('transform')
+    track.classList.remove('is-pan')
+  }
 }

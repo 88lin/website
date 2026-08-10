@@ -35,9 +35,9 @@ SRC_SMILEY = Path("/workspace/fonts/smiley")
 # 配这一版方正的实心块体会打架，且倾斜字的右上角要额外留白，块面排版容不下。
 # 思源黑是可变字体，900 这一档同样要先 instancer 定轴再子集。
 JOBS = [
+    # v9 起只留展示档。正文两档（Regular 85.7 KB + Semibold 31.7 KB）改成
+    # 系统栈，不再下载 —— 见 index.css 顶部的字体说明与代价交代。
     (SRC_NOTO / "NotoSansSC.ttf", 900, "display", "NotoSansSC-Display.woff2", "OFL-NotoSansSC.txt", {}),
-    (SRC_NOTO / "NotoSansSC.ttf", 400, "sans-regular", "NotoSansSC-Regular.woff2", "OFL-NotoSansSC.txt", {}),
-    (SRC_NOTO / "NotoSansSC.ttf", 650, "sans-semibold", "NotoSansSC-Semibold.woff2", "OFL-NotoSansSC.txt", {}),
     (SRC_DS / "JetBrainsMono.ttf", 400, "mono", "JetBrainsMono-Regular.woff2", "OFL-JetBrainsMono.txt", {}),
     (SRC_DS / "Caveat.ttf", 600, "hand", "Caveat.woff2", "OFL-Caveat.txt", {}),
 ]
@@ -58,6 +58,8 @@ LICENSE_NAME = {
 
 # 旧版留下的产物：字体已从 @font-face 里删掉，文件留着只会白占预算与仓库。
 STALE = [
+    "NotoSansSC-Regular.woff2",
+    "NotoSansSC-Semibold.woff2",
     "SmileySans-Display.woff2",
     "LICENSE-SmileySans.txt",
     "Fraunces.woff2",
@@ -154,8 +156,10 @@ def main() -> None:
     width = max(len(r[0]) for r in rows)
     for out_name, weight, n, size in rows:
         print(f"{out_name:<{width}}  wght {weight:<3}  {n:>5} 字  {size / 1024:7.1f} KB")
-    print(f"{'合计':<{width}}                       {total / 1024:7.1f} KB  / 预算 200 KB")
-    if total > 200 * 1024:
+    # 预算随字体策略一起收紧：正文两档改系统字之后只剩三个小子集，
+    # 200 KB 的旧上限已经形同虚设，收到 40 KB 才继续有约束力。
+    print(f"{'合计':<{width}}                       {total / 1024:7.1f} KB  / 预算 40 KB")
+    if total > 40 * 1024:
         sys.exit("字体总量超预算")
 
 
