@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C · 立体色块建构</title>
+<style>
+:root{
+  --brand:#2B7FD8; --brand-deep:#1E5BA8; --brand-tint:#6FA9E6; --highlight:#F4D758;
+  --pop:#E84A5F; --pop-deep:#C93449; --cream:#FEFCF6; --cream-dark:#FAF6EB;
+  --ink:#1A1A2E; --ink-light:#4A4A5A; --ink-faint:#6E6E80;
+  --gut:clamp(18px,3.4vw,52px);
+  --sans:"Noto Sans CJK SC","Noto Sans SC",sans-serif;
+  --mono:"Noto Sans Mono CJK SC",ui-monospace,monospace;
+  --px:0; --py:0;
+  /* 挤出厚度：固定光向的实心侧面，不是模糊阴影 */
+  --ex-ink:1px 1px 0 #12141f,2px 2px 0 #12141f,3px 3px 0 #12141f,4px 4px 0 #12141f,5px 5px 0 #12141f,
+           6px 6px 0 #12141f,7px 7px 0 #12141f,8px 8px 0 #12141f,9px 9px 0 #12141f,10px 10px 0 #12141f,
+           11px 11px 0 #12141f,12px 12px 0 #12141f,13px 13px 0 #12141f,14px 14px 0 #12141f;
+  --ex-blue:1px 1px 0 #16467f,2px 2px 0 #16467f,3px 3px 0 #16467f,4px 4px 0 #16467f,5px 5px 0 #16467f,
+            6px 6px 0 #16467f,7px 7px 0 #16467f,8px 8px 0 #16467f,9px 9px 0 #16467f,10px 10px 0 #16467f,
+            11px 11px 0 #16467f,12px 12px 0 #16467f,13px 13px 0 #16467f,14px 14px 0 #16467f,
+            15px 15px 0 #16467f,16px 16px 0 #16467f,17px 17px 0 #16467f,18px 18px 0 #16467f,
+            19px 19px 0 #16467f,20px 20px 0 #16467f;
+  --ex-yel:1px 1px 0 #C6A82C,2px 2px 0 #C6A82C,3px 3px 0 #C6A82C,4px 4px 0 #C6A82C,5px 5px 0 #C6A82C,
+           6px 6px 0 #C6A82C,7px 7px 0 #C6A82C,8px 8px 0 #C6A82C,9px 9px 0 #C6A82C,10px 10px 0 #C6A82C,
+           11px 11px 0 #C6A82C,12px 12px 0 #C6A82C,13px 13px 0 #C6A82C,14px 14px 0 #C6A82C;
+  --ex-pop:1px 1px 0 #992536,2px 2px 0 #992536,3px 3px 0 #992536,4px 4px 0 #992536,5px 5px 0 #992536,
+           6px 6px 0 #992536,7px 7px 0 #992536,8px 8px 0 #992536,9px 9px 0 #992536,10px 10px 0 #992536,
+           11px 11px 0 #992536,12px 12px 0 #992536,13px 13px 0 #992536,14px 14px 0 #992536,
+           15px 15px 0 #992536,16px 16px 0 #992536;
+  --ex-pap:1px 1px 0 #2C2E3D,2px 2px 0 #2C2E3D,3px 3px 0 #2C2E3D,4px 4px 0 #2C2E3D,5px 5px 0 #2C2E3D,
+           6px 6px 0 #2C2E3D,7px 7px 0 #2C2E3D,8px 8px 0 #2C2E3D,9px 9px 0 #2C2E3D,10px 10px 0 #2C2E3D;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{color-scheme:light;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{background:var(--cream);color:var(--ink);font-family:var(--sans);overflow-x:hidden;-webkit-font-smoothing:antialiased;
+  background-image:linear-gradient(rgba(26,26,46,.05) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(26,26,46,.05) 1px,transparent 1px);
+  background-size:46px 46px}
+
+.top{display:flex;align-items:center;gap:1rem;padding:.85rem var(--gut);position:relative;z-index:20;height:52px}
+.top b{font-weight:900;font-size:1.02rem}
+.top span{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;color:var(--ink-faint)}
+.top nav{margin-inline-start:auto;display:flex;gap:1.35rem;font-family:var(--mono);font-size:.73rem;
+  letter-spacing:.1em;color:var(--ink-light)}
+
+.stage{position:relative;height:calc(100dvh - 52px);min-height:620px}
+.world{position:absolute;inset:clamp(.3rem,1.2vw,1rem) var(--gut) clamp(.7rem,1.8vw,1.35rem)}
+
+/* 每块自带 perspective，不用共享 preserve-3d：
+   共享空间里 translateZ 会连带放大，块会被推出视口，且相交平面的前后关系不可控 */
+.slab{position:absolute}
+
+/* ── 主板：蓝，承标题。左上到右下对角构图的起点 ── */
+.s-main{left:0;top:0;width:60%;bottom:38%;z-index:2;background:var(--brand-deep);box-shadow:var(--ex-blue);
+  padding:clamp(1.1rem,2.3vw,2.1rem) clamp(1.2rem,2.4vw,2.3rem);
+  display:flex;flex-direction:column;justify-content:space-between;
+  transform:perspective(1700px) rotateY(-5deg) rotateZ(-1deg)
+            translate3d(calc(var(--px) * 5px),calc(var(--py) * 4px),0)}
+.s-main .eb{display:block;text-decoration:none;font-family:var(--mono);font-size:.7rem;letter-spacing:.24em;
+  color:#fff;opacity:.9}
+.s-main h1{color:#fff;font-weight:900;line-height:1.06;letter-spacing:-.028em;
+  font-size:clamp(1.75rem,5.1vw,4.3rem)}
+.s-main h1 i{font-style:normal;display:block}
+.s-main h1 i:nth-child(2){margin-inline-start:.12em}
+.s-main h1 em{font-style:normal;color:var(--highlight)}
+.s-main p{color:#fff;margin-block-start:.9rem;max-width:25em;line-height:1.6;
+  font-size:clamp(.85rem,.8rem+.26vw,1.02rem)}
+
+/* ── 黄块：动词。骑在蓝板右上角外沿，压破顶栏那条线 ── */
+.s-yel{left:47.5%;top:-2.5%;width:30%;z-index:6;background:var(--highlight);box-shadow:var(--ex-yel);
+  padding:.85rem 1.35rem 1rem;
+  transform:perspective(1200px) rotateY(-9deg) rotateZ(3deg)
+            translate3d(calc(var(--px) * 15px),calc(var(--py) * 12px),0)}
+.s-yel b{display:block;font-weight:900;font-size:clamp(1.3rem,2.9vw,2.45rem);line-height:1.08;letter-spacing:-.012em}
+.s-yel s{display:block;text-decoration:none;font-family:var(--mono);font-size:.63rem;letter-spacing:.19em;
+  color:#4A4A5A;margin-block-start:.32rem}
+
+/* ── 珊瑚柱：数字。咬住蓝板右缘，填满右半场 ── */
+.s-pop{left:57%;right:0;top:16%;bottom:31%;z-index:4;background:var(--pop-deep);box-shadow:var(--ex-pop);
+  padding:clamp(1rem,2vw,1.8rem) clamp(1rem,2vw,1.9rem);color:#fff;
+  display:flex;flex-direction:column;justify-content:center;gap:.5rem;
+  transform:perspective(1400px) rotateY(-7deg) rotateZ(-2deg)
+            translate3d(calc(var(--px) * 10px),calc(var(--py) * 8px),0)}
+.s-pop .big{font-weight:900;font-size:clamp(2.4rem,5.8vw,4.8rem);line-height:.94;letter-spacing:-.035em}
+.s-pop .cap{font-family:var(--mono);font-size:.68rem;letter-spacing:.16em}
+.s-pop hr{border:0;border-top:2px solid rgba(255,255,255,.55);margin-block:.55rem}
+.s-pop .two{display:flex;gap:clamp(1rem,2.6vw,2.4rem);flex-wrap:wrap}
+.s-pop .two div b{display:block;font-weight:900;font-size:clamp(1.1rem,2vw,1.7rem);line-height:1;letter-spacing:-.02em}
+.s-pop .two div s{display:block;text-decoration:none;font-family:var(--mono);font-size:.6rem;
+  letter-spacing:.19em;margin-block-start:.28rem}
+
+/* ── 纸板：等宽实物。亮面，2px 墨边，挤出墨侧面 ── */
+.s-pap{left:16%;right:8%;top:70%;bottom:11.5%;z-index:3;background:var(--cream-dark);border:2px solid var(--ink);
+  box-shadow:var(--ex-pap);padding:.75rem clamp(1rem,2vw,1.7rem) .8rem;
+  display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:clamp(.9rem,2.2vw,2.2rem);
+  transform:perspective(1700px) rotateY(-3.4deg) rotateZ(.7deg)
+            translate3d(calc(var(--px) * 7px),calc(var(--py) * 6px),0)}
+.s-pap__l{border-inline-end:2px solid var(--ink);padding-inline-end:clamp(.9rem,2.2vw,2.2rem);align-self:stretch;
+  display:flex;flex-direction:column;justify-content:center;gap:.3rem}
+.s-pap__l b{font-weight:900;font-size:clamp(.95rem,1.5vw,1.22rem);letter-spacing:-.01em;white-space:nowrap}
+.s-pap__l s{text-decoration:none;font-family:var(--mono);font-size:.6rem;letter-spacing:.14em;color:var(--ink-faint);
+  line-height:1.6;white-space:nowrap}
+.s-pap code{font-family:var(--mono);font-size:clamp(.7rem,.62rem+.3vw,.95rem);line-height:1.85;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.s-pap code b{color:var(--brand-deep);font-weight:700}
+.s-pap code em{font-style:normal;color:var(--ink-faint)}
+
+/* ── CTA：墨条，咬住纸板左端 ── */
+.s-cta{left:.5%;top:72%;z-index:7;display:flex;gap:.6rem;
+  transform:perspective(1000px) rotateY(-2.6deg) rotateZ(-.6deg)
+            translate3d(calc(var(--px) * 19px),calc(var(--py) * 15px),0)}
+.btn{font-weight:800;font-size:.94rem;padding:.74rem 1.3rem;text-decoration:none;white-space:nowrap;
+  background:var(--ink);color:var(--cream);box-shadow:var(--ex-ink);transition:transform .16s}
+.btn--y{background:var(--highlight);color:var(--ink);box-shadow:var(--ex-yel)}
+.btn:hover{transform:translate(3px,3px)}
+
+/* ── 底条：口径与出处，不复述上面的数字 ── */
+.rail{position:absolute;left:0;right:0;bottom:0;z-index:1;display:flex;align-items:baseline;
+  gap:clamp(.8rem,2.2vw,2.2rem);flex-wrap:wrap;font-family:var(--mono);font-size:.68rem;letter-spacing:.13em;
+  color:var(--ink-faint);border-top:2px solid var(--ink);padding-block-start:.55rem}
+.rail b{font-family:var(--sans);font-weight:900;font-size:.95rem;letter-spacing:0;color:var(--ink);margin-inline-end:.35rem}
+.rail .src{margin-inline-start:auto}
+
+@media (max-width:900px){
+  .stage{height:auto;min-height:calc(100dvh - 52px);padding:0 var(--gut) 1.1rem}
+  .world{position:static;inset:auto;display:flex;flex-direction:column;justify-content:space-between;
+    gap:1rem;min-height:calc(100dvh - 52px - 1.1rem)}
+  .slab{position:static;transform:none!important;width:auto!important}
+  .s-main{bottom:auto;box-shadow:9px 9px 0 #16467f}
+  .s-main h1{font-size:clamp(1.9rem,8.6vw,2.9rem)}
+  .s-yel{box-shadow:8px 8px 0 #C6A82C;align-self:flex-start;padding-inline:1.5rem}
+  .s-pop{bottom:auto;box-shadow:8px 8px 0 #992536}
+  .s-pap{bottom:auto;box-shadow:6px 6px 0 #2C2E3D;grid-template-columns:1fr;gap:.6rem}
+  .s-pap__l{border-inline-end:0;border-block-end:2px solid var(--ink);padding-inline-end:0;padding-block-end:.5rem;
+    flex-direction:row;align-items:baseline;gap:.7rem}
+  .s-pap code{white-space:normal;overflow:visible;text-overflow:clip;font-size:.76rem}
+  .s-pap code em{display:block;margin-block-start:.06rem}
+  .s-pap__l{justify-content:flex-start;text-align:start}
+  .btn{box-shadow:6px 6px 0 #12141f}
+  .btn--y{box-shadow:6px 6px 0 #C6A82C}
+  .rail{position:static}
+  .rail .src{margin-inline-start:0;flex-basis:100%}
+  .top nav{display:none}
+}
+@media (prefers-reduced-motion:reduce){.slab{transition:none}}
+</style>
+</head>
+<body>
+<header class="top">
+  <b>茉灵智库</b><span>@88LIN</span>
+  <nav><span>作品</span><span>怎么做的</span><span>手艺</span><span>在写</span></nav>
+</header>
+
+<div class="stage" id="stage">
+  <div class="world" id="world">
+
+    <section class="slab s-main">
+      <s class="eb">88LIN · WORK THAT SHIPPED</s>
+      <div>
+        <h1><i>把前沿 <em>AI</em> 变成</i><i>可交付、可维护</i><i>的工程结果。</i></h1>
+        <p>接口会挂，平台会变，需求会改。我做的东西按「可切换」设计，所以到今天还活着。</p>
+      </div>
+    </section>
+
+    <aside class="slab s-yel"><b>可切换</b><s>SWITCHABLE BY DESIGN</s></aside>
+
+    <aside class="slab s-pop">
+      <span class="big">1,784</span>
+      <span class="cap">天 · 从第一次提交到今天，一直在跑</span>
+      <hr>
+      <div class="two">
+        <div><b>4,684</b><s>STARS</s></div>
+        <div><b>502</b><s>FORKS</s></div>
+      </div>
+    </aside>
+
+    <aside class="slab s-pap">
+      <div class="s-pap__l"><b>降级配置</b><s>resilience.yml<br>88lin/video_vip</s></div>
+      <div>
+        <code><b>providers:</b> primary → secondary → local <em>&nbsp;&nbsp;# 一家挂了换下一家</em></code>
+        <code><b>on_error:</b> retry x2 → degrade → next <em>&nbsp;&nbsp;# 断网也能出结果</em></code>
+        <code><b>contract:</b> 输出格式与 provider 解耦 <em>&nbsp;&nbsp;# 换上游不改业务代码</em></code>
+      </div>
+    </aside>
+
+    <div class="slab s-cta">
+      <a class="btn" href="#">聊聊合作</a>
+      <a class="btn btn--y" href="#">看三个案例</a>
+    </div>
+
+    <div class="rail">
+      <span><b>22</b>原创仓库</span><span><b>144</b>关注者</span><span><b>55</b>公开文章</span>
+      <span class="src">数据取自 GITHUB 公开接口 · 截至 2026.08.10</span>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const world = document.getElementById('world');
+if (!matchMedia('(prefers-reduced-motion: reduce)').matches && matchMedia('(min-width: 901px)').matches){
+  let tx=0, ty=0, cx=0, cy=0, raf=0;
+  addEventListener('pointermove', (e)=>{
+    tx = (e.clientX / innerWidth - .5) * 2;
+    ty = (e.clientY / innerHeight - .5) * 2;
+    if (!raf) raf = requestAnimationFrame(tick);
+  });
+  function tick(){
+    cx += (tx - cx) * .075; cy += (ty - cy) * .075;
+    world.style.setProperty('--px', cx.toFixed(4));
+    world.style.setProperty('--py', cy.toFixed(4));
+    raf = (Math.abs(tx-cx) > .001 || Math.abs(ty-cy) > .001) ? requestAnimationFrame(tick) : 0;
+  }
+}
+</script>
+</body>
+</html>
