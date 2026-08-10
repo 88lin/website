@@ -25,10 +25,12 @@ const ROUTES = ['', 'case/lofi/', 'case/repair/', 'case/video-vip/']
  *  不能混进来，否则会把系统字排到的字符也塞进子集。 */
 const BUCKET = {
   'noto sans sc black web': 'display',
-  'noto sans sc web': 'sans',
   'jetbrains mono web': 'mono',
   'caveat web': 'hand',
 }
+// v9 起正文不再自托管中日韩字体，正文栈头一项是 -apple-system，
+// 由各端系统字承担（macOS/iOS 苹方，Windows 微软雅黑）。所以这里没有 sans 桶：
+// 留着它只会把系统字排到的几千个汉字塞进子集，白背 117 KB。
 
 const collect = () => {
   const found = {}
@@ -91,8 +93,7 @@ for (const route of ROUTES) {
       const [fam, weight] = key.split('|')
       const bucket = BUCKET[fam]
       if (!bucket) continue
-      // 正文两档字重要分开：650 那档只用来排小标题，字少得多
-      const name = bucket === 'sans' ? (Number(weight) >= 600 ? 'sans-semibold' : 'sans-regular') : bucket
+      const name = bucket
       const set = buckets.get(name) || new Set()
       for (const ch of text) set.add(ch)
       buckets.set(name, set)
@@ -107,8 +108,6 @@ await browser.close()
 const ALWAYS = {
   // 得意黑排的是标题与巨型读数，拉丁与数字它自己带全
   display: '，。、·…「」（）？！0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,%×',
-  'sans-regular': '，。、·…「」（）：；？！／0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
-  'sans-semibold': '，。、·…「」（）0123456789',
   mono: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,:;/·→+-%★⑂ ',
   hand: '，。、·…「」（）0123456789',
 }

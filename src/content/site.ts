@@ -16,7 +16,7 @@ export const AS_OF = '2026.08.10'
 /* ---------------------------------------------------------------- 章节 */
 
 /**
- * 色调 = 一整章的地面色。全部指向 palettes.css 的 A 组（Classic 蓝 / 黄 / 珊瑚），
+ * 色调 = 一整章的地面色。全部指向 palettes.css 的 E 组（Terracotta 陶土 / 沙黄 / 松绿），
  * 组件永远写角色名，不写色值，也不写调色板字母。
  *
  * 硬规则：要放正文的彩色面只能用 -deep 档（blue / coral），
@@ -27,23 +27,27 @@ export type Tone = 'paper' | 'sand' | 'blue' | 'yellow' | 'coral'
 /** 卡片色相。只染卡的边、条与投影，卡面永远是纸，字永远是墨。 */
 export type Tint = 'blue' | 'yellow' | 'coral'
 
-export type ChapterId = 'hero' | 'work' | 'cases' | 'craft' | 'notes' | 'contact'
+export type ChapterId = 'hero' | 'craft' | 'work' | 'cases' | 'notes' | 'contact'
 
 export type Chapter = { id: ChapterId; label: string; tone: Tone }
 
 /**
  * 六章。v6 是八章一个模子，差异只有列数；v7 砍到六章，并且强制每章换一种构图：
- * 分屏海报 / 横向图廊 / 粘性堆叠 / 无卡片对角线 / 分组横滚 / 满幅色块。
+ * 分屏海报 / 无卡片对角线 / 横向图廊 / 粘性堆叠 / 分组横滚 / 满幅色块。
  * 章间的构图特征向量在 audit G16 里逐对比距离，撞型即红。
  *
- * 地面色节奏：纸 → 蓝 → 砂 → 黄 → 纸 → 珊瑚。
+ * v9 把顺序从「先亮仓库」改成「先说能做什么」：第二章不再是作品通道，
+ * 而是两条主线与三类可承接的服务。仓库相关内容压缩到第 3、4 两章，
+ * 且 star / fork 这类仓库统计数字全站只在作品卡上出现一次。
+ *
+ * 地面色节奏：纸 → 黄 → 蓝 → 砂 → 纸 → 珊瑚。
  */
 export const chapters: Chapter[] = [
   { id: 'hero', label: '开场', tone: 'paper' },
-  { id: 'work', label: '作品', tone: 'blue' },
+  { id: 'craft', label: '能做什么', tone: 'yellow' },
+  { id: 'work', label: '做过什么', tone: 'blue' },
   { id: 'cases', label: '怎么做的', tone: 'sand' },
-  { id: 'craft', label: '手艺', tone: 'yellow' },
-  { id: 'notes', label: '在写', tone: 'paper' },
+  { id: 'notes', label: '在写在跑', tone: 'paper' },
   { id: 'contact', label: '联系', tone: 'coral' },
 ]
 
@@ -184,6 +188,58 @@ export const trackB = {
   ] as Track[],
 }
 
+/* ---------------------------------------------------------------- 能接什么活 */
+
+/**
+ * v9 新增。前八版的第二章一上来就摆仓库，读者先看到的是「他有多少 star」，
+ * 而不是「他能替我解决什么」。这三条是把上面两条主线翻译成可以直接下单的东西：
+ * 每条写清交付物和适合谁，不引用任何仓库数字。
+ */
+export type Service = {
+  id: string
+  no: string
+  title: string
+  body: string
+  deliverables: string[]
+  fit: string
+  tint: Tint
+}
+
+export const servicesIntro = {
+  headline: '我能接什么活',
+  body: '把上面两条线拆成可以直接开工的三件事。每件都写了交付物，不是「提供技术支持」这种话。',
+}
+
+export const services: Service[] = [
+  {
+    id: 'agent',
+    no: '01',
+    title: 'Agent 工作流落地',
+    body: '把一件反复做的事，变成 Agent 能自己跑完的流程。接你现有的仓库、文档和部署链路，跑完能看见改动，不是只会给建议。',
+    deliverables: ['可运行的 Agent Skill', 'MCP 工具接入', '知识库与检索'],
+    fit: '适合已经在用 AI 但停在「问答」这一步的团队',
+    tint: 'coral',
+  },
+  {
+    id: 'front',
+    no: '02',
+    title: '创意前端与 WebGL',
+    body: '有视觉主张的页面：品牌站、产品发布页、交互叙事。滚动编排、实时渲染、动效降级一并做掉，不是模板换个色。',
+    deliverables: ['整站视觉与交互', 'Three.js 场景', '性能预算达标'],
+    fit: '适合已经有内容、但页面撑不起内容的项目',
+    tint: 'blue',
+  },
+  {
+    id: 'system',
+    no: '03',
+    title: '设计系统与文档',
+    body: '令牌化的色彩、字体、间距与组件，配一套自己能维护下去的文档。交付之后你的人改得动，不用回来找我。',
+    deliverables: ['色板与令牌', '组件库与用例', 'Diataxis 文档'],
+    fit: '适合多人协作、每次改版都要重画一遍的团队',
+    tint: 'yellow',
+  },
+]
+
 /* ---------------------------------------------------------------- 作品通道 */
 
 export type ProjectState = 'live' | 'maintained' | 'archived'
@@ -205,8 +261,8 @@ export type Project = {
 }
 
 export const worksIntro = {
-  headline: '作品通道',
-  body: '六路，按 star 排，卡片宽度就是它的分量。状态灯是真的：还在改的亮着，只维护不加功能的是待机。',
+  headline: '做过的东西',
+  body: '六个还在线上跑着的东西，横着滑。每张卡写清它解决什么、用什么做的、现在什么状态，点卡里的按钮可以直接打开或看源码。',
 }
 
 export const projects: Project[] = [
@@ -358,11 +414,39 @@ export const garden: GardenItem[] = [
   { name: '窗外动画', href: GH + 'notion/7/', group: '组件' },
 ]
 
+/**
+ * v9：页面不再把 garden 全铺出来。四十块彩色底卡挤成一堵墙，既看不清也不好看，
+ * 而且用户本来就有一个导航站在做同一件事。这里每类挑一个能代表能力的，
+ * 剩下的交给导航站。挑选原则：避开已经在案例章出现过的项目（Lofi 电台、免费影视），
+ * 优先选有真实使用场景、能体现渲染 / 信息设计 / 组件化能力的。
+ */
+export const gardenPicks = ['3D 圣诞树', '科研海报生成器', '元素周期表', '文字卡片', '音乐站', '植物生长']
+
+export type GardenFeature = GardenItem & { why: string }
+
+const WHY: Record<string, string> = {
+  '3D 圣诞树': 'Three.js 实时渲染，粒子与光照全在一块画布里',
+  科研海报生成器: '给真实需求做的排版工具，不是玩具 demo',
+  元素周期表: '118 个元素的数据密度，靠交互而不是靠滚动读完',
+  文字卡片: '设计系统的外显：一套令牌换出十几种卡面',
+  音乐站: '内容站的完整形态，播放、列表、状态都自己实现',
+  植物生长: 'Notion 内嵌组件，一个 iframe 就能挂进别人的页面',
+}
+
+export const gardenFeatured: GardenFeature[] = gardenPicks.map((n) => {
+  const hit = garden.find((g) => g.name === n)
+  if (!hit) throw new Error(`gardenPicks 里的「${n}」在 garden 中不存在`)
+  return { ...hit, why: WHY[n] }
+})
+
 export const gardenIntro = {
-  headline: '数字花园',
-  body: '这些年顺手做的小页面：特效、工具、Notion 组件、内容站。没有一个是 demo，全都还挂在线上跑着。',
+  headline: '还在跑的小站',
+  body: '这些年做的小页面全挂在导航站上，每类挑一个放在这里。没有一个是 demo，链接点开就是线上版本。',
   hub: 'https://88lin.github.io',
   hubLabel: '导航站',
+  /** 剩下多少个由数组长度派生，不写死 */
+  rest: garden.length - gardenPicks.length,
+  total: garden.length,
 }
 
 /* ---------------------------------------------------------------- 装备 */
@@ -407,14 +491,15 @@ export const craftEvidence = [
   {
     id: 'ds',
     title: '自建设计系统',
-    caption: '组件、配色、手绘虚线框，本站用的就是它。色板是 A 组 Classic，十组可切。',
+    caption: '组件、配色、手绘虚线框，本站用的就是它。色板是 E 组 Terracotta，十组可切。',
     linkLabel: 'components-preview',
     href: 'https://88lin.github.io/mydesign-system/components-preview.html',
   },
   {
     id: 'hub',
     title: '导航站',
-    caption: '41 个小站的总入口，按特效、工具、内容、组件四类收口。',
+    /** 数量由 garden 数组长度派生。v8 这里写死过一个错的「41」，v9 起不许写死。 */
+    caption: `${garden.length} 个小站的总入口，按特效、工具、内容、组件四类收口。`,
     linkLabel: '88lin.github.io',
     href: 'https://88lin.github.io',
   },
@@ -444,13 +529,17 @@ export const writing = {
     { name: '学习工具', count: 3 },
   ],
   tagTotal: 27,
+  /**
+   * v9：每篇补上永久链接。v8 只存了标题和日期，页面上就成了六行点不开的死字，
+   * 这是实打实的缺陷。链接从 blog.88lin.eu.org/archive 逐条核对，标题一字不差对上。
+   */
   latest: [
-    { title: 'Adobe 全家桶不限速下载指南', date: '2026-08-08' },
-    { title: '全网 VIP 视频免费看教程', date: '2026-08-06' },
-    { title: '实用生活指南', date: '2026-07-31' },
-    { title: '一键屏蔽流氓软件', date: '2026-07-31' },
-    { title: 'Windows 系统问题排查与修复', date: '2026-07-31' },
-    { title: '电脑蓝屏终极解决办法', date: '2026-07-31' },
+    { title: 'Adobe 全家桶不限速下载指南', date: '2026-08-08', href: 'https://blog.88lin.eu.org/article/18' },
+    { title: '全网 VIP 视频免费看教程', date: '2026-08-06', href: 'https://blog.88lin.eu.org/article/46' },
+    { title: '实用生活指南', date: '2026-07-31', href: 'https://blog.88lin.eu.org/article/50' },
+    { title: '一键屏蔽流氓软件', date: '2026-07-31', href: 'https://blog.88lin.eu.org/article/12' },
+    { title: 'Windows 系统问题排查与修复', date: '2026-07-31', href: 'https://blog.88lin.eu.org/article/44' },
+    { title: '电脑蓝屏终极解决办法', date: '2026-07-31', href: 'https://blog.88lin.eu.org/article/5' },
   ],
 }
 

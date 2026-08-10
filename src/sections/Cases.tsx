@@ -16,6 +16,7 @@ import { useCallback, useRef } from 'react'
 import { ArrowOut } from '../components/Icons'
 import { Frame } from '../components/Ink'
 import { cases, casesIntro, vipInterfaces, type CaseStudy } from '../content/cases'
+import { WIDE_MQ } from '../lib/bp'
 import { caseStack, useLazyScene, useMediaQuery, type SceneApi } from '../lib/motion'
 import { Link } from '../router'
 
@@ -142,7 +143,7 @@ function Case({ c }: { c: CaseStudy }) {
 
 export function Cases() {
   const root = useRef<HTMLDivElement | null>(null)
-  const wide = useMediaQuery('(min-width: 900px)')
+  const wide = useMediaQuery(WIDE_MQ)
 
   const build = useCallback(({ ScrollTrigger, root: el }: SceneApi) => {
     caseStack(ScrollTrigger, el, Array.from(el.querySelectorAll<HTMLElement>('.case')))

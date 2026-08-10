@@ -1,5 +1,5 @@
 /**
- * 上线前自动验收。十九关，任何一关 fail 都让进程以非零码退出。
+ * 上线前自动验收。二十二关，任何一关 fail 都让进程以非零码退出。
  *
  *  1 子路径部署与解码   2 Lighthouse          3 对比度矩阵
  *  4 破折号             5 版式纪律与禁用清单   6 reduced-motion 降级
@@ -7,7 +7,8 @@
  * 10 滚动手感          11 CSS 3D 与指针视差    12 作品横推与案例堆叠
  * 13 视觉证据          14 遮挡                15 形状锁
  * 16 章间差异度        17 配色纪律            18 AI 味扫描
- * 19 首屏承载        20 零位图
+ * 19 首屏承载        20 零位图              21 移动端可用性（双引擎）
+ * 22 可点性
  *
  * 用法：node scripts/audit.mjs [--skip-lh] [--skip-links] [--only=1,13,19]
  *
@@ -15,7 +16,7 @@
  * v6 的教训是十二关全绿但页面很丑——因为没有一关在量构图、密度、遮挡和纪律。
  * 13-19 全部是可判定的几何与字符断言，不是主观描述。
  */
-import { chromium } from 'playwright'
+import { chromium, webkit } from 'playwright'
 import { readFile, readdir, writeFile, stat } from 'node:fs/promises'
 import path from 'node:path'
 import { execFileSync } from 'node:child_process'
@@ -34,25 +35,51 @@ const want = (id) => !only || only.has(String(id))
 /** 六章。顺序、id、色调都跟 content/site.ts 对齐，错一个就说明内容层被改过。 */
 const CHAPTERS = [
   { id: 'hero', tone: 'paper' },
+  { id: 'craft', tone: 'yellow' },
   { id: 'work', tone: 'blue' },
   { id: 'cases', tone: 'sand' },
-  { id: 'craft', tone: 'yellow' },
   { id: 'notes', tone: 'paper' },
   { id: 'contact', tone: 'coral' },
 ]
 const ROUTES = ['', 'case/lofi/', 'case/repair/', 'case/video-vip/']
 
-/** palette A 的全部色值。强调色只能从这里出。 */
-const PALETTE_A = new Set(
-  [
-    '#2B7FD8', '#1E5BA8', '#6FA9E6', '#2674C5',
-    '#F4D758', '#FFF3CD', '#8A6A00',
-    '#E84A5F', '#C93449', '#FCE8EC', '#D43A50',
-    '#FEFCF6', '#FAF6EB', '#FFF8E1', '#FFFFFF',
-    '#1A1A2E', '#4A4A5A', '#6E6E80', '#151821',
-    '#2E7955',
-  ].map((h) => h.toUpperCase()),
-)
+/** 当前色板的全部色值。v8 这里是写死的 palette A 常量，换到 E 组之后它就成了
+    一份必然过期的副本；v9 改成运行时从 :root 读，色板换组不用再改审计脚本。
+    只在需要时抓一次，抓完缓存。 */
+let PALETTE = null
+const PALETTE_VARS = [
+  '--brand', '--brand-deep', '--brand-tint',
+  '--highlight', '--highlight-soft', '--warning', '--warning-soft',
+  '--pop', '--pop-deep', '--pop-soft', '--success', '--success-soft',
+  '--cream', '--cream-dark', '--card-bg', '--preview-bg',
+  '--ink', '--ink-light', '--ink-faint', '--dark-panel',
+  '--on-brand', '--on-pop', '--on-dark-dim',
+]
+async function loadPalette(browser) {
+  if (PALETTE) return PALETTE
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' })
+  const page = await ctx.newPage()
+  await page.goto(URL_BASE, { waitUntil: 'load' })
+  const vals = await page.evaluate((vars) => {
+    const cs = getComputedStyle(document.documentElement)
+    const out = {}
+    for (const v of vars) {
+      const raw = cs.getPropertyValue(v).trim()
+      if (raw) out[v] = raw
+    }
+    return out
+  }, PALETTE_VARS)
+  await ctx.close()
+  const norm = (s) => {
+    if (s.startsWith('#')) return s.length === 4 ? '#' + [...s.slice(1)].map((c) => c + c).join('').toUpperCase() : s.toUpperCase()
+    const n = (s.match(/[\d.]+/g) || []).slice(0, 3).map(Number)
+    return n.length === 3 ? hex({ r: n[0], g: n[1], b: n[2] }) : null
+  }
+  PALETTE = { map: vals, set: new Set(Object.values(vals).map(norm).filter(Boolean)), hexOf: {} }
+  for (const [k, v] of Object.entries(vals)) PALETTE.hexOf[k] = norm(v)
+  PALETTE.set.add('#FFFFFF')
+  return PALETTE
+}
 
 const { server, url: URL_BASE } = await serveDist({ dist: DIST, port: 4199 })
 
@@ -157,11 +184,22 @@ const COLLECT_VISIBLE = () => {
     if (html && html.a >= 0.999) stack.push(html)
     const cs = getComputedStyle(el)
     el.setAttribute('data-audit-done', '1')
+    /* opacity 要折进前景 alpha。v9 之前这里只读 cs.color，于是
+       `opacity:.72` 的标签计数、`opacity:.78` 的花园小标签全被判合格，
+       Lighthouse 的 axe 却照报不误 —— 那三处是真的没到 AA。
+       元素自身与祖先的 opacity 连乘，等价于把文字按这个 alpha 合成到底色上。 */
+    let op = 1
+    for (let n = el; n && n !== document.documentElement; n = n.parentElement) {
+      const o = Number(getComputedStyle(n).opacity)
+      if (Number.isFinite(o)) op *= o
+    }
+    const fg0 = norm(cs.color)
     out.push({
       tag: el.tagName.toLowerCase(),
       cls: typeof el.className === 'string' ? el.className.slice(0, 90) : '',
       text: (el.textContent || '').trim().slice(0, 40),
-      fg: norm(cs.color),
+      fg: fg0 ? { ...fg0, a: +(fg0.a * op).toFixed(4) } : fg0,
+      opacity: +op.toFixed(3),
       stack,
       size: parseFloat(cs.fontSize),
       weight: Number(cs.fontWeight) || 400,
@@ -828,10 +866,29 @@ if (want(12)) {
   await page2.goto(URL_BASE, { waitUntil: 'load' })
   await page2.waitForTimeout(1500)
   await scrollThrough(page2)
-  const narrow = await page2.evaluate(() => ({
-    trackX: getComputedStyle(document.querySelector('.work__track')).overflowX,
-    cardPos: getComputedStyle(document.querySelector('.case')).position,
-  }))
+  /* v8 的窄屏契约是「横推退回原生横滑」。v9 把这条契约整个换掉了：跑道在
+     窄屏根本不渲染成跑道，六张卡竖排堆叠。原因见 v9 计划 §3.2 —— 断点打架
+     时 GSAP 会把 rail 钉成 2600px 高的死区，横滑同时被 overflow-y 吞掉。
+     所以这里改成验「真的竖排了」：单列网格、无残留 transform、不横向溢出、
+     六张卡自上而下依次排开。 */
+  const narrow = await page2.evaluate(() => {
+    const track = document.querySelector('.work__track')
+    const cs = getComputedStyle(track)
+    const cards = [...document.querySelectorAll('.pcard')]
+    // 满宽的基准是跑道的内容盒（要减掉左右 gutter），不是视口
+    const vpW =
+      track.clientWidth - (parseFloat(cs.paddingInlineStart) || 0) - (parseFloat(cs.paddingInlineEnd) || 0)
+    return {
+      display: cs.display,
+      cols: cs.gridTemplateColumns.split(' ').filter(Boolean).length,
+      transform: cs.transform,
+      xOver: track.scrollWidth - track.clientWidth,
+      tops: cards.map((c) => Math.round(c.getBoundingClientRect().top + window.scrollY)),
+      narrowCards: cards.filter((c) => vpW - c.getBoundingClientRect().width > 24).length,
+      n: cards.length,
+      cardPos: getComputedStyle(document.querySelector('.case')).position,
+    }
+  })
   await ctx2.close()
 
   if (!jsPan) probs.push('桌面端横推没被接管（.work__track 上没有 is-pan）')
@@ -849,7 +906,13 @@ if (want(12)) {
     if (!(stack.sink > 0.05)) probs.push(`第二张压上来时第一张没沉降（--sink=${stack.sink}）`)
     if (stack.lastSink > 0.01) probs.push(`最后一张不该沉降，实得 --sink=${stack.lastSink}`)
   }
-  if (!/auto|scroll/.test(narrow.trackX)) probs.push(`窄屏横推未退回原生横滑：overflow-x=${narrow.trackX}`)
+  if (narrow.display !== 'grid' || narrow.cols !== 1)
+    probs.push(`窄屏跑道没退成单列网格（display=${narrow.display} 列数=${narrow.cols}）`)
+  if (narrow.transform !== 'none') probs.push(`窄屏跑道残留 transform=${narrow.transform}`)
+  if (narrow.xOver > 2) probs.push(`窄屏跑道仍横向溢出 ${narrow.xOver}px`)
+  if (narrow.narrowCards) probs.push(`窄屏 ${narrow.narrowCards} 张卡没铺满视口宽`)
+  if (!narrow.tops.every((t, i) => i === 0 || t > narrow.tops[i - 1] + 40))
+    probs.push(`窄屏六张卡没有自上而下依次排开：${narrow.tops.join(' / ')}`)
   if (narrow.cardPos !== 'static') probs.push(`窄屏案例卡未静态化（position=${narrow.cardPos}）`)
 
   probs.length
@@ -857,7 +920,7 @@ if (want(12)) {
     : pass(
         '12',
         '作品横推与案例堆叠',
-        `横推 ${samples.join(' → ')}（行程 ${moved}px，单调左移；${tail.n} 张卡，末卡「${tail.name}」右留白 ${tail.gap}px vs 左 --gutter ${tail.gutter}px）· 案例 ${stack.n} 张 sticky 卡，第二张压上时首张 scale=${stack.scale} --sink=${stack.sink}，末张 --sink=${stack.lastSink} · 窄屏退回 overflow-x:${narrow.trackX} + position:static`,
+        `横推 ${samples.join(' → ')}（行程 ${moved}px，单调左移；${tail.n} 张卡，末卡「${tail.name}」右留白 ${tail.gap}px vs 左 --gutter ${tail.gutter}px）· 案例 ${stack.n} 张 sticky 卡，第二张压上时首张 scale=${stack.scale} --sink=${stack.sink}，末张 --sink=${stack.lastSink} · 窄屏跑道退成单列竖排（${narrow.n} 张卡满宽、0 横向溢出、transform:none），案例卡 position:static`,
       )
 }
 
@@ -1135,7 +1198,8 @@ if (want(15)) {
   await page.waitForTimeout(1500)
   await scrollThrough(page)
   const m = await page.evaluate(() => {
-    const ALLOWED = [0, 6, 11, 14, 24]
+    // v9 放开 --r-pill(999) 给按钮 / 标签 / 状态灯；其余四档不变。
+    const ALLOWED = [0, 6, 11, 14, 24, 999]
     const off = []
     const cards = []
     const square = []
@@ -1179,7 +1243,7 @@ if (want(15)) {
     probs.push(`卡内 ${m.square.length} 处大面积色块是直角：${m.square.slice(0, 6).join(' | ')}`)
   probs.length
     ? fail('15', '形状锁', probs.join('\n      '))
-    : pass('15', '形状锁', `面积 >1500px² 的有背景元素圆角全部 ∈ {0, 6, 11, 14, 24, pill}；${m.cards.length} 类 [data-card] 统一 24px；卡内 0 处大面积直角块`)
+    : pass('15', '形状锁', `面积 >1500px² 的有背景元素圆角全部 ∈ {0, 6, 11, 14, 24, 999, pill}；${m.cards.length} 类 [data-card] 统一 24px；卡内 0 处大面积直角块`)
 }
 
 /* === 20. 零位图 ======================================================
@@ -1356,24 +1420,28 @@ if (want(17)) {
   const bodyHex = toHex(m.bodyBg)
   if (bodyHex && lum({ r: parseInt(bodyHex.slice(1, 3), 16), g: parseInt(bodyHex.slice(3, 5), 16), b: parseInt(bodyHex.slice(5, 7), 16) }) < 0.5)
     probs.push(`系统深色下 body 背景反转成 ${bodyHex}`)
+  const pal = await loadPalette(browser)
   const offPalette = m.accents
     .map((a) => (a.startsWith('#') ? a.toUpperCase() : toHex(a)))
-    .filter((h) => h && !PALETTE_A.has(h))
-  if (offPalette.length) probs.push(`强调色不在 palette A 内：${[...new Set(offPalette)].join(' ')}`)
+    .filter((h) => h && !pal.set.has(h))
+  if (offPalette.length) probs.push(`强调色不在当前色板内：${[...new Set(offPalette)].join(' ')}`)
 
-  // 浅色前景只能出现在 -deep 档底上（小字）。--brand / --pop 只做大字与色块。
-  const LIGHT_OK = new Set(['#1E5BA8', '#C93449', '#151821', '#1A1A2E'])
+  /* 浅色小字只能压在色板的暗档上。v8 这里写死了 palette A 的四个 -deep 值，
+     换组就废；改成从色板里按相对亮度筛：L < 0.25 才算暗档。中间调（brand-tint、
+     highlight、cream-dark）压白字必然不够，这条就是拦它们的。 */
+  const rgbOf = (h) => ({ r: parseInt(h.slice(1, 3), 16), g: parseInt(h.slice(3, 5), 16), b: parseInt(h.slice(5, 7), 16) })
+  const DARK_TIER = new Set([...pal.set].filter((h) => lum(rgbOf(h)) < 0.25))
   const wrong = contrastReport
-    .filter((c) => !c.large && lum(c.fg) > 0.5 && !LIGHT_OK.has(c.bgHex))
+    .filter((c) => !c.large && lum(c.fg) > 0.5 && !DARK_TIER.has(c.bgHex))
     .map((c) => `${c.cls}"${c.text.slice(0, 10)}" 压 ${c.bgHex}`)
-  if (wrong.length) probs.push(`${wrong.length} 处小号浅色字没压在 -deep 档上：${[...new Set(wrong)].slice(0, 4).join(' | ')}`)
+  if (wrong.length) probs.push(`${wrong.length} 处小号浅色字没压在暗档上：${[...new Set(wrong)].slice(0, 4).join(' | ')}`)
 
   probs.length
     ? fail('17', '配色纪律', probs.join('\n      '))
     : pass(
         '17',
         '配色纪律',
-        `color-scheme:light 已声明、0 处 dark 媒体查询、0 处纯黑；系统深色下 body 仍是 ${bodyHex}；章节底色 ${groundHexes.length} 种 ${groundHexes.join(' ')}；强调色全部出自 palette A`,
+        `color-scheme:light 已声明、0 处 dark 媒体查询、0 处纯黑；系统深色下 body 仍是 ${bodyHex}；章节底色 ${groundHexes.length} 种 ${groundHexes.join(' ')}；强调色全部出自运行时色板（${pal.set.size} 色）`,
       )
 }
 
@@ -1470,6 +1538,9 @@ if (want(19)) {
     { name: 'desktop', width: 1440, height: 900, maxLines: 3 },
     { name: 'laptop', width: 1024, height: 768, maxLines: 3 },
     { name: 'mobile', width: 390, height: 844, maxLines: 4 },
+    /* 390×844 是 iPhone，360×800 是大量安卓机的 CSS 尺寸。v8 只测前者，
+       后者实测开场章 839px（比视口高 39px，底条被顶出首屏）却一路绿灯。 */
+    { name: 'android', width: 360, height: 800, maxLines: 4 },
   ]) {
     const ctx = await browser.newContext({
       viewport: { width: vp.width, height: vp.height },
@@ -1507,6 +1578,131 @@ if (want(19)) {
   probs.length ? fail('19', '首屏承载', [...probs, `实测：${sheet.join(' · ')}`].join('\n      ')) : pass('19', '首屏承载', sheet.join(' · '))
 }
 
+/* === 21. 移动端可用性（Chromium + WebKit 双引擎）=======================
+   用户报的原话：「移动端作品通道空白占满一页而且无法滑动」。根因在 worksPan()
+   里那句 rail.style.height = innerHeight + distance + 'px' —— 手写内联样式，
+   gsap.context().revert() 清不掉。视口一旦宽过断点（手机横屏 932px 就够），
+   跑道被钉成 2600px，转回竖屏后内容缩到 900px，剩下的全是空白。
+   所以这一关除了静态量测，还要做一次「横屏→竖屏」往返，直接回归那个 bug。
+   两个引擎都跑：无头 Chromium 的 dvh / sticky 行为和 iOS Safari 不一样。 */
+if (want(21)) {
+  const { MOBILE_PROBE } = await import('./gates-mobile.mjs')
+  const probs = []
+  const sheet = []
+  for (const eng of [
+    { name: 'chromium', launcher: chromium, args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader'] },
+    { name: 'webkit', launcher: webkit, args: [] },
+  ]) {
+    let b
+    try {
+      b = await eng.launcher.launch({ args: eng.args })
+    } catch (e) {
+      probs.push(`${eng.name} 起不来：${String(e).split('\n')[0]}`)
+      continue
+    }
+    const ctx = await b.newContext({
+      viewport: { width: 390, height: 844 },
+      deviceScaleFactor: 2,
+      isMobile: eng.name === 'chromium',
+      hasTouch: true,
+      reducedMotion: 'reduce',
+    })
+    const page = await ctx.newPage()
+    await page.goto(URL_BASE, { waitUntil: 'load' })
+    await page.waitForTimeout(1600)
+    await scrollThrough(page)
+    await page.evaluate(() => window.scrollTo(0, 0))
+    await page.waitForTimeout(500)
+
+    const check = async (phase) => {
+      const m = await page.evaluate(MOBILE_PROBE)
+      const tag = `${eng.name}/${phase}`
+      if (m.scrollW > m.clientW + 1) probs.push(`${tag} 横向溢出 ${m.scrollW - m.clientW}px`)
+      if (m.cards !== 6) probs.push(`${tag} 作品卡渲染 ${m.cards} 张，应为 6`)
+      if (m.railInline !== '') probs.push(`${tag} .work__rail 残留内联高度 "${m.railInline}"`)
+      if (m.railH != null && m.railContent != null && m.railH > m.railContent + 8)
+        probs.push(`${tag} .work__rail 高 ${m.railH}px 超出内容 ${m.railContent}px`)
+      if (m.trackTransform && m.trackTransform !== 'none')
+        probs.push(`${tag} .work__track 残留 transform ${m.trackTransform}`)
+      if (m.trackScrollW != null && m.trackScrollW > m.trackClientW + 4)
+        probs.push(`${tag} .work__track 仍可横滚 ${m.trackScrollW}/${m.trackClientW}`)
+      if (m.pinSpacers) probs.push(`${tag} 残留 ${m.pinSpacers} 个 .pin-spacer`)
+      if (m.badAxis.length) probs.push(`${tag} ${m.badAxis.length} 个横滚容器没锁竖轴：${m.badAxis.slice(0, 3).join(' | ')}`)
+      const deadZone = m.gaps.filter((g) => g.gap > m.vh * 0.6)
+      if (deadZone.length) probs.push(`${tag} 空白死区：${deadZone.map((g) => `#${g.id} ${g.gap}px`).join(' | ')}`)
+      return m
+    }
+
+    const first = await check('竖屏')
+
+    // 能不能从头滚到尾：lenis 接管后用原生 scrollTo，滚到底再读一次位置。
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight))
+    await page.waitForTimeout(900)
+    const bottom = await page.evaluate(() => ({
+      y: Math.round(window.scrollY),
+      vh: window.innerHeight,
+      docH: Math.round(document.documentElement.scrollHeight),
+      footVisible: (() => {
+        const f = document.querySelector('.foot')
+        if (!f) return false
+        const r = f.getBoundingClientRect()
+        return r.top < window.innerHeight && r.bottom > 0
+      })(),
+    }))
+    if (bottom.y + bottom.vh < bottom.docH - 4)
+      probs.push(`${eng.name} 滚不到底：停在 ${bottom.y + bottom.vh}/${bottom.docH}`)
+    if (!bottom.footVisible) probs.push(`${eng.name} 滚到底看不到页脚`)
+
+    // 横屏往返：这是对真机 bug 的直接回归测试
+    await page.evaluate(() => window.scrollTo(0, 0))
+    await page.setViewportSize({ width: 844, height: 390 })
+    await page.waitForTimeout(1200)
+    await scrollThrough(page)
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.waitForTimeout(1400)
+    await page.evaluate(() => window.scrollTo(0, 0))
+    await page.waitForTimeout(600)
+    const after = await check('横屏往返后')
+
+    sheet.push(
+      `${eng.name} 竖屏 doc=${first.docH} rail=${first.railH}/${first.railContent} 卡${first.cards}张；往返后 doc=${after.docH} rail=${after.railH}`,
+    )
+    await ctx.close()
+    await b.close()
+  }
+  probs.length
+    ? fail('21', '移动端可用性', [...new Set(probs)].join('\n      '))
+    : pass('21', '移动端可用性', `390×844 双引擎：0 横向溢出、跑道无内联高度、track 无残留 transform、0 pin-spacer、0 单轴溢出、0 空白死区、能滚到页脚；横屏 844×390 往返后复测同样通过。${sheet.join('；')}`)
+}
+
+/* === 22. 可点性 ======================================================
+   用户报的原话：「博客文章点不开」。这一关把所有该点得动的东西逐个验：
+   六篇博客、六格花园 + 导航站、每张作品卡的两枚卡内按钮，以及全站不许
+   出现 href 为空 / "#" 的链接壳子。桌面与移动两个断点各跑一遍。 */
+if (want(22)) {
+  const { CLICK_PROBE } = await import('./gates-mobile.mjs')
+  const probs = []
+  const sheet = []
+  for (const vp of [
+    { name: 'desktop', width: 1440, height: 900 },
+    { name: 'mobile', width: 390, height: 844 },
+  ]) {
+    const ctx = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, reducedMotion: 'reduce' })
+    const page = await ctx.newPage()
+    await page.goto(URL_BASE, { waitUntil: 'load' })
+    await page.waitForTimeout(1500)
+    await scrollThrough(page)
+    const { bad, info } = await page.evaluate(CLICK_PROBE)
+    await ctx.close()
+    if (info.posts !== 6) bad.push(`博客列表 ${info.posts} 条，应为 6`)
+    if (info.cells !== 7) bad.push(`花园 ${info.cells} 格，应为 6 精选 + 1 导航站`)
+    if (info.btns < 10) bad.push(`作品卡内按钮共 ${info.btns} 枚，六张卡至少 10 枚（4 张带 live + 6 张源码）`)
+    for (const b of bad) probs.push(`${vp.name} ${b}`)
+    sheet.push(`${vp.name} 博客${info.posts}条 花园${info.cells}格 卡内按钮${info.btns}枚 全站${info.links}个链接 0 死壳`)
+  }
+  probs.length ? fail('22', '可点性', [...new Set(probs)].join('\n      ')) : pass('22', '可点性', sheet.join('；'))
+}
+
 /* === 10. 滚动手感 ==================================================== */
 if (want(10)) {
   const { measure, LAUNCH_ARGS } = await import('./scroll-feel.mjs')
@@ -1540,9 +1736,10 @@ if (want(10)) {
 if (want(9)) {
   const FONTS = path.join(ROOT, 'public', 'fonts')
   const CHARS = path.join(ROOT, 'scripts', 'chars')
+  /* v9 删掉了两档中文正文 Web 字体，正文改走苹果系统栈（详见下面的字体栈断言），
+     所以这里只剩三个需要子集覆盖的自带字族。 */
   const FAMILY = {
     'noto sans sc black web': 'display',
-    'noto sans sc web': { 400: 'sans-regular', 650: 'sans-semibold' },
     'jetbrains mono web': 'mono',
     'caveat web': 'hand',
   }
@@ -1603,7 +1800,8 @@ if (want(9)) {
     total += kb
     inv.push(`${f.replace('.woff2', '')} ${kb.toFixed(0)}`)
   }
-  if (total > 200) probs.push(`字体总量 ${total.toFixed(1)} KB > 200 KB 预算`)
+  const BUDGET = 40
+  if (total > BUDGET) probs.push(`字体总量 ${total.toFixed(1)} KB > ${BUDGET} KB 预算`)
   const files = await readdir(FONTS)
   for (const f of files) {
     if (!f.endsWith('.woff2')) continue
@@ -1615,6 +1813,20 @@ if (want(9)) {
   const css = cssRaw.replace(/\/\*[\s\S]*?\*\//g, '')
   const html = await readFile(path.join(ROOT, 'index.html'), 'utf8')
   if (/\bInter\b/.test(css) || /\bInter\b/.test(html)) probs.push('仍有 Inter 引用')
+
+  /* v9 的字体决策：正文交给系统栈，首位必须是 -apple-system（macOS/iOS 上落到
+     苹方 / SF），后面按 Windows → Linux 依次兜底。苹方与 SF Pro 有授权限制，
+     不能当 Web 字体分发，所以只能这么调，各端字形不完全一致是已知代价。
+     同时确认 index.css 里已经没有任何正文中文 Web 字体的 @font-face。 */
+  const sansDecl = (css.match(/--font-sans:\s*([^;]+);/) || [])[1] || ''
+  const first = sansDecl.split(',')[0].trim().replace(/^["']|["']$/g, '')
+  if (first !== '-apple-system') probs.push(`--font-sans 首位是 ${first || '(空)'}，应为 -apple-system`)
+  for (const need of ['Microsoft YaHei', 'Noto Sans CJK SC']) {
+    if (!sansDecl.includes(need)) probs.push(`--font-sans 缺 ${need} 兜底`)
+  }
+  const faceFams = [...css.matchAll(/@font-face\s*\{[^}]*?font-family:\s*['"]([^'"]+)['"]/g)].map((m) => m[1])
+  const bodyFace = faceFams.filter((f) => /noto sans sc web/i.test(f))
+  if (bodyFace.length) probs.push(`index.css 仍有正文中文 @font-face：${bodyFace.join(' ')}`)
   const hexes = [...css.matchAll(/#[0-9a-fA-F]{3,8}\b/g)].map((m) => m[0])
   if (hexes.length) probs.push(`index.css 里有 ${hexes.length} 处硬编码颜色：${hexes.slice(0, 6).join(' ')}`)
   if (/color-mix\(/.test(css)) probs.push('index.css 使用了被禁的 color-mix()')
@@ -1627,7 +1839,7 @@ if (want(9)) {
     : pass(
         '9',
         '字体子集 / 预算 / 设计系统规则',
-        `${covered}；四条路由 × 两个断点 0 缺字。总量 ${total.toFixed(1)} KB ≤ 200 KB（${inv.join(' · ')}）。0 处 Inter、0 处硬编码色、0 处 color-mix()`,
+        `${covered}；四条路由 × 两个断点 0 缺字。总量 ${total.toFixed(1)} KB ≤ ${BUDGET} KB（${inv.join(' · ')}）。正文走系统栈，首位 -apple-system，Windows / Linux 各有兜底；0 处正文中文 @font-face、0 处 Inter、0 处硬编码色、0 处 color-mix()`,
       )
 }
 
