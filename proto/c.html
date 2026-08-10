@@ -94,6 +94,7 @@ body{background:var(--cream);color:var(--ink);font-family:var(--sans);overflow-x
 /* ── 纸板：等宽实物。亮面，2px 墨边，挤出墨侧面 ── */
 .s-pap{left:16%;right:8%;top:70%;bottom:11.5%;z-index:3;background:var(--cream-dark);border:2px solid var(--ink);
   box-shadow:var(--ex-pap);padding:.75rem clamp(1rem,2vw,1.7rem) .8rem;
+  padding-inline-start:max(1.7rem,271px - 15.5vw);
   display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:clamp(.9rem,2.2vw,2.2rem);
   transform:perspective(1700px) rotateY(-3.4deg) rotateZ(.7deg)
             translate3d(calc(var(--px) * 7px),calc(var(--py) * 6px),0)}
@@ -132,7 +133,8 @@ body{background:var(--cream);color:var(--ink);font-family:var(--sans);overflow-x
   .s-main h1{font-size:clamp(1.9rem,8.6vw,2.9rem)}
   .s-yel{box-shadow:8px 8px 0 #C6A82C;align-self:flex-start;padding-inline:1.5rem}
   .s-pop{bottom:auto;box-shadow:8px 8px 0 #992536}
-  .s-pap{bottom:auto;box-shadow:6px 6px 0 #2C2E3D;grid-template-columns:1fr;gap:.6rem}
+  .s-pap{bottom:auto;box-shadow:6px 6px 0 #2C2E3D;grid-template-columns:1fr;gap:.6rem;
+    padding-inline-start:clamp(1rem,2vw,1.7rem)}
   .s-pap__l{border-inline-end:0;border-block-end:2px solid var(--ink);padding-inline-end:0;padding-block-end:.5rem;
     flex-direction:row;align-items:baseline;gap:.7rem}
   .s-pap code{white-space:normal;overflow:visible;text-overflow:clip;font-size:.76rem}
