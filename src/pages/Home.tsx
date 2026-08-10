@@ -1,39 +1,26 @@
 /**
- * 首页。八章 + 一列锚点，页面本身没有任何逻辑。
+ * 首页。六章，每章一种构图，页面本身没有逻辑。
  *
- * 唯一在这里做的事是启动章跟踪：谁占住视口 42% 那条线，谁就是当前章。
- * 这个信号同时喂给右侧锚点栏、舞台的双色场与织带——三者永远说同一件事。
+ * 没有常驻侧边锚点栏：v6 那一列短横线被读成 debug HUD，而且 fixed 的东西
+ * 会压在每一章的正文上。导航改成 hero 里的一条流内顶栏，滚过去就没了。
  */
 
-import { useEffect } from 'react'
-import { Rail } from '../components/Rail'
 import { Hero } from '../sections/Hero'
-import { Metrics } from '../sections/Metrics'
-import { Tracks } from '../sections/Tracks'
-import { Works } from '../sections/Works'
+import { Work } from '../sections/Work'
 import { Cases } from '../sections/Cases'
-import { Garden } from '../sections/Garden'
-import { Writing } from '../sections/Writing'
+import { Craft } from '../sections/Craft'
+import { Notes } from '../sections/Notes'
 import { Contact } from '../sections/Contact'
-import { chapters } from '../content/site'
-import { bootChapterTracking } from '../lib/motion'
 
 export function Home() {
-  useEffect(() => bootChapterTracking(chapters.map((c) => c.id)), [])
-
   return (
-    <>
-      <main id="main">
-        <Hero />
-        <Metrics />
-        <Tracks />
-        <Works />
-        <Cases />
-        <Garden />
-        <Writing />
-        <Contact />
-      </main>
-      <Rail />
-    </>
+    <main id="main">
+      <Hero />
+      <Work />
+      <Cases />
+      <Craft />
+      <Notes />
+      <Contact />
+    </main>
   )
 }

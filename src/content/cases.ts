@@ -6,7 +6,7 @@
  * 没有客户证言、没有营收、没有奖项——这些我没有，就不写。
  */
 
-import type { Tone } from './site'
+import type { Tint } from './site'
 
 export type CaseSection = { label: string; body: string }
 export type CaseResult = { value: string; label: string }
@@ -19,7 +19,7 @@ export type CaseStudy = {
   cn: string
   /** 一句话论点，首页卡片上最大的那行 */
   claim: string
-  tone: Tone
+  tint: Tint
   year: string
   role: string
   stackLine: string
@@ -47,7 +47,7 @@ export const cases: CaseStudy[] = [
     name: 'Lofi Radio Web',
     cn: '专注场景的网页电台',
     claim: '把「打开即听」做成一个界面约束',
-    tone: 'peach',
+    tint: 'blue',
     year: '2026',
     role: '独立设计与开发',
     stackLine: 'Next.js 16 · React · TypeScript · PWA',
@@ -64,7 +64,7 @@ export const cases: CaseStudy[] = [
       },
       {
         label: '怎么解',
-        body: '借鉴 macOS 灵动岛：默认收拢成一枚窄条，只显示当前电台与波形，悬停或点击才展开完整控制。状态不靠文字提示，靠波形本身——缓冲时波形压平，切源时波形跳一次，用户在余光里就能读到，不需要把视线移过来。用 PWA 做独立窗口与离线壳，睡眠定时与专注时钟直接长在播放器上，让它成为专注流程的一部分，而不是又一个要管理的应用。',
+        body: '借鉴 macOS 灵动岛：默认收拢成一枚窄条，只显示当前电台与波形，悬停或点击才展开完整控制。状态不靠文字提示，靠波形本身：缓冲时波形压平，切源时波形跳一次，用户在余光里就能读到，不需要把视线移过来。用 PWA 做独立窗口与离线壳，睡眠定时与专注时钟直接长在播放器上，让它成为专注流程的一部分，而不是又一个要管理的应用。',
       },
     ],
     tradeoffs: [
@@ -98,7 +98,7 @@ export const cases: CaseStudy[] = [
     name: 'Computer Repair Skill',
     cn: '跨平台电脑维修 Agent',
     claim: '给 Agent 装上「先取证，再动手」的职业素养',
-    tone: 'pine',
+    tint: 'yellow',
     year: '2026',
     role: '技能设计与实现',
     stackLine: 'Agent Skill · Python · Markdown · AGPL-3.0',
@@ -111,7 +111,7 @@ export const cases: CaseStudy[] = [
       },
       {
         label: '卡在哪',
-        body: '既要覆盖 Windows / macOS / Linux 三套完全不同的排查路径，又不能把所有知识一次性塞进上下文——塞进去就会互相干扰，Agent 会在 Windows 的问题上引用 Linux 的命令。同时必须区分只读诊断与写操作，让删除、提权、分区、服务修改这类动作永远先经过人确认。',
+        body: '既要覆盖 Windows / macOS / Linux 三套完全不同的排查路径，又不能把所有知识一次性塞进上下文。塞进去就会互相干扰，Agent 会在 Windows 的问题上引用 Linux 的命令。同时必须区分只读诊断与写操作，让删除、提权、分区、服务修改这类动作永远先经过人确认。',
       },
       {
         label: '怎么解',
@@ -121,7 +121,7 @@ export const cases: CaseStudy[] = [
     tradeoffs: [
       {
         title: '放弃了「一句话修好」的体验',
-        body: '确认步骤会让流程变慢。但这是维修，不是补全代码——一次误删的代价远高于多按一次回车。慢是设计出来的。',
+        body: '确认步骤会让流程变慢。但这是维修，不是补全代码。一次误删的代价远高于多按一次回车。慢是设计出来的。',
       },
       {
         title: '放弃了桌面客户端',
@@ -150,7 +150,7 @@ export const cases: CaseStudy[] = [
     name: 'video_vip',
     cn: '多平台视频解析脚本',
     claim: '接口一定会挂，所以整件事按「可切换」来设计',
-    tone: 'berry',
+    tint: 'coral',
     year: '2023 起持续维护',
     role: '独立开发与长期维护',
     stackLine: 'JavaScript · 油猴脚本 · 22 站点适配',
@@ -167,17 +167,17 @@ export const cases: CaseStudy[] = [
       },
       {
         label: '怎么解',
-        body: '把「会坏」当成规格写进结构里。解析服务不是一个常量而是一张 18 项的可切换清单，用户在悬浮面板里一秒换一路，脚本本身不判断谁好谁坏——判断权交给此刻能播的那一路。站点适配不做通用选择器，22 个域名各写一份：自己的播放器容器、自己要显示的节点、自己要清掉的会员遮罩节点，改一个站不牵动其余 21 个。入口用 35 条 @include 同时覆盖 PC 与移动端域名。整个悬浮按钮可以右键拖到任何位置并记住，因为不同站点的播放器控制条位置不一样，固定坐标注定会挡住某个站的按钮。',
+        body: '把「会坏」当成规格写进结构里。解析服务不是一个常量而是一张 18 项的可切换清单，用户在悬浮面板里一秒换一路，脚本本身不判断谁好谁坏，判断权交给此刻能播的那一路。站点适配不做通用选择器，22 个域名各写一份：自己的播放器容器、自己要显示的节点、自己要清掉的会员遮罩节点，改一个站不牵动其余 21 个。入口用 35 条 @include 同时覆盖 PC 与移动端域名。整个悬浮按钮可以右键拖到任何位置并记住，因为不同站点的播放器控制条位置不一样，固定坐标注定会挡住某个站的按钮。',
       },
     ],
     tradeoffs: [
       {
         title: '放弃了自建解析服务',
-        body: '自建能控制质量，但也把单点故障和法律风险都揽到自己身上。用可切换的第三方清单，代价是画质与广告不可控——所以 README 里直说了这一点，并建议配 AdGuard。',
+        body: '自建能控制质量，但也把单点故障和法律风险都揽到自己身上。用可切换的第三方清单，代价是画质与广告不可控，所以 README 里直说了这一点，并建议配 AdGuard。',
       },
       {
         title: '放弃了自动选择「最快接口」',
-        body: '探活需要真的去请求每一路，慢、吵、还容易被限流。让人一秒切换，比让程序猜要可靠——这也是整个项目最核心的判断。',
+        body: '探活需要真的去请求每一路，慢、吵、还容易被限流。让人一秒切换，比让程序猜要可靠。这也是整个项目最核心的判断。',
       },
     ],
     results: [

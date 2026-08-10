@@ -1,67 +1,44 @@
 /**
- * 信号总线。DOM 层与 WebGL 层唯一的通信方式。
+ * 指针总线。
  *
- * 刻意不做「3D 跟着某个 DOM 元素走」那种耦合：一改版式，3D 就跟着崩。
- * 这里只广播几个语义化的量——当前章、滚动进度与速度、指针位置——
- * 织带自己决定拿它们做什么。DOM 不知道有 3D，3D 不认识 DOM。
+ * v6 这里广播四组量（章序号、滚动进度、速度、指针），因为当时有一层常驻 WebGL
+ * 织带要靠它决定形态。v7 把 3D 收回到「卡片 CSS 3D + 分层视差」，织带删了，
+ * 剩下的唯一订阅者是开场那叠截图。所以这里只留指针。
+ *
+ * 一个必须写死的细节：通知走 rAF 合帧。pointermove 在高刷屏上一秒能来 240 次，
+ * 每次都同步回调去写自定义属性，会把样式重算摊到输入线程上。合帧之后一帧最多
+ * 写一次，位移本身交给合成器。
  */
 
 export type Signal = {
-  /** 当前 live 的章序号（0..7） */
-  chapter: number
-  /** 上一章，用来做转场 */
-  prevChapter: number
-  /** 章切换发生的时间戳（performance.now()） */
-  switchedAt: number
-  /** 页面滚动进度 0..1 */
-  progress: number
-  /** 归一化滚动速度，约 -1..1 */
-  velocity: number
-  /** 指针位置，视口归一化到 -1..1 */
+  /** 指针位置，视口归一化到 -1..1（y 轴向上为正） */
   px: number
   py: number
-  /** 指针是否在页面内 */
+  /** 指针是否在页面内。移出去要回中，否则视差会卡在最后一个角度上 */
   pointerIn: boolean
 }
 
-const state: Signal = {
-  chapter: 0,
-  prevChapter: 0,
-  switchedAt: 0,
-  progress: 0,
-  velocity: 0,
-  px: 0,
-  py: 0,
-  pointerIn: false,
-}
+const state: Signal = { px: 0, py: 0, pointerIn: false }
 
 type Listener = (s: Signal) => void
 const listeners = new Set<Listener>()
 
-export const signal = () => state
-
-export const setChapter = (n: number) => {
-  if (n === state.chapter) return
-  state.prevChapter = state.chapter
-  state.chapter = n
-  state.switchedAt = typeof performance !== 'undefined' ? performance.now() : 0
+let queued = 0
+const flush = () => {
+  queued = 0
   listeners.forEach((l) => l(state))
-}
-
-export const setScroll = (progress: number, velocity: number) => {
-  state.progress = progress
-  state.velocity = velocity
 }
 
 export const setPointer = (px: number, py: number, inside: boolean) => {
   state.px = px
   state.py = py
   state.pointerIn = inside
+  if (queued || typeof requestAnimationFrame === 'undefined') return
+  queued = requestAnimationFrame(flush)
 }
 
 export const onSignal = (l: Listener) => {
   listeners.add(l)
-  // 明确返回 void：useEffect 的清理函数不接受返回值，Set.delete 会漏一个 boolean 出去
   return () => {
     listeners.delete(l)
   }

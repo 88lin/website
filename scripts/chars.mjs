@@ -24,9 +24,8 @@ const ROUTES = ['', 'case/lofi/', 'case/repair/', 'case/video-vip/']
  *  站内每个族名都带 Web 后缀（自托管子集），系统同名字体走 local() 回落，
  *  不能混进来，否则会把系统字排到的字符也塞进子集。 */
 const BUCKET = {
-  'noto serif sc web': 'serif',
+  'smiley sans web': 'display',
   'noto sans sc web': 'sans',
-  'fraunces web': 'num',
   'jetbrains mono web': 'mono',
   'caveat web': 'hand',
 }
@@ -104,14 +103,14 @@ for (const route of ROUTES) {
 await browser.close()
 
 // 兜底字符：这些不一定出现在当前 DOM 里，但换行、省略号、日期分隔符随时会用到
+// 破折号一个都不给：全站禁用（audit G18），子集里留着只会有人手滑用上。
 const ALWAYS = {
-  serif: '，。、·—…「」（）0123456789',
-  'sans-regular': '，。、·—…「」（）：；？！／0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
-  'sans-semibold': '，。、·—…「」（）0123456789',
-  // Fraunces 只排读数与案例编号，一个汉字都不带
-  num: '0123456789,.',
-  mono: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,:;/·—→+-%★⑂ ',
-  hand: '，。、·—…「」（）0123456789',
+  // 得意黑排的是标题与巨型读数，拉丁与数字它自己带全
+  display: '，。、·…「」（）？！0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,%×',
+  'sans-regular': '，。、·…「」（）：；？！／0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
+  'sans-semibold': '，。、·…「」（）0123456789',
+  mono: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,:;/·→+-%★⑂ ',
+  hand: '，。、·…「」（）0123456789',
 }
 
 // 每个桶都必须落一个文件：子集脚本按固定表找 chars/*.txt，缺一个就整条管线退出。
