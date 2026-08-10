@@ -4,9 +4,9 @@
 流程：npm run build → npm run chars（浏览器采字）→ 本脚本（定轴 + 子集 + woff2）。
 
 三条不肯让步的规则：
-  1) **定轴**。四个源文件都是可变字体，直接子集会把整条 wght 轴带上，
-     Noto Sans SC 光轴数据就几百 KB。每个 @font-face 只要一个字重，
-     所以先 instancer 定死，再子集。
+  1) **定轴**。可变字体（Noto Sans SC）直接子集会把整条 wght 轴带上，光轴数据
+     就几百 KB。每个 @font-face 只要一个字重，所以先 instancer 定死，再子集。
+     静态字体（得意黑 / JetBrains Mono / Caveat）没有 fvar，这一步自动跳过。
   2) **正文两档分开**。400 与 650 是两个文件、两套字符集；SemiBold 只排小标题，
      字数是正文的零头，合并只会让首屏多下载几十 KB。
   3) **CJK 不预加载**。字体全部 font-display: swap，先用系统字顶上。
@@ -28,32 +28,44 @@ CHARS = ROOT / "scripts" / "chars"
 OUT = ROOT / "public" / "fonts"
 SRC_DS = Path("/workspace/fonts/ds")
 SRC_NOTO = Path("/workspace/fonts/noto")
+SRC_SMILEY = Path("/workspace/fonts/smiley")
 
 # (源文件, 字重, 字符桶, 输出名, 许可证源文件, 额外定轴)
-# 额外定轴只对多轴可变字体有意义：Fraunces 除 wght 外还有 opsz/SOFT/WONK，
-# 只 pin wght 会把剩下三条轴的 gvar 数据整块留下，白多几十 KB。
+# v7 换字：展示档从思源宋体换成得意黑（中文海报字），删掉 Fraunces 与志莽行书。
+# 得意黑是静态 TTF（italicAngle -8，字形自带倾斜），没有 fvar，不需要定轴。
 JOBS = [
-    (SRC_DS / "NotoSerifSC.ttf", 900, "serif", "NotoSerifSC-Display.woff2", "OFL-NotoSerifSC.txt", {}),
+    (SRC_SMILEY / "SmileySans-Oblique.ttf", 400, "display", "SmileySans-Display.woff2", "OFL-SmileySans.txt", {}),
     (SRC_NOTO / "NotoSansSC.ttf", 400, "sans-regular", "NotoSansSC-Regular.woff2", "OFL-NotoSansSC.txt", {}),
     (SRC_NOTO / "NotoSansSC.ttf", 650, "sans-semibold", "NotoSansSC-Semibold.woff2", "OFL-NotoSansSC.txt", {}),
-    # 读数与案例编号都是巨号字，opsz 拉到 144 才是这套字的显示形态
-    (SRC_DS / "Fraunces.ttf", 900, "num", "Fraunces-Numerals.woff2", "OFL-Fraunces.txt", {"opsz": 144, "SOFT": 0, "WONK": 1}),
     (SRC_DS / "JetBrainsMono.ttf", 400, "mono", "JetBrainsMono-Regular.woff2", "OFL-JetBrainsMono.txt", {}),
     (SRC_DS / "Caveat.ttf", 600, "hand", "Caveat.woff2", "OFL-Caveat.txt", {}),
-    (SRC_DS / "ZhiMangXing.ttf", 400, "hand+cjk", "ZhiMangXing.woff2", "OFL-ZhiMangXing.txt", {}),
 ]
 
-LICENSE_NAME = {
-    "OFL-NotoSerifSC.txt": "LICENSE-NotoSerifSC.txt",
-    "OFL-NotoSansSC.txt": "LICENSE-NotoSansSC.txt",
-    "OFL-Fraunces.txt": "LICENSE-Fraunces.txt",
-    "OFL-JetBrainsMono.txt": "LICENSE-JetBrainsMono.txt",
-    "OFL-Caveat.txt": "LICENSE-Caveat.txt",
-    "OFL-ZhiMangXing.txt": "LICENSE-ZhiMangXing.txt",
+LICENSE_SRC = {
+    "OFL-SmileySans.txt": SRC_SMILEY,
+    "OFL-NotoSansSC.txt": SRC_NOTO,
+    "OFL-JetBrainsMono.txt": SRC_DS,
+    "OFL-Caveat.txt": SRC_DS,
 }
 
-# v4/v5 留下的旧产物：文件名换了或字重不再被 @font-face 引用，留着只会白占预算。
-STALE = ["Fraunces.woff2", "JetBrainsMono-Bold.woff2"]
+LICENSE_NAME = {
+    "OFL-SmileySans.txt": "LICENSE-SmileySans.txt",
+    "OFL-NotoSansSC.txt": "LICENSE-NotoSansSC.txt",
+    "OFL-JetBrainsMono.txt": "LICENSE-JetBrainsMono.txt",
+    "OFL-Caveat.txt": "LICENSE-Caveat.txt",
+}
+
+# 旧版留下的产物：字体已从 @font-face 里删掉，文件留着只会白占预算与仓库。
+STALE = [
+    "Fraunces.woff2",
+    "Fraunces-Numerals.woff2",
+    "JetBrainsMono-Bold.woff2",
+    "NotoSerifSC-Display.woff2",
+    "ZhiMangXing.woff2",
+    "LICENSE-Fraunces.txt",
+    "LICENSE-NotoSerifSC.txt",
+    "LICENSE-ZhiMangXing.txt",
+]
 
 
 def read_chars(bucket: str) -> str:
@@ -132,7 +144,7 @@ def main() -> None:
         n, size = build(src, weight, bucket, out_name, extra)
         total += size
         rows.append((out_name, weight, n, size))
-        lic_src = SRC_DS / lic
+        lic_src = LICENSE_SRC[lic] / lic
         if lic_src.exists():
             shutil.copyfile(lic_src, OUT / LICENSE_NAME[lic])
 

@@ -16,43 +16,35 @@ export const AS_OF = '2026.08.10'
 /* ---------------------------------------------------------------- 章节 */
 
 /**
- * 色调只有四个语义角色，全部指向 palettes.css 的 C 组（Mulberry）。
- * 组件永远写角色名，不写色值，也不写调色板字母——换配色时改 <html data-palette> 一个字母即可。
- */
-export type Tone = 'berry' | 'deep' | 'peach' | 'pine'
-
-export type ChapterId =
-  | 'hero'
-  | 'metrics'
-  | 'tracks'
-  | 'works'
-  | 'cases'
-  | 'garden'
-  | 'writing'
-  | 'contact'
-
-/**
- * `tone` 有两个用途：一是章节自己的前景色档位，二是右侧锚点栏——那一列
- * 短横线是 fixed 的，不在任何章里面，只能靠当前章的 tone 决定自己是黑是白。
- * `open` 为真表示这一章不铺自己的底色，让舞台的双色场与织带透上来。
- */
-export type Chapter = { id: ChapterId; label: string; tone: Tone | 'paper'; open?: true }
-
-/**
- * 八章。既是右侧锚点栏的内容，也是 3D 主线上的八个节点。
- * 刻意不带编号：编号眉标是纯装饰，读者不需要知道自己在第几章。
+ * 色调 = 一整章的地面色。全部指向 palettes.css 的 A 组（Classic 蓝 / 黄 / 珊瑚），
+ * 组件永远写角色名，不写色值，也不写调色板字母。
  *
- * 敞开 / 实色交替出现：空间、平面、平面、空间、空间、平面、平面、空间。
+ * 硬规则：要放正文的彩色面只能用 -deep 档（blue / coral），
+ * 亮档 --brand / --pop 只做大字、描边与纯色块。对比度在 styles/index.css 里注明。
+ */
+export type Tone = 'paper' | 'sand' | 'blue' | 'yellow' | 'coral'
+
+/** 卡片色相。只染卡的边、条与投影，卡面永远是纸，字永远是墨。 */
+export type Tint = 'blue' | 'yellow' | 'coral'
+
+export type ChapterId = 'hero' | 'work' | 'cases' | 'craft' | 'notes' | 'contact'
+
+export type Chapter = { id: ChapterId; label: string; tone: Tone }
+
+/**
+ * 六章。v6 是八章一个模子，差异只有列数；v7 砍到六章，并且强制每章换一种构图：
+ * 分屏海报 / 横向图廊 / 粘性堆叠 / 无卡片对角线 / 分组横滚 / 满幅色块。
+ * 章间的构图特征向量在 audit G16 里逐对比距离，撞型即红。
+ *
+ * 地面色节奏：纸 → 蓝 → 砂 → 黄 → 纸 → 珊瑚。
  */
 export const chapters: Chapter[] = [
-  { id: 'hero', label: '主张', tone: 'deep', open: true },
-  { id: 'metrics', label: '读数', tone: 'peach' },
-  { id: 'tracks', label: '主线', tone: 'pine' },
-  { id: 'works', label: '作品', tone: 'berry', open: true },
-  { id: 'cases', label: '案例', tone: 'deep', open: true },
-  { id: 'garden', label: '花园', tone: 'peach' },
-  { id: 'writing', label: '写作', tone: 'paper' },
-  { id: 'contact', label: '接入', tone: 'berry', open: true },
+  { id: 'hero', label: '开场', tone: 'paper' },
+  { id: 'work', label: '作品', tone: 'blue' },
+  { id: 'cases', label: '怎么做的', tone: 'sand' },
+  { id: 'craft', label: '手艺', tone: 'yellow' },
+  { id: 'notes', label: '在写', tone: 'paper' },
+  { id: 'contact', label: '联系', tone: 'coral' },
 ]
 
 /* ---------------------------------------------------------------- 身份 */
@@ -73,13 +65,19 @@ export const hero = {
   line2Mark: '交付',
   line2Mid: '、可',
   line2Circle: '维护',
-  line2Post: '的',
-  line3: '工程结果。',
-  sub: '接口会挂，平台会变，需求会改。我做的东西按「可切换」来设计——所以它们还活着。',
-  latin: 'THE THREAD · 88LIN',
+  line3: '的工程结果。',
+  sub: '接口会挂，平台会变，需求会改。我做的东西按「可切换」设计，所以到今天还活着。',
+  latin: '88LIN · WORK THAT SHIPPED',
   primaryCta: '聊聊合作',
   secondaryCta: '看三个案例',
 }
+
+/** 首屏那叠真实界面。顺序即层序：0 在最前。 */
+export const heroShots = [
+  { cover: 'video-vip', alt: 'video_vip 解析站首页截图', label: 'video_vip' },
+  { cover: 'lofi', alt: 'Lofi Radio 播放界面截图', label: 'Lofi Radio' },
+  { cover: 'gzh', alt: '公众号排版技能主题画廊截图', label: 'gzh-design-skill' },
+] as const
 
 export const CTA_LABEL = '聊聊合作'
 export const CONTACT_EMAIL = '431761794@qq.com'
@@ -210,12 +208,16 @@ export type Project = {
   state: ProjectState
   live?: string
   repo: string
-  tone: Tone
+  tint: Tint
+  /** public/covers/<cover>.webp，构建期抓的真实页面截图 */
+  cover: string
+  /** og = GitHub 官方社交预览卡（2:1，整张放进容器，不裁） */
+  coverKind: 'shot' | 'og'
 }
 
 export const worksIntro = {
   headline: '作品通道',
-  body: '六路，按 star 排。状态灯是真的：还在改的亮着，只维护不加功能的是待机。横向拖动。',
+  body: '六路，按 star 排，卡片宽度就是它的分量。状态灯是真的：还在改的亮着，只维护不加功能的是待机。',
 }
 
 export const projects: Project[] = [
@@ -233,7 +235,9 @@ export const projects: Project[] = [
     state: 'maintained',
     live: 'https://88lin.github.io/vip/',
     repo: 'https://github.com/88lin/video_vip',
-    tone: 'berry',
+    tint: 'coral',
+    cover: 'video-vip',
+    coverKind: 'shot',
   },
   {
     slug: 'lofi-radio-web',
@@ -249,7 +253,9 @@ export const projects: Project[] = [
     state: 'live',
     live: 'https://lofi.88lin.eu.org',
     repo: 'https://github.com/88lin/lofi-radio-web',
-    tone: 'pine',
+    tint: 'blue',
+    cover: 'lofi',
+    coverKind: 'shot',
   },
   {
     slug: 'computer-repair-skill',
@@ -265,7 +271,9 @@ export const projects: Project[] = [
     state: 'live',
     live: 'https://repair.88lin.eu.org',
     repo: 'https://github.com/88lin/computer-repair-skill',
-    tone: 'deep',
+    tint: 'yellow',
+    cover: 'repair',
+    coverKind: 'shot',
   },
   {
     slug: 'gzh-design-skill',
@@ -281,7 +289,9 @@ export const projects: Project[] = [
     state: 'live',
     live: 'https://88lin.github.io/gzh-design-skill/docs/gallery/index.html',
     repo: 'https://github.com/88lin/gzh-design-skill',
-    tone: 'peach',
+    tint: 'coral',
+    cover: 'gzh',
+    coverKind: 'shot',
   },
   {
     slug: 'diataxis-docs-skill',
@@ -296,7 +306,9 @@ export const projects: Project[] = [
     forks: 0,
     state: 'maintained',
     repo: 'https://github.com/88lin/diataxis-docs-skill',
-    tone: 'pine',
+    tint: 'blue',
+    cover: 'diataxis',
+    coverKind: 'og',
   },
   {
     slug: 'wesum-wechat-monitor',
@@ -310,7 +322,9 @@ export const projects: Project[] = [
     forks: 6,
     state: 'maintained',
     repo: 'https://github.com/88lin/wesum-wechat-monitor',
-    tone: 'peach',
+    tint: 'yellow',
+    cover: 'wesum',
+    coverKind: 'og',
   },
 ]
 
@@ -367,6 +381,22 @@ export const garden: GardenItem[] = [
   { name: '窗外动画', href: GH + 'notion/7/', group: '组件' },
 ]
 
+/**
+ * 花园里能抓到可用截图的条目。按 name 索引：抓不出内容的（纯 canvas 特效、
+ * 弱登录页）一张都不放占位图，宁可只给名字。「特效」整组 14 项都在此列。
+ */
+export const gardenCovers: Record<string, string> = {
+  古诗起名: 'gushi',
+  科研海报生成器: 'poster-gen',
+  文字卡片: 'textcard',
+  元素周期表: 'periodic',
+  打印纸设计: 'paperstudio',
+  深度研究: 'research',
+}
+
+/** 精选六项：花园里唯一带图展示的那一排，顺序即版面顺序。 */
+export const gardenFeatured = ['古诗起名', '科研海报生成器', '文字卡片', '元素周期表', '打印纸设计', '深度研究']
+
 export const gardenIntro = {
   headline: '数字花园',
   body: '这些年顺手做的小页面：特效、工具、Notion 组件、内容站。没有一个是 demo，全都还挂在线上跑着。',
@@ -404,6 +434,22 @@ export const stack = {
 }
 
 /* ---------------------------------------------------------------- 写作 */
+
+/** 手艺章的证据条：两张真实页面，横条裁切，不做成卡片。 */
+export const craftEvidence = [
+  {
+    cover: 'designsystem',
+    alt: '自建设计系统组件库预览页截图',
+    caption: '自建设计系统：组件、配色、手绘框，本站用的就是它',
+    href: 'https://88lin.github.io/mydesign-system/components-preview.html',
+  },
+  {
+    cover: 'hub',
+    alt: '导航站首页截图',
+    caption: '导航站：所有小站的总入口',
+    href: 'https://88lin.github.io',
+  },
+] as const
 
 export const writing = {
   headline: '写下来的部分',
@@ -455,8 +501,8 @@ export const contact = {
 }
 
 export const footer = {
-  copyright: '© 2023–2026 茉灵智库 · 88lin',
-  note: '本站由 Vite + React + Three.js 构建，页面数字全部来自公开接口，源码开源。',
+  copyright: '© 2023-2026 茉灵智库 · 88lin',
+  note: '本站由 Vite + React + GSAP 构建，页面上每个数字都来自公开接口，源码开源。',
   source: 'https://github.com/88lin/website',
   asOf: AS_OF,
 }

@@ -12,7 +12,7 @@
  */
 
 import { useEffect, useRef, useState, type RefObject } from 'react'
-import { setChapter, setScroll, setPointer } from './bus'
+import { setPointer } from './bus'
 import { prefersReducedMotion } from './caps'
 
 /* ------------------------------------------------------------ 平滑滚动 */
@@ -38,12 +38,6 @@ export async function bootScroll() {
   }
   raf = requestAnimationFrame(loop)
 
-  const doc = document.documentElement
-  lenis.on('scroll', ({ velocity }: { velocity: number }) => {
-    const max = Math.max(1, doc.scrollHeight - window.innerHeight)
-    setScroll(window.scrollY / max, Math.max(-1, Math.min(1, velocity / 45)))
-  })
-
   // lenis 接管之后，ScrollTrigger 必须被告知「滚动位置由谁说了算」，
   // 否则 pin 与 scrub 会比页面慢半拍。
   const { ScrollTrigger } = await import('gsap/ScrollTrigger')
@@ -54,15 +48,6 @@ export async function bootScroll() {
     lenis.destroy()
     lenisRef = null
   }
-}
-
-export function scrollToId(id: string) {
-  const el = document.getElementById(id)
-  if (!el) return
-  const top = el.getBoundingClientRect().top + window.scrollY
-  const l = lenisRef as unknown as { scrollTo?: (t: number, o?: object) => void } | null
-  if (l?.scrollTo) l.scrollTo(top, { duration: 1.1 })
-  else window.scrollTo({ top, behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
 }
 
 /* ------------------------------------------------------------ 指针 */
@@ -88,7 +73,7 @@ export function bootPointer() {
 /* ------------------------------------------------------------ 入场 */
 
 /** 单元素揭示：进入视口就加 .is-in，一次性，不来回抖。 */
-export function useReveal<T extends HTMLElement>(rootMargin = '-12% 0px -8% 0px') {
+export function useReveal<T extends Element>(rootMargin = '-12% 0px -8% 0px') {
   const ref = useRef<T | null>(null)
   useEffect(() => {
     const el = ref.current
@@ -235,27 +220,41 @@ export function useLazyScene(
  * 深色模式。--sink 盖的是本章底色，读起来是卡片沉回背景里。
  */
 export function caseStack(
-  gsap: typeof import('gsap').gsap,
+  ScrollTrigger: typeof import('gsap/ScrollTrigger').ScrollTrigger,
+  root: HTMLElement,
   cards: HTMLElement[],
 ) {
+  const stick: number[] = []
   cards.forEach((c, i) => {
     c.style.zIndex = String(i + 1)
-    // GSAP 读不到未声明的自定义属性，起始值必须显式落在 style 上
     c.style.setProperty('--sink', '0')
+    c.style.setProperty('--shrink', '1')
+    stick.push(parseFloat(getComputedStyle(c).insetBlockStart) || 0)
   })
-  cards.slice(0, -1).forEach((card, i) => {
-    gsap.to(card, {
-      scale: 0.93,
-      '--sink': 0.55,
-      ease: 'none',
-      scrollTrigger: {
-        trigger: cards[i + 1],
-        start: 'top bottom',
-        end: 'top top',
-        scrub: true,
-      },
-    })
+
+  // 不写「以下一张卡为 trigger」：那些卡是 sticky 的。场景要是在页面已经滚进本章
+  // 之后才建起来（点锚点直达、深链回来、前进后退），ScrollTrigger 量到的是它被钉住
+  // 之后的位置，start/end 整体偏掉，结果是卡片还整个露着就被漂白，看着像禁用态。
+  // 改成每次滚动现量「下一张压过来多少」，几何永远是当下的真值。
+  const apply = () => {
+    const reach = window.innerHeight * 0.6
+    for (let i = 0; i < cards.length - 1; i++) {
+      const span = Math.max(1, reach - stick[i + 1])
+      const t = cards[i + 1].getBoundingClientRect().top
+      const p = Math.min(1, Math.max(0, (reach - t) / span))
+      cards[i].style.setProperty('--sink', (p * 0.45).toFixed(4))
+      cards[i].style.setProperty('--shrink', (1 - p * 0.06).toFixed(4))
+    }
+  }
+
+  ScrollTrigger.create({
+    trigger: root,
+    start: 'top bottom',
+    end: 'bottom top',
+    onUpdate: apply,
+    onRefresh: apply,
   })
+  apply()
 }
 
 /* ------------------------------------------------------------ 作品横推 */
@@ -293,48 +292,4 @@ export function worksPan(
       onRefreshInit: size,
     },
   })
-}
-
-/* ------------------------------------------------------------ 章跟踪 */
-
-/**
- * 谁占住视口 42% 那条线，谁就是当前章。用 rAF 而不是 IntersectionObserver：
- * 需要的是「哪一章占住了基准线」，不是「谁露出来了」。
- * 每帧只读 8 个 getBoundingClientRect，都是只读、同一批次。
- */
-export function bootChapterTracking(ids: string[]) {
-  if (typeof window === 'undefined') return () => {}
-  let raf = 0
-  let lastY = NaN
-  let lastH = NaN
-  const read = () => {
-    // 只在滚动位置或视口高度真的变了的时候量。停下来不动时这个循环是空转，
-    // 一次 getBoundingClientRect 都不做。
-    if (window.scrollY === lastY && window.innerHeight === lastH) return
-    lastY = window.scrollY
-    lastH = window.innerHeight
-    const mid = window.innerHeight * 0.42
-    let best = 0
-    for (let i = 0; i < ids.length; i++) {
-      const el = document.getElementById(ids[i])
-      if (!el) continue
-      const r = el.getBoundingClientRect()
-      if (r.top <= mid && r.bottom > mid) {
-        best = i
-        break
-      }
-      if (r.top <= mid) best = i
-    }
-    setChapter(best)
-    // 减弱动效下 lenis 不启动，进度得在这里补一次，织带静态图版才知道停在哪
-    const max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight)
-    setScroll(window.scrollY / max, 0)
-  }
-  const loop = () => {
-    raf = requestAnimationFrame(loop)
-    read()
-  }
-  read()
-  raf = requestAnimationFrame(loop)
-  return () => cancelAnimationFrame(raf)
 }

@@ -1,7 +1,7 @@
 {
   "name": "moling-website",
   "private": true,
-  "version": "5.0.0",
+  "version": "7.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,7 +12,6 @@
     "chars": "node scripts/chars.mjs",
     "fonts": "npm run chars && python3 scripts/subset-fonts.py",
     "covers": "node scripts/covers.mjs",
-    "plates": "node scripts/plates.mjs",
     "static": "node scripts/static.mjs",
     "audit": "node scripts/audit.mjs",
     "cover:vip": "node scripts/cover-vip.mjs"
@@ -21,13 +20,11 @@
     "gsap": "^3.13.0",
     "lenis": "^1.1.20",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "three": "^0.169.0"
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
-    "@types/three": "^0.169.0",
     "@vitejs/plugin-react": "^4.3.4",
     "lighthouse": "^12.8.2",
     "playwright": "^1.50.1",

@@ -1,24 +1,27 @@
 <!doctype html>
-<html lang="zh-CN" data-palette="C">
+<html lang="zh-CN" data-palette="A">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- 本站没有深色模式。这里声明一次，CSS 里再声明一次：系统开深色时
+         浏览器不许自作主张反转表单控件与滚动条的配色。 -->
+    <meta name="color-scheme" content="light" />
     <title>茉灵智库 · 88lin ｜ AI Agent 工程 × 创意前端</title>
     <meta
       name="description"
       content="茉灵智库（88lin）个人主页与作品集。AI 研究者与 Agent 工程实践者，把前沿 AI 变成可交付、可维护的工程结果。22 个原创开源仓库，累计 4,684 star。"
     />
     <meta name="author" content="88lin · 茉灵智库" />
-    <meta name="theme-color" content="#5B2349" />
+    <meta name="theme-color" content="#FEFCF6" />
     <link rel="canonical" href="https://88lin.github.io/website/" />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
-    <!-- 只预载标题这一个子集。它是 LCP 元素用的字，25.8 KB，提前发能让首屏巨字
-         一次成型。**其余六个不预载**：实测把首屏全部字体一起预载会在 1.6 Mbps
-         节流下抢掉 LCP 的带宽，LCP 从 1.88s 掉到 2.56s——为了一笔 0.006 的 CLS
-         赔 0.7 秒首屏，不划算。font 预载必须带 crossorigin，同源也不例外。 -->
-    <link rel="preload" as="font" type="font/woff2" href="./fonts/NotoSerifSC-Display.woff2" crossorigin />
-    <!-- 第二条例外：手写体只有 2.4 KB，但首屏那句旁批就用它。不预载的话它会在
-         首屏画完之后才换字，制造全站唯一一处 CLS。2.4 KB 抢不走 LCP 的带宽。 -->
+    <!-- 只预载展示字这一个子集。它排的是 LCP 元素（首屏那三行巨字），约 30 KB，
+         提前发能让首屏一次成型。**正文与等宽不预载**：实测把首屏字体一起预载会
+         在 1.6 Mbps 节流下抢掉 LCP 的带宽，LCP 从 1.88s 掉到 2.56s，为了一笔
+         0.006 的 CLS 赔 0.7 秒首屏，不划算。font 预载必须带 crossorigin，同源也不例外。 -->
+    <link rel="preload" as="font" type="font/woff2" href="./fonts/SmileySans-Display.woff2" crossorigin />
+    <!-- 第二条例外：手写体只有 2 KB 出头，但首屏那句旁批就用它。不预载的话它会在
+         首屏画完之后才换字，制造全站唯一一处 CLS。2 KB 抢不走 LCP 的带宽。 -->
     <link rel="preload" as="font" type="font/woff2" href="./fonts/Caveat.woff2" crossorigin />
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="zh_CN" />
@@ -52,7 +55,7 @@
     <script type="module" src="/src/main.tsx"></script>
     <noscript>
       <div style="padding: 2rem; font-family: system-ui">
-        本站的动效需要 JavaScript，但内容不需要——上面的正文是构建期就写死在 HTML 里的，可以直接读。也可以去
+        本站的动效需要 JavaScript，内容不需要。上面的正文是构建期就写死在 HTML 里的，可以直接读。也可以去
         <a href="https://github.com/88lin">GitHub</a> 或 <a href="https://blog.88lin.eu.org">博客</a>。
       </div>
     </noscript>

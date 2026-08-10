@@ -1,103 +1,118 @@
 /**
- * 04 案例。
+ * 03 怎么做的 · 粘性堆叠。
  *
- * 三张整屏卡片 sticky 叠层，后一张推上来时把前一张压回底色里。sticky 写在 CSS，
- * JS 只做被压住那张的形变——这样禁用 JS 时它就是三段普通的长内容，不会白屏。
+ * 三张卡依次钉在同一个位置，后一张推上来时前一张缩小并沉回底色里。
+ * 这是顺序叙事：你不能同时读三个案例，所以版面也不让你同时看见三个。
  *
- * 每张卡只讲一件事，按「背景 / 卡在哪 / 怎么解」三段走，右栏是能被第三方核到的
- * 四个数字，加一块手绘框里的取舍：**写清楚放弃了什么**，比列一堆功能有用。
+ * 写法沿用「背景 / 卡在哪 / 怎么解」三段，这是这套内容里最值钱的部分。
+ * 「怎么解」单独套一个手绘虚线框——一整章只圈这一处，圈多了就成花边。
  *
- * 不放封面图：三张封面在这个尺寸下只会变成三块彩色噪声，而且会把首屏之外的
- * 图片预算吃光。数字和字本身就是画面。
+ * v6 在这一章翻的两个车都在这里改掉：
+ *  - 卡片 border-radius 是 0，而同章的小方块有圆角，一页两套形状语言。
+ *    现在所有 [data-card] 统一 14px，audit G15 逐个量。
+ *  - 手绘框里的文字冲出框线。现在框是 .frame 的 padding 画出来的，
+ *    内容永远在框内至少 18px。
  */
 
-import { Fragment, useCallback, useRef } from 'react'
-import { Hand } from '../components/Hand'
+import { useCallback, useRef } from 'react'
 import { ArrowOut } from '../components/Icons'
-import { cases, casesIntro } from '../content/cases'
-import { caseStack, useLazyScene, type SceneApi } from '../lib/motion'
+import { Frame } from '../components/Ink'
+import { Shot } from '../components/Shot'
+import { cases, casesIntro, type CaseStudy } from '../content/cases'
+import { caseStack, useLazyScene, useMediaQuery, type SceneApi } from '../lib/motion'
 import { Link } from '../router'
 
-export function Cases() {
-  const stackRef = useRef<HTMLDivElement | null>(null)
+/** 案例 slug 与截图同名，三张都是真实站点抓的。 */
+const COVER: Record<string, string> = {
+  lofi: 'lofi',
+  repair: 'repair',
+  'video-vip': 'video-vip',
+}
 
-  const build = useCallback(({ gsap, root }: SceneApi) => {
-    const cards = Array.from(root.querySelectorAll<HTMLElement>('.stack-card'))
-    if (cards.length > 1) caseStack(gsap, cards)
-  }, [])
-
-  useLazyScene(stackRef, build)
-
+function Case({ c }: { c: CaseStudy }) {
+  const [bg, stuck, fix] = c.sections
   return (
-    <section id="cases" className="ch ch-cases ch--open" data-tone="deep">
-      <div className="wrap cases__head">
-        <h2 className="hd">{casesIntro.headline}</h2>
-        <p className="lede">{casesIntro.body}</p>
+    <article className="case" data-card="" data-tint={c.tint}>
+      <div className="case__hd">
+        <span className="case__no" aria-hidden="true">
+          {c.no}
+        </span>
+        <div className="case__id">
+          <h3 className="case__name">{c.name}</h3>
+          <p className="case__cn">{c.cn}</p>
+        </div>
+        <p className="case__claim">{c.claim}</p>
       </div>
 
-      <div className="stack" ref={stackRef}>
-        {cases.map((c) => (
-          <div className="stack-card" key={c.slug}>
-            <div className="wrap">
-              <article className="case" data-tint={c.tone}>
-                {/* 编号是纹理不是内容：5.5% 的墨色读不出来，也不该被读屏念出来 */}
-                <span className="case__no num" data-no={c.no} aria-hidden="true" />
+      <div className="case__grid">
+        <div className="case__text">
+          <section className="case__blk">
+            <h4>{bg.label}</h4>
+            <p>{bg.body}</p>
+          </section>
+          <section className="case__blk">
+            <h4>{stuck.label}</h4>
+            <p>{stuck.body}</p>
+          </section>
+          <Frame seed={`case-${c.slug}`} className="case__fix">
+            <h4>{fix.label}</h4>
+            <p>{fix.body}</p>
+          </Frame>
+        </div>
 
-                <div className="case__main">
-                  <div>
-                    <h3 className="case__name">{c.name}</h3>
-                    <span className="case__cn">{c.cn}</span>
-                  </div>
-                  <p className="case__claim">{c.claim}</p>
-                  <dl className="case__secs">
-                    {c.sections.map((s) => (
-                      <div className="case__sec" key={s.label}>
-                        <dt>{s.label}</dt>
-                        <dd>{s.body}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                </div>
-
-                <div className="case__side">
-                  <div className="case__figures">
-                    {c.results.map((r) => (
-                      <div className="figure" key={r.label}>
-                        <b>{r.value}</b>
-                        <span>{r.label}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <Hand label="取舍" tone={c.tone} seed={c.slug}>
-                    <div className="hand__in">
-                      {c.tradeoffs.map((t) => (
-                        <Fragment key={t.title}>
-                          <h4>{t.title}</h4>
-                          <p>{t.body}</p>
-                        </Fragment>
-                      ))}
-                    </div>
-                  </Hand>
-
-                  <div className="case__links">
-                    <Link className="btn" to={`/case/${c.slug}/`}>
-                      读完整案例
-                    </Link>
-                    <a
-                      className="btn btn--ghost"
-                      href={c.repo}
-                      target="_blank"
-                      rel="noreferrer noopener"
-                    >
-                      仓库
-                      <ArrowOut />
-                    </a>
-                  </div>
-                </div>
-              </article>
-            </div>
+        <div className="case__side">
+          <Shot
+            cover={COVER[c.slug]}
+            alt={`${c.name} 界面截图`}
+            ratio="16 / 10"
+            sizes="(max-width: 1000px) 88vw, 34vw"
+          />
+          <dl className="case__res">
+            {c.results.map((r) => (
+              <div key={r.label}>
+                <dt>{r.label}</dt>
+                <dd>{r.value}</dd>
+              </div>
+            ))}
+          </dl>
+          <div className="case__go">
+            <Link className="btn btn--solid" to={`/case/${c.slug}/`}>
+              读完整案例
+            </Link>
+            {c.link ? (
+              <a className="btn btn--ghost" href={c.link} target="_blank" rel="noreferrer noopener">
+                {c.linkLabel || '在线'} <ArrowOut />
+              </a>
+            ) : null}
           </div>
+        </div>
+      </div>
+    </article>
+  )
+}
+
+export function Cases() {
+  const root = useRef<HTMLDivElement | null>(null)
+  const wide = useMediaQuery('(min-width: 900px)')
+
+  const build = useCallback(({ ScrollTrigger, root: el }: SceneApi) => {
+    caseStack(ScrollTrigger, el, Array.from(el.querySelectorAll<HTMLElement>('.case')))
+  }, [])
+
+  useLazyScene(root, build, wide)
+
+  return (
+    <section id="cases" className="ch ch--cases" data-tone="sand" aria-labelledby="cases-h">
+      <div className="wrap cases__head">
+        <p className="eyebrow">THREE CASE STUDIES</p>
+        <h2 className="ch-title" id="cases-h">
+          {casesIntro.headline}
+        </h2>
+        <p className="ch-lede">{casesIntro.body}</p>
+      </div>
+      <div className="wrap cases__stack" ref={root}>
+        {cases.map((c) => (
+          <Case c={c} key={c.slug} />
         ))}
       </div>
     </section>
