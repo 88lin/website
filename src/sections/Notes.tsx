@@ -1,150 +1,83 @@
 /**
- * 05 在写 · 精选缩略图 + 分组横滚。
+ * 05 在写 · 花园与博客。
  *
- * v6 这一章是 40 个标签胶囊平铺三行加一大片空白，用户的原话是
- * 「很普通的页面，像古老的网站一样」——那确实就是 2008 年的 tag cloud。
+ * v7 这一章靠六张缩略图撑场面，图一删就塌。v8 换成一堵 41 块的彩色底卡墙：
+ * 每块是一个真实在线的小站，跨度按 4/3/3/2 轮换，同一行不出现两块等宽——
+ * 既避开「一行三张等宽卡」的模板感，也让这堵墙自己就是数量的证据。
  *
- * 换掉的方式不是加装饰，是**换组件形态**：
- *  1) 能抓到真实截图的六项升为精选图墙，跨度 7/5、5/7、6/6，不是三等分。
- *  2) 抓不出内容的（纯 canvas 特效那一组 14 项）不放占位图，改成编号磁贴，
- *     按组横向 snap。宁可只给名字，也不塞假图。
- *  3) 博客不再用「计数除以最大值」的条形图假装数据可视化，
- *     改成一张真实的博客截图加最新六篇的实际标题与日期。
+ * 底卡颜色按七组 AA 达标的面色/字色组合轮换，不是随机上色：
+ * 每一格的字色是跟着面色定死的，不存在浅字压浅底。
  */
 
 import { ArrowOut } from '../components/Icons'
-import { Shot } from '../components/Shot'
-import {
-  garden,
-  gardenCovers,
-  gardenFeatured,
-  gardenIntro,
-  writing,
-  type GardenGroup,
-} from '../content/site'
+import { garden, gardenIntro, writing, type GardenGroup } from '../content/site'
 import { useStagger } from '../lib/motion'
 
-/** 精选六项的版面跨度与裁切比：等宽等高就是一张表格。 */
-const CELL = [
-  { span: 7, ratio: '16 / 9', tint: 'blue' },
-  { span: 5, ratio: '4 / 3', tint: 'yellow' },
-  { span: 5, ratio: '4 / 3', tint: 'coral' },
-  { span: 7, ratio: '16 / 9', tint: 'blue' },
-  { span: 6, ratio: '3 / 2', tint: 'yellow' },
-  { span: 6, ratio: '3 / 2', tint: 'coral' },
+/** 12 栏里的跨度。四种行型轮换：每行都收口成 12，但宽块的位置逐行挪，
+ *  一行内最多两块等宽——避免整堵墙退化成「第一列宽、其余等分」的表格。 */
+const ROWS = [
+  [4, 3, 3, 2],
+  [3, 4, 2, 3],
+  [2, 3, 4, 3],
+  [3, 2, 3, 4],
 ]
+const spanOf = (i: number) => ROWS[Math.floor(i / 4) % ROWS.length][i % 4]
 
-const GROUPS: { g: GardenGroup; tint: string; note: string }[] = [
-  { g: '特效', tint: 'coral', note: '纯 canvas，截图抓不出内容，只给名字' },
-  { g: '工具', tint: 'blue', note: '打开就能用，不用注册' },
-  { g: '内容', tint: 'yellow', note: '影视、短剧、电台、图集' },
-  { g: '组件', tint: 'blue', note: '嵌进 Notion 页面的小挂件' },
-]
-
-const featured = gardenFeatured
-  .map((name) => garden.find((g) => g.name === name))
-  .filter((g): g is NonNullable<typeof g> => Boolean(g))
+/** 组名的等宽字缩写：JetBrains Mono 没有汉字，角标只能走拉丁。 */
+const TAG: Record<GardenGroup, string> = {
+  特效: 'FX',
+  工具: 'TOOL',
+  内容: 'MEDIA',
+  组件: 'WIDGET',
+}
 
 export function Notes() {
-  const wall = useStagger<HTMLDivElement>(70)
+  const wall = useStagger<HTMLDivElement>(28)
 
   return (
     <section id="notes" className="ch ch--notes" data-tone="paper" aria-labelledby="notes-h">
       <div className="wrap">
-        <p className="eyebrow">GARDEN &amp; BLOG</p>
-        <h2 className="ch-title" id="notes-h">
-          {gardenIntro.headline}
-        </h2>
-        <p className="ch-lede">{gardenIntro.body}</p>
+        <div className="notes__head">
+          <p className="eyebrow">GARDEN &amp; BLOG</p>
+          <h2 className="ch-title" id="notes-h">
+            {gardenIntro.headline}
+          </h2>
+          <p className="ch-lede">{gardenIntro.body}</p>
+          <a className="notes__hub" href={gardenIntro.hub} target="_blank" rel="noreferrer noopener">
+            {gardenIntro.hubLabel} {gardenIntro.hub.replace('https://', '')}
+            <ArrowOut />
+          </a>
+        </div>
 
-        <div className="gwall" ref={wall}>
-          {featured.map((it, i) => (
+        <div className="garden" ref={wall}>
+          {garden.map((it, i) => (
             <a
-              className="gwall__i rise"
+              className="slab gcell rise"
               data-stagger=""
+              data-c={i % 7}
               key={it.name}
               href={it.href}
               target="_blank"
               rel="noreferrer noopener"
-              data-tint={CELL[i].tint}
-              style={{ gridColumn: `span ${CELL[i].span}` }}
+              style={{ '--sp': spanOf(i) } as React.CSSProperties}
             >
-              <Shot
-                cover={gardenCovers[it.name]}
-                alt={`${it.name} 页面截图`}
-                ratio={CELL[i].ratio}
-                sizes="(max-width: 900px) 92vw, 40vw"
-              />
-              <span className="gwall__c">
-                <span className="gwall__n">{it.name}</span>
-                <ArrowOut />
-              </span>
+              <b>{it.name}</b>
+              <s>
+                {String(i + 1).padStart(2, '0')} {TAG[it.group]}
+              </s>
             </a>
           ))}
         </div>
 
-        {GROUPS.map(({ g, tint, note }) => {
-          const items = garden.filter((x) => x.group === g && !gardenFeatured.includes(x.name))
-          if (!items.length) return null
-          return (
-            <div className="gset" data-tint={tint} key={g}>
-              <div className="gset__hd">
-                <h3>{g}</h3>
-                <span className="gset__n">{items.length}</span>
-                <p className="gset__note">{note}</p>
-              </div>
-              <ul className="gset__strip">
-                {items.map((it, i) => (
-                  <li key={it.name}>
-                    <a href={it.href} target="_blank" rel="noreferrer noopener">
-                      <span className="gset__i">{String(i + 1).padStart(2, '0')}</span>
-                      <span className="gset__t">{it.name}</span>
-                      <ArrowOut />
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )
-        })}
-
-        <hr className="hair gsep" />
-
-        <div className="blog">
-          <a className="blog__shot" href={writing.href} target="_blank" rel="noreferrer noopener">
-            <Shot
-              cover="blog"
-              alt="个人博客首页截图"
-              ratio="16 / 10"
-              sizes="(max-width: 900px) 92vw, 40vw"
-            />
-          </a>
-          <div className="blog__say">
-            <h3 className="blog__h">{writing.headline}</h3>
-            <p className="blog__b">{writing.body}</p>
-            <dl className="blog__nums">
-              <div>
-                <dt>文章</dt>
-                <dd>{writing.posts}</dd>
-              </div>
-              <div>
-                <dt>建站天数</dt>
-                <dd>{writing.days.toLocaleString('en-US')}</dd>
-              </div>
-              <div>
-                <dt>标签</dt>
-                <dd>{writing.tagTotal}</dd>
-              </div>
-            </dl>
-            <ul className="blog__list">
-              {writing.latest.map((p) => (
-                <li key={p.title}>
-                  <span>{p.title}</span>
-                  <time dateTime={p.date}>{p.date}</time>
-                </li>
-              ))}
-            </ul>
-            <ul className="blog__tags">
+        <div className="notes__blog">
+          <div className="slab notes__panel">
+            <h3>{writing.headline}</h3>
+            <p className="notes__meta">
+              {writing.posts} POSTS / {writing.days.toLocaleString('en-US')} DAYS /{' '}
+              {writing.tagTotal} TAGS
+            </p>
+            <p>{writing.body}</p>
+            <ul className="notes__tags">
               {writing.tags.map((t) => (
                 <li className="chip" key={t.name}>
                   {t.name}
@@ -152,10 +85,24 @@ export function Notes() {
                 </li>
               ))}
             </ul>
-            <a className="btn btn--ghost" href={writing.href} target="_blank" rel="noreferrer noopener">
+            <a
+              className="btn btn--ink btn--sm"
+              href={writing.href}
+              target="_blank"
+              rel="noreferrer noopener"
+            >
               {writing.hrefLabel} <ArrowOut />
             </a>
           </div>
+
+          <ul className="notes__list">
+            {writing.latest.map((p) => (
+              <li key={p.title}>
+                <b>{p.title}</b>
+                <s>{p.date}</s>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </section>

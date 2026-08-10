@@ -24,7 +24,7 @@ const ROUTES = ['', 'case/lofi/', 'case/repair/', 'case/video-vip/']
  *  站内每个族名都带 Web 后缀（自托管子集），系统同名字体走 local() 回落，
  *  不能混进来，否则会把系统字排到的字符也塞进子集。 */
 const BUCKET = {
-  'smiley sans web': 'display',
+  'noto sans sc black web': 'display',
   'noto sans sc web': 'sans',
   'jetbrains mono web': 'mono',
   'caveat web': 'hand',

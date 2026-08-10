@@ -1,9 +1,9 @@
 /**
- * 06 联系 · 满幅色块海报。
+ * 06 联系 · 满幅色块。
  *
  * 最后一屏只做一件事：把唯一重要的动作放大到不可能错过。
- * 所以这一章没有图、没有卡、没有网格，就是一整块珊瑚红加一行巨字。
- * 前五章都在给证据，这一屏不需要再证明什么。
+ * 前五章都在给证据，这一屏不需要再证明什么，所以没有卡、没有网格、没有图形，
+ * 就是一整块珊瑚红加一行巨字，加一张平铺的联系方式清单。
  *
  * CTA 有磁吸：指针靠近时按钮往指针方向偏一点。全站只有这一个控件这么做——
  * 它是整页唯一真正想让人点的东西，反馈该给在这里。
@@ -11,7 +11,7 @@
 
 import { useEffect, useRef } from 'react'
 import { ArrowOut } from '../components/Icons'
-import { contact, footer, profile } from '../content/site'
+import { CTA_LABEL, contact, footer, profile } from '../content/site'
 import { prefersReducedMotion } from '../lib/caps'
 
 function useMagnet<T extends HTMLElement>() {
@@ -41,37 +41,44 @@ export function Contact() {
     <section id="contact" className="ch ch--contact" data-tone="coral" aria-labelledby="contact-h">
       <div className="wrap">
         <p className="eyebrow">LET US BUILD SOMETHING</p>
-        <h2 className="ch-title ch-title--xl" id="contact-h">
+        <h2 className="contact__h" id="contact-h">
           {contact.headline}
         </h2>
-        <p className="ct__body">{contact.body}</p>
+        <p className="contact__body">{contact.body}</p>
 
-        <a className="btn btn--paper btn--magnet btn--lg" href={contact.primary.href} ref={magnet}>
-          {contact.primary.value}
-        </a>
+        <div className="contact__act">
+          <a
+            className="btn btn--paper btn--magnet btn--lg"
+            href={contact.primary.href}
+            ref={magnet}
+          >
+            {CTA_LABEL}
+          </a>
+          <span className="contact__mail">{contact.primary.value}</span>
+        </div>
 
-        <ul className="ct__ch">
+        <div className="contact__ch">
           {contact.channels.map((c) => (
-            <li key={c.id}>
-              <a href={c.href} target="_blank" rel="noreferrer noopener">
-                <span className="ct__k">{c.label}</span>
-                <span className="ct__v">{c.value}</span>
+            <a key={c.id} href={c.href} target="_blank" rel="noreferrer noopener">
+              <span className="contact__cl">{c.label}</span>
+              <span className="contact__cv">{c.value}</span>
+              <span className="contact__cn">
+                打开
                 <ArrowOut />
-              </a>
-            </li>
+              </span>
+            </a>
           ))}
-        </ul>
+        </div>
 
         <footer className="foot">
-          <p className="foot__c">{footer.copyright}</p>
-          <p className="foot__n">{footer.note}</p>
-          <p className="foot__m">
-            <a href={footer.source} target="_blank" rel="noreferrer noopener">
-              源码仓库 <ArrowOut />
-            </a>
-            <span>数据核实于 {footer.asOf}</span>
-            <span>{profile.location}</span>
-          </p>
+          <span>{footer.copyright}</span>
+          <span>{footer.note}</span>
+          <a href={footer.source} target="_blank" rel="noreferrer noopener">
+            源码仓库
+            <ArrowOut />
+          </a>
+          <span>数据核实于 {footer.asOf}</span>
+          <span>{profile.location}</span>
         </footer>
       </div>
     </section>

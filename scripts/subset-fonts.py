@@ -31,10 +31,11 @@ SRC_NOTO = Path("/workspace/fonts/noto")
 SRC_SMILEY = Path("/workspace/fonts/smiley")
 
 # (源文件, 字重, 字符桶, 输出名, 许可证源文件, 额外定轴)
-# v7 换字：展示档从思源宋体换成得意黑（中文海报字），删掉 Fraunces 与志莽行书。
-# 得意黑是静态 TTF（italicAngle -8，字形自带倾斜），没有 fvar，不需要定轴。
+# v8 换字：展示档从得意黑换回思源黑 Black。得意黑字形自带 -8° 倾斜，
+# 配这一版方正的实心块体会打架，且倾斜字的右上角要额外留白，块面排版容不下。
+# 思源黑是可变字体，900 这一档同样要先 instancer 定轴再子集。
 JOBS = [
-    (SRC_SMILEY / "SmileySans-Oblique.ttf", 400, "display", "SmileySans-Display.woff2", "OFL-SmileySans.txt", {}),
+    (SRC_NOTO / "NotoSansSC.ttf", 900, "display", "NotoSansSC-Display.woff2", "OFL-NotoSansSC.txt", {}),
     (SRC_NOTO / "NotoSansSC.ttf", 400, "sans-regular", "NotoSansSC-Regular.woff2", "OFL-NotoSansSC.txt", {}),
     (SRC_NOTO / "NotoSansSC.ttf", 650, "sans-semibold", "NotoSansSC-Semibold.woff2", "OFL-NotoSansSC.txt", {}),
     (SRC_DS / "JetBrainsMono.ttf", 400, "mono", "JetBrainsMono-Regular.woff2", "OFL-JetBrainsMono.txt", {}),
@@ -57,6 +58,8 @@ LICENSE_NAME = {
 
 # 旧版留下的产物：字体已从 @font-face 里删掉，文件留着只会白占预算与仓库。
 STALE = [
+    "SmileySans-Display.woff2",
+    "LICENSE-SmileySans.txt",
     "Fraunces.woff2",
     "Fraunces-Numerals.woff2",
     "JetBrainsMono-Bold.woff2",

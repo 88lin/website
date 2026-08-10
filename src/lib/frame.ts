@@ -54,7 +54,10 @@ const catmullToBezier = (pts: Pt[], close: boolean) => {
  * preserveAspectRatio="none" 去贴合任意尺寸——非等比拉伸会让描边变形，
  * 所以描边用 vector-effect: non-scaling-stroke 保持粗细一致。
  */
-export const handFrame = (key: string, jitter = 2.4) => {
+/* jitter 是 viewBox 百分比，会被非等比拉伸放大：一个 620px 宽的框，2.4 就是
+   ±15px 的横向摆幅，抖到内距里去，线会压到字上。1.4 是实测下来手绘感还在、
+   最大摆幅仍小于 .frame 横向内距的上限。 */
+export const handFrame = (key: string, jitter = 1.4) => {
   const r = rng(seedOf(key))
   const j = () => (r() - 0.5) * 2 * jitter
   const per = 4 // 每条边取 4 个采样点

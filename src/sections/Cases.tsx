@@ -5,42 +5,96 @@
  * 这是顺序叙事：你不能同时读三个案例，所以版面也不让你同时看见三个。
  *
  * 写法沿用「背景 / 卡在哪 / 怎么解」三段，这是这套内容里最值钱的部分。
- * 「怎么解」单独套一个手绘虚线框——一整章只圈这一处，圈多了就成花边。
+ * 「怎么解」单独套一个手绘虚线框，一整章只圈这一处，圈多了就成花边。
  *
- * v6 在这一章翻的两个车都在这里改掉：
- *  - 卡片 border-radius 是 0，而同章的小方块有圆角，一页两套形状语言。
- *    现在所有 [data-card] 统一 14px，audit G15 逐个量。
- *  - 手绘框里的文字冲出框线。现在框是 .frame 的 padding 画出来的，
- *    内容永远在框内至少 18px。
+ * v8 起零位图。原来放截图的侧栏改成三块不同画法的图形面板，各自画的是这个
+ * 项目里真实存在的结构：21 个电台格子、两条硬规则、18 路可切换解析清单。
+ * 三块面板刻意不共用一个模子，否则三张卡又会被读成同一张。
  */
 
 import { useCallback, useRef } from 'react'
 import { ArrowOut } from '../components/Icons'
 import { Frame } from '../components/Ink'
-import { Shot } from '../components/Shot'
-import { cases, casesIntro, type CaseStudy } from '../content/cases'
+import { cases, casesIntro, vipInterfaces, type CaseStudy } from '../content/cases'
 import { caseStack, useLazyScene, useMediaQuery, type SceneApi } from '../lib/motion'
 import { Link } from '../router'
 
-/** 案例 slug 与截图同名，三张都是真实站点抓的。 */
-const COVER: Record<string, string> = {
-  lofi: 'lofi',
-  repair: 'repair',
-  'video-vip': 'video-vip',
+type Line = { k: string; t: string; c: string }
+
+/** 02 的面板画的是它那两条硬规则与路由结构，文字全部出自案例正文。 */
+const REPAIR: Line[] = [
+  { k: 'rule 1', t: '证据优先', c: '# 先读状态、日志与硬件事实' },
+  { k: 'rule 2', t: '只读优先', c: '# 写操作先给回滚与验证' },
+  { k: 'route', t: '62 个 Playbook 按需加载', c: '# 无关内容不进上下文' },
+  { k: 'ci', t: '路由表结构校验', c: '# 62 个文件永远对得上' },
+]
+
+function Panel({ c }: { c: CaseStudy }) {
+  if (c.slug === 'lofi') {
+    return (
+      <div className="case__panel case__panel--tiles">
+        <p className="case__ptop">
+          <span>STATIONS</span>
+          <span>21 / 0 SIGN-UP</span>
+        </p>
+        <div className="case__grp">
+          <span>21 路精选电台，一路不通就静默换下一路</span>
+          <div className="case__tiles" aria-hidden="true">
+            {Array.from({ length: 21 }, (_, i) => (
+              <span className="case__tile" key={i} />
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (c.slug === 'repair') {
+    return (
+      <div className="case__panel">
+        <p className="case__ptop">
+          <span>SKILL RULES</span>
+          <span>3 OS / 62 PLAYBOOKS</span>
+        </p>
+        {REPAIR.map((l) => (
+          <p className="case__line" key={l.k}>
+            <b>{l.k}</b> {l.t} <em>{l.c}</em>
+          </p>
+        ))}
+      </div>
+    )
+  }
+
+  return (
+    <div className="case__panel">
+      <p className="case__ptop">
+        <span>FALLBACK LIST</span>
+        <span>18 / 22 HOSTS</span>
+      </p>
+      <p className="case__line">
+        <b>strategy</b> ordered fallback <em># 判断权交给此刻能播的那一路</em>
+      </p>
+      <div className="case__ifs">
+        {vipInterfaces.map((n) => (
+          <span className="case__if" key={n}>
+            {n}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 function Case({ c }: { c: CaseStudy }) {
   const [bg, stuck, fix] = c.sections
   return (
-    <article className="case" data-card="" data-tint={c.tint}>
+    <article className="slab case" data-card="" data-tint={c.tint}>
       <div className="case__hd">
         <span className="case__no" aria-hidden="true">
           {c.no}
         </span>
-        <div className="case__id">
-          <h3 className="case__name">{c.name}</h3>
-          <p className="case__cn">{c.cn}</p>
-        </div>
+        <h3 className="case__name">{c.name}</h3>
+        <p className="case__cn">{c.cn}</p>
         <p className="case__claim">{c.claim}</p>
       </div>
 
@@ -61,12 +115,7 @@ function Case({ c }: { c: CaseStudy }) {
         </div>
 
         <div className="case__side">
-          <Shot
-            cover={COVER[c.slug]}
-            alt={`${c.name} 界面截图`}
-            ratio="16 / 10"
-            sizes="(max-width: 1000px) 88vw, 34vw"
-          />
+          <Panel c={c} />
           <dl className="case__res">
             {c.results.map((r) => (
               <div key={r.label}>
@@ -76,7 +125,7 @@ function Case({ c }: { c: CaseStudy }) {
             ))}
           </dl>
           <div className="case__go">
-            <Link className="btn btn--solid" to={`/case/${c.slug}/`}>
+            <Link className="slab btn btn--solid" to={`/case/${c.slug}/`}>
               读完整案例
             </Link>
             {c.link ? (
@@ -110,7 +159,7 @@ export function Cases() {
         </h2>
         <p className="ch-lede">{casesIntro.body}</p>
       </div>
-      <div className="wrap cases__stack" ref={root}>
+      <div className="wrap" ref={root}>
         {cases.map((c) => (
           <Case c={c} key={c.slug} />
         ))}

@@ -1,23 +1,22 @@
 /**
- * 01 开场 · 非对称分屏海报。
+ * 01 开场 · 立体色块建构。
  *
- * 左边说话，右边给证据。没有居中大标题，没有「向下滚动」，没有装饰性数据条。
+ * 五块有厚度的板子在一个共同的透视坐标系里搭成一条左上到右下的对角构图。
+ * 厚度不是模糊阴影，是 1px 步进的实心 box-shadow 链（见 index.css 的 --ex-*），
+ * 所以块体读起来是「挤出来的」而不是「浮起来的」。
  *
- * 三件事是刻意的：
- *  1) 标题占满左栏宽度，三行逐行揭幕（clip-path，一次性）。得意黑只出现在这一档。
- *  2) 右边那叠是**真实产品截图**，不是抽象图形，也不是 div 假窗口。
- *     首屏第一眼就得看见做过什么，这是 v6 最大的单点失败。
- *  3) 整章锁在一屏内（audit G19）。顶栏也算在里面，所以它是流内的细条，
- *     不是常驻悬浮导航——悬浮导航会压住下面每一章的正文。
+ * 三条不让步的规则：
+ *  1) 零位图。视觉重量由色块体积、巨字与真实配置片段扛，不靠截图。
+ *  2) 整章锁在一屏内（audit G19），顶栏算在里面，不做常驻悬浮导航。
+ *  3) 每块自带 perspective()，不共享 transform-style: preserve-3d。
+ *     共享 3D 上下文会让子元素被父块的面切开，v8 原型阶段实测过。
  */
 
 import { useEffect, useRef } from 'react'
 import { Circle } from '../components/Ink'
-import { Shot } from '../components/Shot'
-import { CONTACT_HREF, hero, heroShots, profile } from '../content/site'
+import { AS_OF, CONTACT_HREF, hero, metrics, profile } from '../content/site'
 import { onSignal } from '../lib/bus'
 import { prefersReducedMotion } from '../lib/caps'
-import { useStagger } from '../lib/motion'
 
 const NAV = [
   { id: 'work', label: '作品' },
@@ -26,85 +25,128 @@ const NAV = [
   { id: 'notes', label: '在写' },
 ]
 
-export function Hero() {
-  const say = useStagger<HTMLDivElement>(120)
-  const deck = useRef<HTMLDivElement | null>(null)
+/** 纸板上那三行是 video_vip 里真实在用的降级策略，不是示意图。 */
+const YAML = [
+  { k: 'providers:', v: 'primary → secondary → local', c: '# 一家挂了换下一家' },
+  { k: 'on_error:', v: 'retry x2 → degrade → next', c: '# 断网也能出结果' },
+  { k: 'contract:', v: '输出格式与 provider 解耦', c: '# 换上游不改业务代码' },
+]
 
-  // 指针视差。只写两个自定义属性，位移交给合成器，主线程不参与排版。
+/** 底条只给口径，不复述上面已经放大过的数字。 */
+const RAIL = [metrics[2], metrics[3], metrics[4]]
+
+export function Hero() {
+  const world = useRef<HTMLDivElement | null>(null)
+
+  // 指针视差：只写两个自定义属性，位移交给合成器，主线程不参与排版。
+  // bus 的 y 轴向上为正，这里的块体要跟着指针走，所以取负。
   useEffect(() => {
-    const el = deck.current
+    const el = world.current
     if (!el || prefersReducedMotion()) return
     return onSignal((s) => {
       el.style.setProperty('--px', s.pointerIn ? s.px.toFixed(3) : '0')
-      el.style.setProperty('--py', s.pointerIn ? s.py.toFixed(3) : '0')
+      el.style.setProperty('--py', s.pointerIn ? (-s.py).toFixed(3) : '0')
     })
   }, [])
 
   return (
     <section id="hero" className="ch ch--hero" data-tone="paper" aria-labelledby="hero-h">
-      <div className="wrap hero__wrap">
-        <header className="topbar">
-          <a className="topbar__mark" href="#hero">
-            <span className="topbar__cn">{profile.name}</span>
-            <span className="topbar__la">{profile.handle}</span>
-          </a>
-          <nav className="topbar__nav" aria-label="章节">
-            {NAV.map((n) => (
-              <a key={n.id} href={`#${n.id}`}>
-                {n.label}
-              </a>
-            ))}
-          </nav>
-          <a className="btn btn--solid btn--sm" href={CONTACT_HREF}>
-            {hero.primaryCta}
-          </a>
-        </header>
+      <header className="topbar">
+        <a className="topbar__mark" href="#hero">
+          <span className="topbar__cn">{profile.name}</span>
+          <span className="topbar__la">@88LIN</span>
+        </a>
+        <nav className="topbar__nav" aria-label="章节">
+          {NAV.map((n) => (
+            <a key={n.id} href={`#${n.id}`}>
+              {n.label}
+            </a>
+          ))}
+        </nav>
+      </header>
 
-        <div className="hero__grid">
-          <div className="hero__say" ref={say}>
-            <p className="eyebrow hero__eb">{hero.latin}</p>
-            <h1 className="hero__h" id="hero-h">
-              <span className="hero__l wipe" data-stagger="">
-                {hero.line1}
-              </span>
-              <span className="hero__l wipe" data-stagger="">
-                {hero.line2Pre}
-                <mark className="mark">{hero.line2Mark}</mark>
-                {hero.line2Mid}
-                <Circle seed="hero-circle">{hero.line2Circle}</Circle>
-              </span>
-              <span className="hero__l wipe" data-stagger="">
-                {hero.line3}
-              </span>
-            </h1>
-            <p className="hero__sub rise" data-stagger="">
-              {hero.sub}
-            </p>
-            <div className="hero__cta rise" data-stagger="">
-              <a className="btn btn--solid" href={CONTACT_HREF}>
-                {hero.primaryCta}
-              </a>
-              <a className="btn btn--ghost" href="#cases">
-                {hero.secondaryCta}
-              </a>
+      <div className="hero__stage">
+        <div className="hero__world" ref={world}>
+          <section className="slab s-main">
+            <a
+              className="eyebrow hero__eb"
+              href="https://github.com/88lin"
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              {hero.latin}
+            </a>
+            <div>
+              <h1 className="hero__h" id="hero-h">
+                <i className="hero__l wipe is-in">{hero.line1}</i>
+                <i className="hero__l wipe is-in">
+                  {hero.line2Pre}
+                  <mark className="mark">{hero.line2Mark}</mark>
+                  {hero.line2Mid}
+                  <Circle seed="hero-keep">{hero.line2Circle}</Circle>
+                </i>
+                <i className="hero__l wipe is-in">{hero.line3}</i>
+              </h1>
+              <p className="hero__sub">{hero.sub}</p>
             </div>
-          </div>
+          </section>
 
-          <div className="hero__deck" ref={deck}>
-            <div className="deck">
-              {heroShots.map((s, i) => (
-                <div className="deck__pane" data-i={i} key={s.cover}>
-                  <Shot
-                    cover={s.cover}
-                    alt={s.alt}
-                    ratio="16 / 10"
-                    eager={i === 0}
-                    sizes="(max-width: 900px) 88vw, 40vw"
-                  />
-                  <span className="deck__tag">{s.label}</span>
-                </div>
+          <aside className="slab s-yel">
+            <b>可切换</b>
+            <s>SWITCHABLE BY DESIGN</s>
+          </aside>
+
+          <aside className="slab s-pop">
+            <span className="s-pop__big">1,784</span>
+            <span className="s-pop__cap">天 · 从第一次提交到今天，一直在跑</span>
+            <hr className="s-pop__hr" />
+            <div className="s-pop__two">
+              <div>
+                <b>4,684</b>
+                <s>STARS</s>
+              </div>
+              <div>
+                <b>502</b>
+                <s>FORKS</s>
+              </div>
+            </div>
+          </aside>
+
+          <aside className="slab s-pap">
+            <div className="s-pap__l">
+              <b>降级配置</b>
+              <s>
+                resilience.yml
+                <br />
+                88lin/video_vip
+              </s>
+            </div>
+            <div>
+              {YAML.map((l) => (
+                <code key={l.k}>
+                  <b>{l.k}</b> {l.v} <em>{l.c}</em>
+                </code>
               ))}
             </div>
+          </aside>
+
+          <div className="slab s-cta hero__cta">
+            <a className="btn btn--solid" href={CONTACT_HREF}>
+              {hero.primaryCta}
+            </a>
+            <a className="btn btn--yellow" href="#cases">
+              {hero.secondaryCta}
+            </a>
+          </div>
+
+          <div className="hero__rail">
+            {RAIL.map((m) => (
+              <span key={m.label}>
+                <b>{m.value}</b>
+                {m.label}
+              </span>
+            ))}
+            <span className="hero__src">数据取自 GITHUB 公开接口，截至 {AS_OF}</span>
           </div>
         </div>
       </div>

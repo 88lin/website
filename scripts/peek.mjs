@@ -89,7 +89,7 @@ if (CASES) {
     await shot(id)
 
     // 横推与堆叠只看章首等于没看：按行程切片
-    if (id === 'work' || id === 'cases' || id === 'notes') {
+    if (id === 'work' || id === 'cases' || id === 'notes' || id === 'craft') {
       const h = await page.evaluate((i) => document.getElementById(i).offsetHeight, id)
       const cuts = id === 'work' ? [0.35, 0.7, 0.98] : [0.34, 0.68, 0.95]
       for (const f of cuts) {
