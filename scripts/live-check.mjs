@@ -36,7 +36,7 @@ for (const [tag, vp, dpr, touch] of [
       cream: cs.getPropertyValue('--cream').trim(),
       bodyFont: getComputedStyle(document.body).fontFamily.split(',')[0].trim(),
       chapters, posts, cells, btns, dead,
-      cards: document.querySelectorAll('.pcard').length,
+      cards: document.querySelectorAll('.hscroll-card').length,
       imgs: document.querySelectorAll('img,picture').length,
       xOver: document.documentElement.scrollWidth - document.documentElement.clientWidth,
       docH: document.documentElement.scrollHeight,

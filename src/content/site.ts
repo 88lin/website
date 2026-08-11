@@ -16,13 +16,21 @@ export const AS_OF = '2026.08.10'
 /* ---------------------------------------------------------------- 章节 */
 
 /**
- * 色调 = 一整章的地面色。全部指向 palettes.css 的 E 组（Terracotta 陶土 / 沙黄 / 松绿），
- * 组件永远写角色名，不写色值，也不写调色板字母。
+ * 色调 = 一整章的地面色。
  *
- * 硬规则：要放正文的彩色面只能用 -deep 档（blue / coral），
- * 亮档 --brand / --pop 只做大字、描边与纯色块。对比度在 styles/index.css 里注明。
+ * v10 从五档砍到两档。v9 有纸 / 砂 / 蓝 / 黄 / 珊瑚五种地面色，整章刷饱和底，
+ * 结果是用户原话的「屎黄色」和「整个页面配色我都不喜欢」—— 一整屏 #EFCE9A
+ * 没有任何排版能救。现在只剩两档纸色交替（奶油 / 深奶油），跟 88lin 自己那套
+ * 设计系统三个线上站点的做法一致。
+ *
+ * 深色不再是章级色调，降级成组件：macOS 代码面板、表格深墨表头、notes 章尾那条
+ * 短带。深色像素占全页面积的上限由 audit G23 卡在 12%。
+ *
+ * 硬规则：要放白字的彩色面只能用 --brand-surface / --brand-deep / --pop-surface /
+ * --ink；奶油底上的彩色文字只能用 --brand-text / --pop-text / --warning /
+ * --danger-strong。亮档 --brand / --pop 只做圆点、描边与 rgba 淡底。
  */
-export type Tone = 'paper' | 'sand' | 'blue' | 'yellow' | 'coral'
+export type Tone = 'paper' | 'alt'
 
 /** 卡片色相。只染卡的边、条与投影，卡面永远是纸，字永远是墨。 */
 export type Tint = 'blue' | 'yellow' | 'coral'
@@ -40,15 +48,17 @@ export type Chapter = { id: ChapterId; label: string; tone: Tone }
  * 而是两条主线与三类可承接的服务。仓库相关内容压缩到第 3、4 两章，
  * 且 star / fork 这类仓库统计数字全站只在作品卡上出现一次。
  *
- * 地面色节奏：纸 → 黄 → 蓝 → 砂 → 纸 → 珊瑚。
+ * v10 地面色节奏改成两档严格交替：纸 → 深纸 → 纸 → 深纸 → 纸 → 深纸。
+ * 章界不再靠色相跳变来分，靠地面明度差 1.5% 加章头编号 —— 这是那三个参考站
+ * 的做法，也是 v9「一整屏 #EFCE9A」翻车之后唯一还站得住的分章方式。
  */
 export const chapters: Chapter[] = [
   { id: 'hero', label: '开场', tone: 'paper' },
-  { id: 'craft', label: '能做什么', tone: 'yellow' },
-  { id: 'work', label: '做过什么', tone: 'blue' },
-  { id: 'cases', label: '怎么做的', tone: 'sand' },
+  { id: 'craft', label: '能做什么', tone: 'alt' },
+  { id: 'work', label: '做过什么', tone: 'paper' },
+  { id: 'cases', label: '怎么做的', tone: 'alt' },
   { id: 'notes', label: '在写在跑', tone: 'paper' },
-  { id: 'contact', label: '联系', tone: 'coral' },
+  { id: 'contact', label: '联系', tone: 'alt' },
 ]
 
 /* ---------------------------------------------------------------- 身份 */
@@ -491,7 +501,7 @@ export const craftEvidence = [
   {
     id: 'ds',
     title: '自建设计系统',
-    caption: '组件、配色、手绘虚线框，本站用的就是它。色板是 E 组 Terracotta，十组可切。',
+    caption: '组件、配色、手绘虚线框，本站用的就是它。色板是 A 组，十组可切。',
     linkLabel: 'components-preview',
     href: 'https://88lin.github.io/mydesign-system/components-preview.html',
   },

@@ -1,20 +1,24 @@
 /**
- * 03 怎么做的 · 粘性堆叠。
+ * 04 怎么做的 · 粘性堆叠。
  *
  * 三张卡依次钉在同一个位置，后一张推上来时前一张缩小并沉回底色里。
  * 这是顺序叙事：你不能同时读三个案例，所以版面也不让你同时看见三个。
  *
  * 写法沿用「背景 / 卡在哪 / 怎么解」三段，这是这套内容里最值钱的部分。
- * 「怎么解」单独套一个手绘虚线框，一整章只圈这一处，圈多了就成花边。
+ * v10 把这三段挂上参考站 dst 的编号步骤器：44px 圆徽 + 一条黄色虚线竖轨，
+ * 读者不用读小标题也知道这是一条有先后的链。「怎么解」那一步换成虚线框
+ * 加珊瑚红圆徽 —— 一章只圈这一处，圈多了就成花边。
  *
- * v8 起零位图。原来放截图的侧栏改成三块不同画法的图形面板，各自画的是这个
- * 项目里真实存在的结构：21 个电台格子、两条硬规则、18 路可切换解析清单。
- * 三块面板刻意不共用一个模子，否则三张卡又会被读成同一张。
+ * v8 起零位图。侧栏三块图形面板各自画的是这个项目里真实存在的结构：
+ * 21 个电台格子、四条路由规则、18 路可切换解析清单。三块面板刻意不共用
+ * 一个模子，否则三张卡又会被读成同一张。
+ *
+ * v10 改掉一处用户点名的东西：02 的面板标题原来叫 SKILL RULES，
+ * 那是实现细节冒充标签。现在叫 PLAYBOOK ROUTER，说的是它真正在做的事。
  */
 
 import { useCallback, useRef } from 'react'
 import { ArrowOut } from '../components/Icons'
-import { Frame } from '../components/Ink'
 import { cases, casesIntro, vipInterfaces, type CaseStudy } from '../content/cases'
 import { WIDE_MQ } from '../lib/bp'
 import { caseStack, useLazyScene, useMediaQuery, type SceneApi } from '../lib/motion'
@@ -33,18 +37,18 @@ const REPAIR: Line[] = [
 function Panel({ c }: { c: CaseStudy }) {
   if (c.slug === 'lofi') {
     return (
-      <div className="case__panel case__panel--tiles">
+      <div className="case__panel">
         <p className="case__ptop">
           <span>STATIONS</span>
-          <span>21 / 0 SIGN-UP</span>
+          <b>21 / 0 SIGN-UP</b>
         </p>
-        <div className="case__grp">
-          <span>21 路精选电台，一路不通就静默换下一路</span>
-          <div className="case__tiles" aria-hidden="true">
-            {Array.from({ length: 21 }, (_, i) => (
-              <span className="case__tile" key={i} />
-            ))}
-          </div>
+        <p className="case__line">
+          21 路精选电台 <em># 一路不通就静默换下一路</em>
+        </p>
+        <div className="case__tiles" aria-hidden="true">
+          {Array.from({ length: 21 }, (_, i) => (
+            <span className="case__tile" key={i} />
+          ))}
         </div>
       </div>
     )
@@ -54,8 +58,8 @@ function Panel({ c }: { c: CaseStudy }) {
     return (
       <div className="case__panel">
         <p className="case__ptop">
-          <span>SKILL RULES</span>
-          <span>3 OS / 62 PLAYBOOKS</span>
+          <span>PLAYBOOK ROUTER</span>
+          <b>3 OS / 62 FILES</b>
         </p>
         {REPAIR.map((l) => (
           <p className="case__line" key={l.k}>
@@ -70,7 +74,7 @@ function Panel({ c }: { c: CaseStudy }) {
     <div className="case__panel">
       <p className="case__ptop">
         <span>FALLBACK LIST</span>
-        <span>18 / 22 HOSTS</span>
+        <b>18 / 22 HOSTS</b>
       </p>
       <p className="case__line">
         <b>strategy</b> ordered fallback <em># 判断权交给此刻能播的那一路</em>
@@ -87,9 +91,8 @@ function Panel({ c }: { c: CaseStudy }) {
 }
 
 function Case({ c }: { c: CaseStudy }) {
-  const [bg, stuck, fix] = c.sections
   return (
-    <article className="slab case" data-card="" data-tint={c.tint}>
+    <article className="case" data-card="" data-tint={c.tint}>
       <div className="case__hd">
         <span className="case__no" aria-hidden="true">
           {c.no}
@@ -100,19 +103,20 @@ function Case({ c }: { c: CaseStudy }) {
       </div>
 
       <div className="case__grid">
-        <div className="case__text">
-          <section className="case__blk">
-            <h4>{bg.label}</h4>
-            <p>{bg.body}</p>
-          </section>
-          <section className="case__blk">
-            <h4>{stuck.label}</h4>
-            <p>{stuck.body}</p>
-          </section>
-          <Frame seed={`case-${c.slug}`} className="case__fix">
-            <h4>{fix.label}</h4>
-            <p>{fix.body}</p>
-          </Frame>
+        {/* 三步一条链。最后一步是「怎么解」，用虚线框与珊瑚红圆徽单独拎出来。 */}
+        <div className="logic-flow">
+          {c.sections.map((s, i) => (
+            <section
+              className={i === 2 ? 'logic-step logic-step--fix' : 'logic-step'}
+              key={s.label}
+            >
+              <span className="logic-step__dot" aria-hidden="true">
+                {`0${i + 1}`}
+              </span>
+              <h4>{s.label}</h4>
+              <p>{s.body}</p>
+            </section>
+          ))}
         </div>
 
         <div className="case__side">
@@ -126,11 +130,16 @@ function Case({ c }: { c: CaseStudy }) {
             ))}
           </dl>
           <div className="case__go">
-            <Link className="slab btn btn--solid" to={`/case/${c.slug}/`}>
+            <Link className="cta-btn cta-btn--sm" to={`/case/${c.slug}/`}>
               读完整案例
             </Link>
             {c.link ? (
-              <a className="btn btn--ghost" href={c.link} target="_blank" rel="noreferrer noopener">
+              <a
+                className="cta-btn cta-btn--ghost cta-btn--sm"
+                href={c.link}
+                target="_blank"
+                rel="noreferrer noopener"
+              >
                 {c.linkLabel || '在线'} <ArrowOut />
               </a>
             ) : null}
@@ -152,15 +161,19 @@ export function Cases() {
   useLazyScene(root, build, wide)
 
   return (
-    <section id="cases" className="ch ch--cases" data-tone="sand" aria-labelledby="cases-h">
-      <div className="wrap cases__head">
-        <p className="eyebrow">THREE CASE STUDIES</p>
+    <section id="cases" className="ch" data-tone="alt" aria-labelledby="cases-h">
+      <div className="wrap ch-head">
+        <span className="section-number" aria-hidden="true">
+          04
+        </span>
+        <p className="label-caps">THREE CASE STUDIES</p>
         <h2 className="ch-title" id="cases-h">
           {casesIntro.headline}
         </h2>
         <p className="ch-lede">{casesIntro.body}</p>
       </div>
-      <div className="wrap" ref={root}>
+
+      <div className="wrap cases-stack" ref={root}>
         {cases.map((c) => (
           <Case c={c} key={c.slug} />
         ))}

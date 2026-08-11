@@ -1,47 +1,56 @@
 /* ============================================================================
-   茉灵智库 v8「立体色块建构」· 全站视觉系统
+   茉灵智库 v10「Daylight」· 全站视觉系统
    ----------------------------------------------------------------------------
-   概念：整页是几块有厚度的实心色块搭起来的构筑物。块体在各自的透视里轻微
-   转动，文字贴在块的面上。没有一张位图，所有图形都是现画的矢量与色块。
+   这一版不是微调，是把地基换掉。
 
-   针对 v7 的四条硬纠正（每一条都有对应的自动断言）：
-   1) 圆角要看得见。v7 卡壳 14px，卡里那张大截图却是 0，眼睛读到的是方角。
-      v8 全站零位图，形状只有 0 / 6 / 11 / 14 / 24 / pill 六档，
-      且卡片内部任何有独立背景的大块不许是直角。（audit G15 + G20）
-   2) 厚度不是模糊阴影。挤出侧面是一串 1px 步进的实心 box-shadow，
-      跟着 border-radius 走，光向固定右下。（本文件 --ex-* 链）
-   3) 3D 不共享空间。每块自带 perspective()，靠 z-index 排前后，
-      视差靠每块不同的位移倍数。共享 preserve-3d 会让相交面前后关系失控。
-   4) 每章换一种版式。六章六种构图，章间特征向量距离逐对校验。（audit G16）
+   v9 之前我一直在自造骨架，结果是一套没人见过、也没人验证过的版式。v10 直接
+   采用 88lin 自己那套设计系统的版式与组件语言（components-preview /
+   demo-readme-tutorial / repair.88lin.eu.org 三站同源），只把写死的色值换成
+   语义令牌。理由很简单：那套系统已经在三个线上站点跑通了，比我现编的可靠。
 
-   两条不肯让步的规则：
-   - 本文件出现任何十六进制色值即违规。颜色只有两个来源：palettes.css 的
-     语义令牌，或 rgba(var(--*-rgb), a)。
-   - 禁止 color-mix()：它在部分 Android WebView 上整块失效退成透明。
+   四条硬规则，每条都有对应的自动断言：
+
+   1) 颜色只有两个来源：palettes.css 的语义令牌，或 rgba(var(--*-rgb), a)。
+      本文件出现裸十六进制即违规（audit G24），白名单只有三组：
+        · --rule / --rule-soft   上游 A 组没有对应的分隔线令牌
+        · Tokyo Night 语法色      代码面板的配色方案，换成品牌色就不是代码了
+        · macOS 三色圆点          #5A 组件的标识性图形，改色就读不出是窗口
+   2) 白字色块只能落在 --brand-surface / --brand-deep / --pop-surface / --ink 上；
+      奶油底上的彩色文字只能用 --brand-deep / --danger-strong / --warning
+      （统一收在 --accent-text / --tint-text 两个令牌里）。--brand / --pop 的原色只许出现在圆点、1–2px 描边、图标
+      和 rgba() 淡底里。理由是实测：白字压 --pop 只有 3.77:1，压 --pop-surface
+      是 4.65:1。（audit G25 逐节点复核）
+   3) 60 / 30 / 10。奶油底 ≥60%，蓝是唯一的主色，黄 ≤8%，红 ≤6%，深色 ≤12%。
+      深色只出现在代码面板、表头和 notes 章尾那一条短带里，不做整章。（audit G23）
+   4) 禁止 color-mix()：部分 Android WebView 上整块失效退成透明。
    ========================================================================== */
 
 @import './palettes.css';
 
 /* ------------------------------------------------------------------ 字体 */
 /* 全部自托管并按站内实际用字子集化（npm run chars + subset-fonts.py）。
-   不走 Google Fonts / jsDelivr：目标读者在中国大陆，那两个域名不可靠。 */
+   不走 Google Fonts / jsDelivr：目标读者在中国大陆，那两个域名不可靠。
 
-/* 展示档换成思源黑 Black。v7 用的得意黑自带 8° 倾斜，配这一版方正的块体
-   会打架；而且倾斜字形的右上角总要额外留白，块面排版容不下这种不确定。 */
+   v10 换展示字：英文 Fraunces（衬线）+ 中文系统黑体混排。
+   参考站的两个设计系统页用 Huiwen Mincho / Noto Serif SC 做中文展示字，但那是
+   Google Fonts 全量加载，几百 KB。本站有 40 KB 硬预算，所以中文走系统栈
+   （跟 repair 站一致），英文走 Fraunces 子集。删掉的思源黑 29 KB 换来两档
+   Fraunces 21.6 KB，总量反而降了。 */
+
 @font-face {
-  font-family: 'Noto Sans SC Black Web';
-  src: url('/fonts/NotoSansSC-Display.woff2') format('woff2');
+  font-family: 'Fraunces Web';
+  src: url('/fonts/Fraunces-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Fraunces Web';
+  src: url('/fonts/Fraunces-900.woff2') format('woff2');
   font-weight: 900;
   font-style: normal;
   font-display: swap;
 }
-/* v9 起正文不再下载中日韩网络字体。
-   用户的原话是「小字体、灰色字的超级丑，可以用苹果字体」——那是对的：
-   思源黑的小字号在正文里发虚，而苹方（PingFang SC）与 SF Pro 是各自系统上
-   为屏幕小字调过 hinting 的字体，直接调本机的就比下载一份子集好看。
-   代价要说清楚：苹方与 SF Pro 受授权限制不能当网络字体分发，只能 local 调用，
-   所以 macOS / iOS 是苹方，Windows 落微软雅黑，Linux 落系统无衬线，各端字形不一致。
-   换来的是正文两档 117.4 KB 直接归零，只剩展示字 / 等宽 / 手写三个小子集。 */
 @font-face {
   font-family: 'JetBrains Mono Web';
   src: url('/fonts/JetBrainsMono-Regular.woff2') format('woff2');
@@ -60,174 +69,132 @@
 /* ------------------------------------------------------------------ 令牌 */
 
 :root {
-  color-scheme: light; /* 明确声明：本站没有深色模式，也不接受系统反色 */
+  color-scheme: light; /* 本站没有深色模式，也不接受系统反色 */
 
-  --font-display: 'Noto Sans SC Black Web', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei',
-    sans-serif;
-  /* 正文栈：苹果系统字体优先，逐级退到各平台自带的中文无衬线。
-     -apple-system 在 Safari 上解析成 SF Pro / 苹方，BlinkMacSystemFont 是 Chrome 的同义词。 */
+  /* 字族。--font-display 是混排栈：Fraunces 只含拉丁字形，汉字会逐字回落到
+     后面的系统黑体，这正是想要的效果 —— 英文衬线、中文黑体。 */
+  --font-display: 'Fraunces Web', -apple-system, BlinkMacSystemFont, 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
   --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'PingFang SC', 'Hiragino Sans GB',
     'Helvetica Neue', 'Microsoft YaHei', 'Segoe UI', Roboto, 'Noto Sans CJK SC', system-ui,
     sans-serif;
-  /* 等宽与手写这两档都不含汉字，字族链后半段专门给中文兜底：
-     漏掉的话 Windows 会一路退到 SimSun，和整站的字重完全对不上。 */
   --font-mono: 'JetBrains Mono Web', ui-monospace, 'SFMono-Regular', 'Cascadia Mono', 'PingFang SC',
     'Microsoft YaHei', monospace;
   --font-hand: 'Caveat Web', 'PingFang SC', 'Microsoft YaHei', cursive;
 
-  /* 版心与节奏。--gutter 是唯一的水平安全边，所有出血都相对它计算。 */
-  --gutter: clamp(1.15rem, 4.2vw, 5.5rem);
-  --maxw: 94rem;
-  --ch-pad: clamp(4.5rem, 10vh, 9.5rem);
+  /* 排版节奏 —— 逐条抄自 repair.css，那三个站就是靠这几个 clamp 对齐的。 */
+  --s-section: clamp(80px, 12vh, 160px);
+  --s-block: clamp(40px, 6vw, 100px);
+  --s-card: clamp(28px, 3vw, 44px);
+  --s-gap: clamp(24px, 3vw, 48px);
+  --gutter: clamp(20px, 4vw, 48px);
+  --wrap: 1300px;
 
-  /* 形状锁，六档。分级不是随意：块体越大、承载越重，圆角越大。
-     0 满幅色块 / 6 eyebrow 与代码块 / 11 大按钮 / 14 内嵌面板 / 24 主块与卡片 /
-     pill 按钮、标签、状态灯、跳过链接。
-     v9 把 pill 从「只给跳过链接」放开到全部小控件（用户点名要胶囊）。
-     代价是圆角语义变松，所以 eyebrow 与代码块被钉死在方角一侧当对比锚点 ——
-     全站都圆等于没有层次。audit G15 逐元素校验，且卡片内部的大块不许落回 0。 */
-  --r-0: 0px;
-  --r-xs: 6px;
-  --r-sm: 11px;
-  --r-card: 14px;
-  --r-lg: 24px;
+  /* 形状锁。v9 有六档还各自跑偏，v10 收到五档 + 胶囊，全部落在 audit G15
+     的允许集合里。分级依据是承载重量：越大的面圆角越大。 */
+  --r-xs: 4px; /* 行内代码、荧光笔盒 */
+  --r-sm: 10px; /* 按钮 */
+  --r-md: 12px; /* 代码面板、命令框 */
+  --r-card: 14px; /* 普通卡片 */
+  --r-lg: 16px; /* 大卡片、分屏、深色带 */
+  --r-xl: 20px; /* 首屏视觉块 */
   --r-pill: 999px;
 
-  /* 挤出侧面。1px 步进的实心投影链，不是模糊阴影：模糊阴影读起来是「浮起来」，
-     实心步进读起来是「有厚度」。颜色写成 currentColor，由 .slab::before 自己的
-     color 决定，所以一条链能给任何色块复用，本文件里一个色值都不用写。 */
-  --ex-4: 1px 1px 0 currentColor, 2px 2px 0 currentColor, 3px 3px 0 currentColor,
-    4px 4px 0 currentColor;
-  --ex-6: 1px 1px 0 currentColor, 2px 2px 0 currentColor, 3px 3px 0 currentColor,
-    4px 4px 0 currentColor, 5px 5px 0 currentColor, 6px 6px 0 currentColor;
-  --ex-9: 1px 1px 0 currentColor, 2px 2px 0 currentColor, 3px 3px 0 currentColor,
-    4px 4px 0 currentColor, 5px 5px 0 currentColor, 6px 6px 0 currentColor,
-    7px 7px 0 currentColor, 8px 8px 0 currentColor, 9px 9px 0 currentColor;
-  --ex-14: 1px 1px 0 currentColor, 2px 2px 0 currentColor, 3px 3px 0 currentColor,
-    4px 4px 0 currentColor, 5px 5px 0 currentColor, 6px 6px 0 currentColor,
-    7px 7px 0 currentColor, 8px 8px 0 currentColor, 9px 9px 0 currentColor,
-    10px 10px 0 currentColor, 11px 11px 0 currentColor, 12px 12px 0 currentColor,
-    13px 13px 0 currentColor, 14px 14px 0 currentColor;
-  --ex-20: 1px 1px 0 currentColor, 2px 2px 0 currentColor, 3px 3px 0 currentColor,
-    4px 4px 0 currentColor, 5px 5px 0 currentColor, 6px 6px 0 currentColor,
-    7px 7px 0 currentColor, 8px 8px 0 currentColor, 9px 9px 0 currentColor,
-    10px 10px 0 currentColor, 11px 11px 0 currentColor, 12px 12px 0 currentColor,
-    13px 13px 0 currentColor, 14px 14px 0 currentColor, 15px 15px 0 currentColor,
-    16px 16px 0 currentColor, 17px 17px 0 currentColor, 18px 18px 0 currentColor,
-    19px 19px 0 currentColor, 20px 20px 0 currentColor;
+  /* 卡片语言 —— 全站唯一一套。投影染墨色，禁止纯黑。 */
+  --card-r: var(--r-lg);
+  --card-shadow: 0 4px 24px rgba(26, 26, 46, 0.055);
+  --card-shadow-h: 0 12px 34px rgba(26, 26, 46, 0.1);
+  --card-shadow-soft: 0 2px 12px rgba(26, 26, 46, 0.04);
 
-  /* 投影一律染墨色（页面主色相），禁止纯黑。两档：贴纸与抬起。 */
-  --sh-flat: 0 1px 2px rgba(var(--ink-rgb), 0.07), 0 10px 24px -16px rgba(var(--ink-rgb), 0.4);
-  --sh-lift: 0 2px 6px rgba(var(--ink-rgb), 0.09), 0 30px 60px -26px rgba(var(--ink-rgb), 0.5);
+  /* 分隔线。这是全文件唯二允许写死的十六进制：上游 A 组没有给分隔线角色，
+     而 rgba(ink) 在奶油底上偏冷，跟纸的暖调不合。取值来自 repair.css。 */
+  --rule: #d9d4c6;
+  --rule-soft: #e8e2d5;
 
-  /* 缓动。命名按手感：拉出去、弹一下、平推。 */
-  --e-pull: cubic-bezier(0.16, 1, 0.3, 1);
-  --e-snap: cubic-bezier(0.34, 1.32, 0.48, 1);
-  --e-flat: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-snap: cubic-bezier(0.34, 1.32, 0.48, 1);
 
-  /* 前景四件套：由每个 [data-tone] 覆写，组件内部永远只写 var(--fg)。 */
+  /* 前景四件套：由 [data-tone] 覆写，组件内部永远只写 var(--fg)。 */
   --fg: var(--ink);
   --fg-dim: var(--ink-light);
-  --fg-faint: var(--ink-light);
-  --hair: rgba(var(--ink-rgb), 0.14);
-  --accent: var(--brand);
-  /* --tint 是这一块上「可以拿来做色块」的强调色，不承载正文。 */
-  --tint: var(--brand);
-  --tint-deep: var(--brand-deep);
-  --tint-rgb: var(--brand-rgb);
+  --fg-faint: var(--ink-faint);
+  --accent: var(--brand-text);
+  /* 彩色文字专用档。palettes.css 的 -text 变体是按「压纯白/纯奶油」算的 AA，
+     落到砂色底（#FAF6EB）就掉到 4.43:1，压 8~10% 同色纹更低。全站彩字统一
+     走 -deep 档，两种地面色和淡底上都是 6:1 以上，不用再看底色是哪一章。 */
+  --accent-text: var(--brand-deep);
+  --ground: var(--cream);
+
+  /* Tokyo Night —— 代码面板专用配色方案。它是一套有名字的方案，不是随手挑的色，
+     所以配色关系整套保留；换成品牌色，那块面板就不再读作「代码」。
+     唯一改动：注释色由上游 #565F89 提亮到 #7C87B8。上游那一档压 #1A1B26 只有
+     2.76:1，编辑器里靠「注释本就该退后」说得通，网页正文里就是不可读。提亮后
+     4.90:1 过 AA，且仍是全套里最暗的一档，注释仍然排在最后读。 */
+  --tn-bg: #1a1b26;
+  --tn-bar: #2d2d3a;
+  --tn-fg: #a9b1d6;
+  --tn-kw: #7aa2f7;
+  --tn-str: #9ece6a;
+  --tn-fn: #bb9af7;
+  --tn-num: #ff9e64;
+  --tn-cmt: #7c87b8;
+  --tn-dot-r: #ff5f56;
+  --tn-dot-y: #ffbd2e;
+  --tn-dot-g: #27c93f;
 }
 
 /* ---------------------------------------------------------------- 色调档
-   五档地面色。硬规则：任何要放文字的彩色面只能用 -deep 档；
-   --brand / --pop 亮档只做大字、描边、纯色块，永不承载正文。
-   （白 on --brand 只有 4.09:1，白 on --brand-deep 是 6.74:1）        */
+   v9 有五档地面色（纸 / 砂 / 蓝 / 黄 / 珊瑚），整章刷饱和底就是「屎黄色」和
+   「太丑」的直接来源 —— 一整屏 #EFCE9A 没有任何东西能救。
+   v10 只剩两档纸色交替，深色降级为组件（代码面板、表头、一条短带）。 */
 
 [data-tone='paper'] {
   --ground: var(--cream);
-  --ground-rgb: var(--ink-rgb);
   --fg: var(--ink);
   --fg-dim: var(--ink-light);
-  --fg-faint: var(--ink-light);
-  --hair: rgba(var(--ink-rgb), 0.14);
+  --fg-faint: var(--ink-faint);
   --accent: var(--brand-text);
-}
-[data-tone='sand'] {
-  --ground: var(--cream-dark);
-  --ground-rgb: var(--ink-rgb);
-  --fg: var(--ink);
-  --fg-dim: var(--ink-light);
-  --fg-faint: var(--ink-light);
-  --hair: rgba(var(--ink-rgb), 0.16);
-  --accent: var(--brand-text);
-}
-[data-tone='blue'] {
-  --ground: var(--brand-deep);
-  --ground-rgb: var(--brand-rgb);
-  --fg: var(--on-brand);
-  --fg-dim: rgba(255, 255, 255, 0.88); /* 压 1E5BA8 = 5.62:1 */
-  /* v9：小字灰阶整体抬一档。0.88 压 E 组 --brand-deep 是 7.12:1，
-     比 v8 的 5.15 厚实得多 —— 「灰色小字超级丑」一半是对比度不够，一半是字号太小。 */
-  --fg-faint: rgba(255, 255, 255, 0.88); /* 7.12:1 */
-  --hair: rgba(255, 255, 255, 0.26);
-  --accent: var(--highlight);
-}
-[data-tone='yellow'] {
-  --ground: var(--highlight);
-  --ground-rgb: var(--highlight-rgb);
-  --fg: var(--ink);
-  --fg-dim: var(--ink-light);
-  /* 亮黄底上的小字最容易发飘，压到 0.86 = 7.7:1 */
-  --fg-faint: rgba(var(--ink-rgb), 0.86); /* 7.7:1 */
-  --hair: rgba(var(--ink-rgb), 0.22);
-  --accent: var(--brand-deep);
-}
-[data-tone='coral'] {
-  --ground: var(--pop-deep);
-  --ground-rgb: var(--pop-rgb);
-  --fg: var(--on-pop);
-  /* E 组的 --pop-deep 比 A 组的珊瑚深得多，白字满值 9.15:1，
-     半透明档终于有余量了：0.96 = 8.58，0.90 = 7.83，都远在 AA 之上。 */
-  --fg-dim: rgba(255, 255, 255, 0.96); /* 8.58:1 */
-  --fg-faint: rgba(255, 255, 255, 0.90); /* 7.83:1 */
-  --hair: rgba(255, 255, 255, 0.28);
-  --accent: var(--highlight);
+  --notch: var(--cream);
 }
 
-/* 卡片色相。只改 --tint，不改前景：卡面永远是纸，字永远是墨。 */
-[data-tone='blue'] [data-tint='blue'],
-[data-tone='blue'][data-tint='blue'] {
-  --tint: var(--brand-tint); /* 蓝压蓝会糊掉，顶条换亮档 */
+[data-tone='alt'] {
+  --ground: var(--cream-dark);
+  --fg: var(--ink);
+  --fg-dim: var(--ink-light);
+  --fg-faint: var(--ink-faint);
+  --accent: var(--brand-text);
+  --notch: var(--cream-dark);
 }
+
+/* ---------------------------------------------------------------- 卡片色相
+   只染卡的编号、圆点、细边与标签，卡面永远是白纸，正文永远是墨。
+   -surface / -text 两档是给「要放字」的地方用的 AA 安全变体。 */
 
 [data-tint='blue'] {
   --tint: var(--brand);
   --tint-deep: var(--brand-deep);
-  --tint-rgb: var(--brand-rgb);
+  --tint-surface: var(--brand-surface);
+  --tint-text: var(--brand-deep);
   --tint-soft: var(--info-soft);
+  --tint-rgb: var(--brand-rgb);
 }
+
 [data-tint='yellow'] {
   --tint: var(--highlight);
   --tint-deep: var(--warning);
-  --tint-rgb: var(--highlight-rgb);
+  --tint-surface: var(--warning);
+  --tint-text: var(--warning);
   --tint-soft: var(--highlight-soft);
+  --tint-rgb: var(--highlight-rgb);
 }
+
 [data-tint='coral'] {
   --tint: var(--pop);
   --tint-deep: var(--pop-deep);
-  --tint-rgb: var(--pop-rgb);
+  --tint-surface: var(--pop-surface);
+  --tint-text: var(--danger-strong);
   --tint-soft: var(--pop-soft);
-}
-
-/* 浅色纸面贴在深色调上时，必须把前景四件套重置回墨色档，
-   否则 --fg 还是那一档的纯白，卡片里就是白底白字。v6 踩过这个坑。 */
-[data-card],
-.paper {
-  color: var(--ink); /* 继承来的是算好的纯白，只重置变量救不回来 */
-  --fg: var(--ink);
-  --fg-dim: var(--ink-light);
-  --fg-faint: rgba(var(--ink-rgb), 0.86);
-  --hair: rgba(var(--ink-rgb), 0.16);
-  --accent: var(--brand-text);
+  --tint-rgb: var(--pop-rgb);
 }
 
 /* ------------------------------------------------------------------ 基础 */
@@ -239,34 +206,35 @@
 }
 
 html {
-  /* 不写这两行，Chromium 在窄屏会对长段落做 font boosting，
-     整块巨字被悄悄放大，块面构图当场散架。 */
+  /* 不写这两行，Chromium 在窄屏会对长段落做 font boosting，巨字被悄悄放大。 */
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  scroll-behavior: auto; /* 平滑滚动由 lenis 接管；两套一起开会打架 */
+  scroll-behavior: auto; /* 平滑滚动由 lenis 接管，两套一起开会打架 */
 }
 
 body {
   margin: 0;
   font-family: var(--font-sans);
-  font-size: clamp(1rem, 0.94rem + 0.28vw, 1.115rem);
+  font-size: clamp(1rem, 0.95rem + 0.24vw, 1.08rem);
   line-height: 1.7;
   color: var(--ink);
   background: var(--cream);
   overflow-x: clip;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 svg,
-canvas {
+canvas,
+img {
   display: block;
   max-width: 100%;
 }
 
 a {
   color: inherit;
-  text-decoration-color: rgba(var(--ink-rgb), 0.32);
+  text-decoration-color: rgba(var(--ink-rgb), 0.3);
   text-underline-offset: 0.22em;
 }
 
@@ -277,6 +245,8 @@ h4,
 p,
 ul,
 ol,
+dl,
+dd,
 figure {
   margin: 0;
 }
@@ -287,366 +257,1001 @@ ol {
   list-style: none;
 }
 
-::selection {
-  background: var(--highlight);
-  color: var(--ink);
-}
-
-:focus-visible {
-  outline: 3px solid var(--accent, var(--brand-deep));
-  outline-offset: 3px;
-  border-radius: var(--r-xs);
+button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  cursor: pointer;
 }
 
 .skip {
   position: fixed;
   top: 0.6rem;
   left: 0.6rem;
-  z-index: 90;
+  z-index: 200;
   padding: 0.55rem 1rem;
   border-radius: var(--r-pill);
   background: var(--brand-deep);
   color: var(--on-brand);
   font-size: 0.9rem;
-  transform: translateY(-160%);
+  text-decoration: none;
+  transform: translateY(-180%);
 }
 
 .skip:focus-visible {
   transform: none;
 }
 
-/* --------------------------------------------------------------- 挤出块
-   全站唯一的「厚度」实现。承载投影的是伪元素而不是元素自己，原因有两个：
-   外投影天生被裁在 border-box 之外，所以这一层不会盖住面色；伪元素不进
-   querySelectorAll，装饰层不会被当成内容元素扫到。
-   brightness() 直接把面色压成侧面色，因此新增一块色块不需要再配一个色值。 */
-
-.slab {
-  position: relative;
-  border-radius: var(--r-lg);
-  background: var(--face, var(--cream));
-}
-
-/* 按钮共用同一条挤出链。描边档除外：它本来就是次一级的那个，
-   给它加厚度会和主按钮抢，而且 transparent 面色会挤出一圈米白幽灵。
-   v9 把实心胶囊 .pill--go 也接上同一条链：它现在是卡片内部的主动作，
-   没有厚度会被旁边有厚度的卡面压扁。描边胶囊 .pill--src 同样不接。 */
-.slab::before,
-.btn:not(.btn--ghost)::before,
-.pill--go::before {
-  content: '';
-  position: absolute;
-  /* 有描边的块要把伪元素撑到 border-box，否则侧面从描边内侧起跳，缺一圈 */
-  inset: var(--ex-inset, 0);
-  border-radius: inherit;
-  color: var(--ex-color, var(--face, var(--cream)));
-  box-shadow: var(--ex, var(--ex-9));
-  filter: brightness(0.74) saturate(1.12);
-  pointer-events: none;
-}
-
 /* ------------------------------------------------------------ 章与版心 */
 
 .ch {
   position: relative;
-  background: var(--ground, var(--cream));
+  background: var(--ground);
   color: var(--fg);
-  padding-block: var(--ch-pad);
-  /* 满幅色块自己不带圆角：形状锁的 0 档就是给它的 */
-  border-radius: var(--r-0);
+  padding-block: var(--s-section);
 }
 
 .wrap {
   width: 100%;
-  max-width: var(--maxw);
+  max-width: var(--wrap);
   margin-inline: auto;
   padding-inline: var(--gutter);
 }
 
-/* 章标题。思源黑 Black 只出现在这一档、开场巨字和超大读数上。 */
-.ch-title {
-  font-family: var(--font-display);
-  font-weight: 900;
-  font-size: clamp(2.4rem, 6.4vw, 5.4rem);
-  line-height: 1.02;
-  letter-spacing: -0.03em;
-  color: var(--fg);
-}
+/* 章头三件套。参考站的写法：小号大写字距标签 → 中文标题 → 灰度引导句。
+   v9 的 .eyebrow 是一枚有底色的胶囊，落在饱和底上就是用户点名的
+   「SKILL RULES 背景色太丑」。v10 一律去掉底色，只留字距。 */
 
-.ch-lede {
-  /* ch 是拉丁 0 的宽度，中文一行只能装到它的一半：行长一律用 em 定 */
-  max-width: 32em;
-  margin-block-start: clamp(0.5rem, 1.2vh, 0.95rem);
-  color: var(--fg-dim);
-  font-size: clamp(1rem, 0.95rem + 0.3vw, 1.2rem);
-}
-
-/* 元信息小标签。全站唯一的小字标签形态，mono + 字距。 */
-.eyebrow {
+.label-caps {
   font-family: var(--font-mono);
-  font-size: 0.86rem;
+  font-size: 0.72rem;
+  font-weight: 500;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--fg-faint);
 }
 
-.hair {
-  border: 0;
-  height: 1px;
-  background: var(--hair);
-}
-
-/* ---------------------------------------------------------------- 按钮 */
-
-.btn {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.76rem 1.4rem;
-  border: 0;
-  border-radius: var(--r-sm);
-  font-family: var(--font-sans);
-  font-size: 0.98rem;
-  font-weight: 650;
-  line-height: 1.2;
-  white-space: nowrap;
+a.label-caps {
   text-decoration: none;
-  cursor: pointer;
-  background: var(--face, var(--brand-deep));
-  transition:
-    transform 0.18s var(--e-flat),
-    background-color 0.25s var(--e-flat),
-    color 0.25s var(--e-flat);
+  transition: color 0.2s var(--ease);
 }
 
-/* 按住不动的时候，按钮往侧面塌下去三格：厚度是真的，不是画上去的 */
-.btn:hover {
-  transform: translate(3px, 3px);
+a.label-caps:hover {
+  color: var(--accent-text);
 }
 
-.btn:active {
-  transform: translate(5px, 5px);
+/* Fraunces 大编号。**不用斜体**：真斜体是另一个字幅（再花 11 KB，预算不够），
+   合成斜体是把字形整体切变，衬线字的水平衬线会被拉成菱形，2rem 上一眼看得出。
+   参考站的 .big-num 本身也是正体，这里对齐它。 */
+.section-number {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(1.5rem, 3vw, 2.1rem);
+  line-height: 1;
+  color: var(--brand);
+  opacity: 0.32;
+  margin-bottom: 0.3rem;
 }
 
-.btn--solid {
-  --face: var(--brand-deep);
-  --ex: var(--ex-6);
-  color: var(--on-brand);
-}
-
-.btn--ink {
-  --face: var(--ink);
-  --ex: var(--ex-6);
-  color: var(--cream);
-}
-
-.btn--yellow {
-  --face: var(--highlight);
-  --ex: var(--ex-6);
-  color: var(--ink);
-}
-
-.btn--paper {
-  --face: var(--cream);
-  --ex-color: var(--ink);
-  --ex: var(--ex-6);
-  color: var(--ink);
-}
-
-/* 描边档不挤出：它本来就是「次一级」的那个，加厚度会和主按钮抢 */
-.btn--ghost {
-  background: transparent;
+.ch-title {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(1.65rem, 3.4vw, 2.5rem);
+  line-height: 1.28;
+  letter-spacing: -0.01em;
   color: var(--fg);
-  box-shadow: inset 0 0 0 2px currentColor;
+  /* 中文回落到微软雅黑时字重只有 Bold，比苹方 Heavy 细一档。补一道极细描边
+     把两端拉齐；同时禁掉合成加粗，免得 Safari 再叠一层糊边。 */
+  font-synthesis-weight: none;
+  -webkit-text-stroke: 0.008em currentColor;
 }
 
-.btn--ghost:hover {
-  background: var(--fg);
-  color: var(--ground, var(--cream));
+.ch-lede {
+  margin-top: 0.85rem;
+  max-width: 46em;
+  font-size: 1.02rem;
+  line-height: 1.78;
+  color: var(--fg-dim);
+}
+
+.ch-head {
+  margin-bottom: var(--s-block);
+}
+
+/* ------------------------------------------------------- 荧光笔家族 (#50)
+   参考站的签名手法。正文里所有「重点」都用它，不用加粗也不用换色 ——
+   那两种做法在中文里会把段落打成马赛克。 */
+
+.hl-yellow {
+  background: linear-gradient(180deg, transparent 58%, rgba(var(--highlight-rgb), 0.45) 58%);
+  padding: 0 0.14em;
+  border-radius: var(--r-xs);
+}
+
+.hl-wave {
+  text-decoration: underline wavy var(--brand);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 5px;
+}
+
+.hl-box {
+  border: 2px solid var(--brand);
+  border-radius: var(--r-xs);
+  padding: 0 0.22em;
+  display: inline-block;
+}
+
+/* 手绘圈注。不规则圆角 + 极慢的呼吸，一页只用一次。 */
+.hl-circle {
+  border: 2.5px solid var(--pop);
+  border-radius: 52% 45% 55% 40% / 50% 45% 55% 42%;
+  padding: 0.02em 0.24em;
+  display: inline-block;
+  animation: wiggle 6s ease-in-out infinite;
+}
+
+@keyframes wiggle {
+  0%,
+  100% {
+    transform: rotate(-0.6deg);
+  }
+  50% {
+    transform: rotate(0.6deg);
+  }
+}
+
+/* ------------------------------------------------------------------ 顶栏
+   repair 站的写法：62px 高、半透明奶油 + 背景模糊、当前项黄色下划线从左展开。
+   常驻不隐藏 —— v9 的流内顶栏滚过去就没了，读到第五章想回开场只能拖滚动条。 */
+
+.nav {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 110;
+  background: rgba(254, 252, 246, 0.86);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.nav-in {
+  max-width: var(--wrap);
+  margin: 0 auto;
+  padding-inline: var(--gutter);
+  height: 62px;
+  display: flex;
+  align-items: center;
+  gap: clamp(14px, 2.5vw, 36px);
+}
+
+.nav-mark {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.nav-mark b {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 1.02rem;
+  letter-spacing: 0.01em;
+}
+
+.nav-mark s {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+  color: var(--ink-faint);
+  text-decoration: none;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 2vw, 26px);
+  margin-left: auto;
+}
+
+.nav-links a {
+  position: relative;
+  z-index: 0;
+  font-size: 0.9rem;
+  color: var(--ink-light);
+  text-decoration: none;
+  padding: 4px 2px;
+  transition: color 0.2s var(--ease);
+}
+
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  bottom: 2px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--highlight);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.26s var(--ease);
+  z-index: -1;
+}
+
+.nav-links a:hover {
+  color: var(--ink);
+}
+
+.nav-links a:hover::after {
+  transform: scaleX(1);
+}
+
+/* 顶部 3px 滚动进度条。宽度由 --p 驱动，rAF 里只写这一个自定义属性。 */
+.scrollbar {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 3px;
+  z-index: 120;
+  background: transparent;
+  pointer-events: none;
+}
+
+.scrollbar i {
+  display: block;
+  height: 100%;
+  width: 100%;
+  transform-origin: left center;
+  transform: scaleX(var(--p, 0));
+  background: var(--highlight);
+}
+
+/* ---------------------------------------------------------- 入场动效
+   默认状态永远是「已经可见」。只有 <html class="js"> 挂上之后才允许隐藏，
+   所以禁用 JS、减弱动效、预渲染快照三种情况下内容都是完整的。 */
+
+.js .reveal:not(.is-in),
+.js .rise:not(.is-in) {
+  opacity: 0;
+  transform: translateY(28px);
+}
+
+.reveal,
+.rise {
+  transition:
+    opacity 0.7s var(--ease),
+    transform 0.7s var(--ease);
+}
+
+.reveal.is-in,
+.rise.is-in {
+  opacity: 1;
   transform: none;
 }
 
-.btn--sm {
-  padding: 0.5rem 0.95rem;
-  font-size: 0.86rem;
+.reveal-d1 {
+  transition-delay: 0.08s;
+}
+.reveal-d2 {
+  transition-delay: 0.16s;
+}
+.reveal-d3 {
+  transition-delay: 0.24s;
+}
+.reveal-d4 {
+  transition-delay: 0.32s;
+}
+.reveal-d5 {
+  transition-delay: 0.4s;
 }
 
-/* 全站只有末屏那个邮箱按钮用大号档：它是整页唯一真正想让人点的东西。 */
-.btn--lg {
-  --ex: var(--ex-9);
-  padding: 1rem 1.9rem;
-  font-size: 1.06rem;
+/* ---------------------------------------------------------------- 按钮
+   两档：实心主动作 + 描边次动作。参考站 #14 的规格，hover 只抬 2px。 */
+
+.cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: 12px 28px;
+  border-radius: var(--r-sm);
+  background: var(--brand-surface);
+  color: var(--on-brand);
+  font-weight: 600;
+  font-size: 0.92rem;
+  line-height: 1.4;
+  text-decoration: none;
+  border: 1.5px solid var(--brand-surface);
+  transition:
+    transform 0.22s var(--ease),
+    box-shadow 0.22s var(--ease),
+    background 0.22s var(--ease);
 }
 
-/* 磁吸：JS 把指针偏移写进 --mx/--my，只有 contact 那个 CTA 用。 */
-.btn--magnet {
+.cta-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(var(--brand-rgb), 0.3);
+  background: var(--brand-deep);
+  border-color: var(--brand-deep);
+}
+
+.cta-btn--ghost {
+  background: transparent;
+  color: var(--accent-text);
+  border-color: var(--rule);
+}
+
+.cta-btn--ghost:hover {
+  background: transparent;
+  color: var(--brand-deep);
+  border-color: var(--brand);
+  box-shadow: 0 6px 20px rgba(var(--brand-rgb), 0.14);
+}
+
+.cta-btn--sm {
+  padding: 8px 18px;
+  font-size: 0.84rem;
+}
+
+.cta-btn--lg {
+  padding: 16px 40px;
+  font-size: 1.05rem;
+  border-radius: var(--r-md);
+}
+
+/* 磁吸。全站只有 contact 那一枚主 CTA 这么做。 */
+.cta-btn--magnet {
   transform: translate3d(calc(var(--mx, 0) * 1px), calc(var(--my, 0) * 1px), 0);
+  transition:
+    transform 0.34s var(--ease),
+    box-shadow 0.22s var(--ease);
 }
 
-.btn--magnet:hover {
-  transform: translate3d(calc(var(--mx, 0) * 1px + 3px), calc(var(--my, 0) * 1px + 3px), 0);
+.cta-btn--magnet:hover {
+  transform: translate3d(calc(var(--mx, 0) * 1px), calc(var(--my, 0) * 1px - 2px), 0);
 }
 
-/* ------------------------------------------------------------ 小组件 */
+/* ------------------------------------------------------------ 胶囊与标签 */
 
-/* 技术栈 / 标签胶囊。6px 档，不是药丸：药丸只给跳过链接。 */
+/* 上游 .pill 是 .62rem。那个尺寸在移动端小到读不出来，这是我唯一主动偏离
+   上游的一处，提到 .78rem。其余规格照抄。 */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.5;
+  background: rgba(var(--brand-rgb), 0.08);
+  color: var(--accent-text);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.pill--tint {
+  background: rgba(var(--tint-rgb), 0.1);
+  color: var(--tint-text);
+}
+
+.pill--mono {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+}
+
+/* repair 站的 chip：白底、1px 细边、hover 转蓝。 */
 .chip {
   display: inline-flex;
   align-items: center;
-  padding: 0.3rem 0.62rem;
-  border: 1px solid var(--hair);
-  border-radius: var(--r-xs);
-  font-family: var(--font-mono);
-  font-size: 0.86rem;
-  line-height: 1.35;
-  color: var(--fg-dim);
-  white-space: nowrap;
-}
-
-.chip--tint {
-  border-color: rgba(var(--tint-rgb), 0.42);
-  background: rgba(var(--tint-rgb), 0.1);
-  color: var(--fg-dim);
-}
-
-/* ---------------------------------------------------------------- 胶囊
-   用户原话：「可以用不同颜色好看的胶囊形状的按钮，标签什么的也是」。
-   v8 这些位置是灰底 6px 方角，确实闷。v9 统一成一套胶囊骨架，五个变体只换
-   底色与字色，形状与内距完全共用 —— 变体之间的差别必须只有颜色，
-   否则一张卡里三种胶囊会读成三种控件。
-
-   配色不是挑好看的，是先算再挑。全部按 E 组实际取值算过 WCAG（正文档 4.5）：
-
-     .pill--tag  k0  brand-deep on info-soft         7.38（卡面）/ 7.17（cream 面）
-     .pill--tag  k1  pop-deep   on pop-soft          7.91
-     .pill--tag  k2  ink        on highlight-soft   13.86
-     .pill--go       白字 on brand-deep 8.72 / pop-deep 9.15 / warning 5.07 / ink 16.31
-     .pill--src      brand-deep 8.25 / pop-deep 8.66 / warning 4.80（cream 面）
-     .pill--state    在跑 pop-deep on pop-soft 7.91；维护中 ink on warning-soft 14.74
-     .pill--cap      白字 on brand-deep 8.72 / pop-deep 9.15
-
-   琥珀档单独说一句：warning(#8A6A00) 压 highlight-soft 只有 4.31，不达标。
-   本文件禁 color-mix()（部分 Android WebView 会整块失效退成透明），
-   所以第三档不硬凑琥珀字，直接换成墨字压沙底 —— 三档仍然是三个可分辨的色相，
-   而且这一档反而是最稳的那个。 */
-
-.pill {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.34rem;
-  padding: 0.34rem 0.74rem;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--ink-light);
+  background: var(--card-bg);
+  border: 1px solid var(--rule);
   border-radius: var(--r-pill);
-  font-family: var(--font-sans);
-  font-size: 0.82rem;
-  font-weight: 600;
-  /* 中文小字在 0.82rem 会糊成一团，给一点字距把笔画拆开 */
-  letter-spacing: 0.01em;
-  line-height: 1.35;
-  white-space: nowrap;
+  padding: 6px 14px;
   text-decoration: none;
-  background: var(--face, transparent);
+  white-space: nowrap;
+  transition:
+    border-color 0.18s var(--ease),
+    color 0.18s var(--ease),
+    transform 0.18s var(--ease);
 }
 
-.pill svg {
-  inline-size: 0.92em;
-  block-size: 0.92em;
+.chip:hover {
+  border-color: var(--brand);
+  color: var(--accent-text);
+}
+
+.chip b {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--ink-faint);
+}
+
+/* 状态灯。圆点用原色（面积只有 7px²，不承载文字，不受 AA 约束）。 */
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--r-pill);
+  flex: none;
+  background: var(--brand);
+}
+
+.dot[data-live='live'] {
+  background: var(--success);
+}
+
+.dot[data-live='maintained'] {
+  background: var(--brand);
+}
+
+.dot[data-live='archived'] {
+  background: var(--ink-faint);
+}
+
+/* ------------------------------------------------------------------ 卡片
+   全站唯一一套卡面：白纸 + 16px 圆角 + 一层染墨的浅投影，没有第二种画法。
+   各章的卡（.svc-card / .hscroll-card / .case / .logic-step / .scene-card）
+   都只在这套基底上加自己的编号、色相与边，不另起炉灶。 */
+
+.slab {
+  position: relative;
+  background: var(--card-bg);
+  border-radius: var(--card-r);
+  box-shadow: var(--card-shadow);
+}
+
+/* ------------------------------------------------- #5A 代码面板 · macOS 窗口
+   用户点名的组件。原样移植：12px 圆角、隐藏溢出、40px 模糊投影，标题栏
+   #2D2D3A 加 11px 三色圆点，面体 #1A1B26，Tokyo Night 语法着色。
+   这是全站唯一的深色实体，也是唯一的反差来源 —— 一整页奶油底需要一个锚点。 */
+
+.code-mac {
+  border-radius: var(--r-md);
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(26, 26, 46, 0.16);
+  background: var(--tn-bg);
+}
+
+.code-mac__tb {
+  background: var(--tn-bar);
+  padding: 11px 14px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.code-mac__dots {
+  display: flex;
+  gap: 5px;
+}
+
+.code-mac__dots i {
+  width: 11px;
+  height: 11px;
+  border-radius: var(--r-pill);
+  display: block;
+}
+
+.code-mac__dots i:nth-child(1) {
+  background: var(--tn-dot-r);
+}
+.code-mac__dots i:nth-child(2) {
+  background: var(--tn-dot-y);
+}
+.code-mac__dots i:nth-child(3) {
+  background: var(--tn-dot-g);
+}
+
+.code-mac__fn {
+  flex: 1;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--on-dark-dim);
+  /* 三个圆点占 43px，右边补等宽的空位，文件名才真的在正中 */
+  padding-right: 43px;
+}
+
+.code-mac__bd {
+  background: var(--tn-bg);
+  padding: 22px;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.code-mac pre {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  line-height: 1.85;
+  color: var(--tn-fg);
+  /* 终端行必须 pre：nowrap 会让长行在窄屏被截断，pre + 容器横滚才是对的 */
+  white-space: pre;
+}
+
+.code-mac .kw {
+  color: var(--tn-kw);
+}
+.code-mac .str {
+  color: var(--tn-str);
+}
+.code-mac .fnc {
+  color: var(--tn-fn);
+}
+.code-mac .num {
+  color: var(--tn-num);
+}
+.code-mac .cmt {
+  color: var(--tn-cmt);
+}
+
+/* ---------------------------------------------------- 行内命令框（repair）
+   奶油深底 + 1px 细边 + 等宽字 + 右侧 COPY。这里装的是邮箱：整页唯一真正
+   想让人带走的字符串，给它一个一键复制比再放一个按钮实用。 */
+
+.hero-cmd {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--cream-dark);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-md);
+  padding: 10px 10px 10px 16px;
+  max-width: 30em;
+}
+
+.hero-cmd__p {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--accent-text);
   flex: none;
 }
 
-/* 标签。三档固定轮换，按 data-k 取，不跟卡片 tint 走：
-   同一张卡里三枚标签要互相分得开，全跟 tint 会变成三枚同色。 */
-.pill--tag[data-k='0'] {
-  --face: var(--info-soft);
-  color: var(--brand-deep);
+.hero-cmd code {
+  font-family: var(--font-mono);
+  font-size: 0.84rem;
+  color: var(--ink);
+  flex: 1;
+  /* 只写 overflow-x 时规范把另一轴算成 auto，那一轴会吞掉移动端的竖向手势 */
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
 }
-.pill--tag[data-k='1'] {
-  --face: var(--pop-soft);
-  color: var(--pop-deep);
+
+.hero-cmd__copy {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  padding: 6px 12px;
+  border-radius: var(--r-sm);
+  background: var(--card-bg);
+  border: 1px solid var(--rule);
+  color: var(--ink-light);
+  transition:
+    border-color 0.18s var(--ease),
+    color 0.18s var(--ease);
 }
-.pill--tag[data-k='2'] {
-  --face: var(--highlight-soft);
+
+.hero-cmd__copy:hover {
+  border-color: var(--brand);
+  color: var(--accent-text);
+}
+
+.hero-cmd__copy[data-done='1'] {
+  color: var(--success);
+  border-color: var(--success);
+}
+
+/* -------------------------------------------------- 编号步骤器（dst）
+   案例章的骨架。44px 蓝圆徽 + 一条黄色虚线竖轨把三步串起来。
+   「背景 / 卡在哪 / 怎么解」三段就挂在这条轨上。 */
+
+.logic-flow {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(18px, 2.2vw, 30px);
+  padding-left: 60px;
+  position: relative;
+}
+
+.logic-flow::before {
+  content: '';
+  position: absolute;
+  left: 22px;
+  top: 26px;
+  bottom: 26px;
+  width: 0;
+  border-left: 2px dashed var(--highlight);
+}
+
+.logic-step {
+  position: relative;
+  background: var(--card-bg);
+  border-radius: var(--r-card);
+  padding: clamp(18px, 2.2vw, 26px) clamp(20px, 2.4vw, 30px);
+  box-shadow: var(--card-shadow-soft);
+}
+
+.logic-step__dot {
+  position: absolute;
+  left: -60px;
+  top: 20px;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-pill);
+  background: var(--brand-surface);
+  color: var(--on-brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.86rem;
+}
+
+.logic-step h4 {
+  font-size: 1.02rem;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
   color: var(--ink);
 }
 
-/* 实心动作胶囊。面色跟卡片 tint 的 deep 档走，接挤出链，按下去会塌。 */
-.pill--go {
-  --face: var(--tint-deep, var(--brand-deep));
-  --ex: var(--ex-4);
-  padding-inline: 0.95rem;
-  color: var(--on-brand);
-  font-weight: 650;
-  transition: transform 0.18s var(--e-flat);
-}
-
-.pill--go:hover {
-  transform: translate(3px, 3px);
-}
-
-.pill--go:active {
-  transform: translate(4px, 4px);
-}
-
-/* 描边档不挤出：两枚都有厚度就分不出主次了。 */
-.pill--src {
-  padding-inline: 0.9rem;
-  color: var(--tint-deep, var(--brand-deep));
-  box-shadow: inset 0 0 0 1.5px currentColor;
-  transition:
-    background-color 0.18s var(--e-flat),
-    color 0.18s var(--e-flat);
-}
-
-.pill--src:hover {
-  background: var(--tint-deep, var(--brand-deep));
-  color: var(--on-brand);
-}
-
-/* 状态灯。不是装饰圆点：它有三个真实取值，颜色与文字同时变。 */
-.pill--state {
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  letter-spacing: 0.02em;
-  --face: rgba(var(--ink-rgb), 0.07);
+.logic-step p {
+  font-size: 0.95rem;
+  line-height: 1.8;
   color: var(--ink-light);
 }
 
-.pill--state i {
-  inline-size: 0.46rem;
-  block-size: 0.46rem;
-  border-radius: var(--r-pill);
-  background: currentColor;
-  flex: none;
+/* 最后一步（「怎么解」）单独换成虚线框，一章只圈这一处。 */
+.logic-step--fix {
+  background: var(--card-bg);
+  border: 1.5px dashed rgba(var(--brand-rgb), 0.38);
+  box-shadow: none;
 }
 
-.pill--state[data-live='live'] {
-  --face: var(--pop-soft);
-  color: var(--pop-deep);
+.logic-step--fix .logic-step__dot {
+  background: var(--pop-surface);
 }
 
-.pill--state[data-live='maintained'] {
-  --face: var(--warning-soft);
+/* ------------------------------------------------------ 表格（dst）
+   craft 章承载两条主线。深墨表头是全站第二处深色，占地一行。 */
+
+.wtable {
+  border-radius: var(--r-card);
+  overflow: hidden;
+  box-shadow: var(--card-shadow-soft);
+}
+
+.wt-header {
+  display: grid;
+  grid-template-columns: 64px 1fr 1.35fr;
+  background: var(--ink);
+  padding: 13px 20px;
+  gap: 14px;
+}
+
+.wt-header span {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--on-dark-dim);
+}
+
+.wt-row {
+  display: grid;
+  grid-template-columns: 64px 1fr 1.35fr;
+  gap: 14px;
+  padding: 15px 20px;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--hairline);
+  align-items: baseline;
+}
+
+.wt-row:last-child {
+  border-bottom: 0;
+}
+
+.wt-k {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--accent-text);
+}
+
+.wt-t {
+  font-weight: 600;
+  font-size: 0.95rem;
   color: var(--ink);
 }
 
-/* 主线上的能力胶囊。左右两轨各一个色，白字压深底，站在黄地上也压得住。 */
-.pill--cap {
-  --face: var(--brand-deep);
-  color: var(--on-brand);
-  font-weight: 650;
+.wt-b {
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--ink-light);
 }
 
-/* ------------------------------------------------------ 手绘虚线框
-   规则：始终在内容盒之外，给内容留 ≥ 18px 内距，绝不 position:absolute
-   压在活文字上。v6 的文字冲出框线与批注吃字，根因都在这两条。        */
+/* -------------------------------------------------- 虚线场景卡（dst）
+   标签用与地面同色的底抠在边框缺口上，所以它必须知道所在章的地面色：
+   var(--notch) 由 [data-tone] 提供。 */
 
-/* 横向内距要大得多：虚线框的路径按 viewBox 百分比拉伸，横向摆幅是纵向的
-   三倍以上。两边给够，线才不会压到活字上。 */
+/* 三列。上游 dst 是四列，但这里要放的是导航站六选一的六张卡 ——
+   四列排六张会剩两个空格子，三列刚好两行满。 */
+.scene-grid {
+  display: grid;
+  grid-template-columns: 1.12fr 0.97fr 0.91fr;
+  gap: clamp(16px, 2vw, 24px);
+}
+
+.scene-card {
+  position: relative;
+  border: 2px dashed rgba(var(--tint-rgb, var(--brand-rgb)), 0.42);
+  border-radius: var(--r-lg);
+  padding: 26px 20px 22px;
+  background: var(--card-bg);
+}
+
+.scene-card__label {
+  position: absolute;
+  top: -11px;
+  left: 16px;
+  font-family: var(--font-hand);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--tint-text, var(--accent-text));
+  background: var(--notch, var(--cream));
+  padding: 0 8px;
+}
+
+/* ----------------------------------------------- 横推卡轨 (#26)
+   宽屏由 GSAP 把纵向滚动换算成横向推进（lib/motion.ts 的 worksPan）；
+   窄屏退成原生 scroll-snap 横滑 —— 不建 pin 就不可能再出现 v8 那种
+   「横屏转竖屏留下一屏死白」的事故。 */
+
+.hscroll-track {
+  display: flex;
+  gap: 20px;
+  padding: 16px 0 20px;
+}
+
+.hscroll-card {
+  position: relative;
+  flex: none;
+  width: var(--w, 20rem);
+  background: var(--card-bg);
+  border-radius: var(--r-lg);
+  /* 上内距要给右上角那枚手写编号让出一整行，否则它压在状态灯那一行上。 */
+  padding: 46px 24px 24px;
+  box-shadow: 0 4px 18px rgba(26, 26, 46, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  transition:
+    transform 0.28s var(--ease),
+    box-shadow 0.28s var(--ease);
+}
+
+.hscroll-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--card-shadow-h);
+}
+
+.hscroll-card__n {
+  position: absolute;
+  top: 12px;
+  right: 22px;
+  font-family: var(--font-hand);
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: var(--tint, var(--brand));
+  opacity: 0.32;
+  line-height: 1;
+}
+
+/* --------------------------------------------- 引述与批注 (#3 / #6)
+   两种写法刻意分开：实线黄框是「结论」，虚线蓝框是「旁批」。 */
+
+.pullquote {
+  position: relative;
+  padding: 28px 32px 26px;
+  background: var(--cream);
+  border-radius: var(--r-lg);
+  border: 2px solid var(--highlight);
+}
+
+.pullquote::before {
+  content: '“';
+  position: absolute;
+  top: -6px;
+  left: 14px;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 4rem;
+  line-height: 1;
+  color: var(--highlight);
+}
+
+.pullquote p {
+  font-size: 1.02rem;
+  line-height: 1.8;
+  color: var(--ink);
+  padding-left: 1.6rem;
+}
+
+.key-note {
+  position: relative;
+  padding: 22px 26px;
+  background: var(--card-bg);
+  border-radius: var(--r-sm);
+  border: 1.5px dashed rgba(var(--brand-rgb), 0.32);
+}
+
+.key-note__t {
+  position: absolute;
+  top: -11px;
+  left: 18px;
+  font-family: var(--font-hand);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--accent-text);
+  background: var(--notch, var(--cream));
+  padding: 0 7px;
+}
+
+.key-note p {
+  font-size: 0.96rem;
+  line-height: 1.8;
+  color: var(--ink-light);
+}
+
+/* --------------------------------------------------- 编号网格 (#34) */
+
+.numgrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.numgrid-card {
+  position: relative;
+  overflow: hidden;
+  background: var(--card-bg);
+  border-radius: var(--r-card);
+  padding: 24px 22px 22px;
+  box-shadow: var(--card-shadow-soft);
+  text-decoration: none;
+  display: block;
+  transition:
+    transform 0.28s var(--ease),
+    box-shadow 0.28s var(--ease);
+}
+
+.numgrid-card::before {
+  content: attr(data-num);
+  position: absolute;
+  top: -6px;
+  right: 12px;
+  font-family: var(--font-hand);
+  font-size: 2.8rem;
+  font-weight: 700;
+  color: var(--brand);
+  opacity: 0.16;
+  line-height: 1;
+}
+
+.numgrid-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--card-shadow-h);
+}
+
+/* -------------------------------------------------------- 分屏（dst） */
+
+.brand-split {
+  display: grid;
+  grid-template-columns: 0.45fr 1fr;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: var(--card-shadow);
+}
+
+.brand-left {
+  padding: clamp(28px, 3.4vw, 46px);
+  background: var(--cream-dark);
+}
+
+.brand-right {
+  padding: clamp(18px, 2vw, 26px);
+  background: var(--card-bg);
+}
+
+/* ------------------------------------------------- 深色揭示短带 (#33)
+   全站第三处深色，也是最后一处。高度受 G23 的 12% 面积配额约束，
+   所以它只是一条带，不是一屏。 */
+
+.dark-reveal {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--r-lg);
+  background: var(--dark-panel);
+  color: var(--on-dark);
+  padding: clamp(32px, 4vw, 52px) clamp(26px, 3.4vw, 44px);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: clamp(18px, 3vw, 40px);
+}
+
+.dark-reveal__bg {
+  position: absolute;
+  right: 2%;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(6rem, 15vw, 11rem);
+  line-height: 0.8;
+  color: rgba(255, 255, 255, 0.04);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* 文字块占主宽，按钮被挤到右侧；窄屏 flex-wrap 自然换行到下一行。 */
+.dark-reveal__txt {
+  position: relative;
+  flex: 1 1 22rem;
+  min-width: 0;
+}
+
+.dark-reveal__rule {
+  width: 36px;
+  height: 2px;
+  background: var(--highlight);
+  margin-bottom: 14px;
+}
+
+.dark-reveal h3 {
+  position: relative;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(1.3rem, 2.6vw, 1.9rem);
+  line-height: 1.35;
+  color: var(--on-dark);
+}
+
+.dark-reveal p {
+  position: relative;
+  margin-top: 0.6rem;
+  max-width: 34em;
+  font-size: 0.95rem;
+  line-height: 1.8;
+  color: var(--on-dark-dim);
+}
+
+.dark-reveal .cta-btn {
+  position: relative;
+  background: var(--highlight);
+  border-color: var(--highlight);
+  color: var(--on-highlight);
+}
+
+.dark-reveal .cta-btn:hover {
+  background: var(--highlight-soft);
+  border-color: var(--highlight-soft);
+  box-shadow: 0 6px 20px rgba(var(--highlight-rgb), 0.28);
+}
+
+/* ------------------------------------------------------ 手绘层（Ink.tsx）
+   三个零件全部走布局流，不压正文。颜色一律继承 --accent。 */
+
 .frame {
   position: relative;
-  padding: clamp(1rem, 2.2vh, 1.4rem) clamp(1.6rem, 3.2vw, 2.6rem);
-  color: var(--accent);
+  padding: 18px 20px;
 }
 
 .frame__svg {
@@ -654,56 +1259,12 @@ ol {
   inset: 0;
   width: 100%;
   height: 100%;
-  overflow: visible;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 0.5;
+  opacity: 0.55;
   pointer-events: none;
-  z-index: 0;
 }
-
-.frame__svg path {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.6;
-  stroke-linecap: round;
-  stroke-dasharray: 7 6;
-  vector-effect: non-scaling-stroke;
-  opacity: 0.85;
-}
-
-.frame > *:not(.frame__svg) {
-  position: relative;
-  z-index: 1;
-}
-
-/* 手写旁批。走布局流，不浮空；它旁边的箭头是 SVG，不是字符画。 */
-.annot {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-  font-family: var(--font-hand);
-  font-size: clamp(1rem, 1.4vw, 1.28rem);
-  line-height: 1.35;
-  color: var(--accent);
-}
-
-.annot svg {
-  flex: none;
-  width: 1.6rem;
-  height: 1.6rem;
-  margin-top: 0.1rem;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.7;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.annot__lead {
-  width: 1.7rem;
-  height: 1.7rem;
-}
-
-/* 圈注。唯一允许压在字上的东西，因为它只有一条描边且 pointer-events:none，
-   命中测试穿透它，G14 的五点测试打到的仍然是文字本身。 */
 
 .circ {
   position: relative;
@@ -713,655 +1274,535 @@ ol {
 
 .circ__svg {
   position: absolute;
-  inset: -0.3em -0.34em;
-  width: calc(100% + 0.68em);
-  height: calc(100% + 0.6em);
-  overflow: visible;
-  pointer-events: none;
-  color: var(--accent);
-}
-
-.circ__svg path {
+  inset: -22% -8%;
+  width: 116%;
+  height: 144%;
   fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
+  stroke: var(--pop);
+  stroke-width: 1.6;
   vector-effect: non-scaling-stroke;
-  opacity: 0.9;
+  pointer-events: none;
 }
 
 .circ__t {
   position: relative;
 }
 
-/* 高亮块。整块实色而不是荧光笔下划线：巨字那一档太大，
-   60% 处的渐变会被读成一条脏边。 */
-.mark {
-  background: var(--highlight);
-  color: var(--ink);
-  padding-inline: 0.1em;
-  border-radius: var(--r-xs);
+.annot {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  font-family: var(--font-hand);
+  font-size: 1.18rem;
+  line-height: 1.5;
+  color: var(--accent-text);
 }
 
-/* ---------------------------------------------------------- 入场动效
-   初态只在 .js 下生效：没有 JS 的时候内容必须是可读的静态页。      */
-
-.js .rise {
-  opacity: 0;
-  transform: translateY(22px);
-  transition:
-    opacity 0.7s var(--e-pull),
-    transform 0.7s var(--e-pull);
-}
-
-.js .rise.is-in {
-  opacity: 1;
-  transform: none;
-}
-
-/* 上下留出负内缩：圈注的椭圆要溢出行盒，inset(0 …) 会把它的上下弧剪掉。 */
-.js .wipe {
-  clip-path: inset(-0.52em 100% -0.44em 0);
-  transition: clip-path 0.9s var(--e-pull);
-}
-
-.js .wipe.is-in {
-  clip-path: inset(-0.52em -0.44em -0.44em 0);
-}
-
-.js .swing {
-  opacity: 0;
-  transform: rotate(-1.4deg) translateY(28px);
-  transition:
-    opacity 0.75s var(--e-pull),
-    transform 0.75s var(--e-pull);
-}
-
-.js .swing.is-in {
-  opacity: 1;
-  transform: none;
-}
-
-/* 卡片 3D 视差倾斜。JS 只写 --rx/--ry 两个角度，动画交给合成器。 */
-.tilt {
-  transform: perspective(1100px) rotateX(calc(var(--rx, 0) * 1deg))
-    rotateY(calc(var(--ry, 0) * 1deg)) translate3d(0, 0, 0);
-  transition: transform 0.5s var(--e-pull);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .js .rise,
-  .js .wipe,
-  .js .swing {
-    opacity: 1;
-    transform: none;
-    clip-path: none;
-  }
-
-  .tilt {
-    transform: none;
-  }
-
-  /* 跑马灯是这一页唯一一条自走的动画，关掉它整章就完全静止 */
-  .craft__belt {
-    animation: none;
-  }
+.annot__lead {
+  flex: none;
+  width: 2.2rem;
+  height: 1.6rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  opacity: 0.7;
+  vector-effect: non-scaling-stroke;
 }
 
 /* ==========================================================================
-   六章版式。每章一种构图类型，章间不共用骨架（audit G16 逐对量特征向量）。
-   共用的只有：令牌、按钮、chip、挤出块、手绘层。
+   分章版式。六章六种构图，章间特征向量距离在 audit G16 里逐对校验。
    ========================================================================== */
 
-/* ================================================ 01 开场 · 立体色块建构 */
+/* ============================================== 01 开场 · 两栏 + 代码面板 */
 
 .ch--hero {
-  --hgut: clamp(18px, 3.4vw, 52px);
-  padding-block: 0;
-  min-block-size: 100dvh;
-  display: flex;
-  flex-direction: column;
-  overflow: clip;
-  /* 工程制图的方格纸。46px 一格，透明度压到 5%：它是底噪，不是图案。 */
-  background-image: linear-gradient(rgba(var(--ink-rgb), 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(var(--ink-rgb), 0.05) 1px, transparent 1px);
-  background-size: 46px 46px;
+  padding-top: calc(62px + clamp(44px, 7vh, 88px));
+  padding-bottom: clamp(56px, 8vh, 104px);
 }
 
-.topbar {
-  flex: none;
-  position: relative;
-  z-index: 20;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  block-size: 52px;
-  padding-inline: var(--hgut);
-}
-
-.topbar__mark {
-  display: flex;
-  align-items: baseline;
-  gap: 0.55rem;
-  text-decoration: none;
-}
-
-.topbar__cn {
-  font-family: var(--font-display);
-  font-weight: 900;
-  font-size: 1.02rem;
-  letter-spacing: -0.01em;
-}
-
-.topbar__la {
-  font-family: var(--font-mono);
-  font-size: 0.84rem;
-  letter-spacing: 0.16em;
-  color: var(--fg-faint);
-}
-
-.topbar__nav {
-  margin-inline-start: auto;
-  display: flex;
-  gap: 1.35rem;
-  font-family: var(--font-mono);
-  font-size: 0.84rem;
-  letter-spacing: 0.1em;
-  color: var(--fg-dim);
-}
-
-.topbar__nav a {
-  text-decoration: none;
-}
-
-.topbar__nav a:hover {
-  text-decoration: underline;
-}
-
-.hero__stage {
-  position: relative;
-  flex: 1 1 auto;
-  min-block-size: 560px;
-}
-
-/* 所有块的公共坐标系。指针视差只写这两个数，位移交给合成器。 */
-.hero__world {
-  --px: 0;
-  --py: 0;
-  position: absolute;
-  inset: clamp(0.3rem, 1.2vw, 1rem) var(--hgut) clamp(0.7rem, 1.8vw, 1.35rem);
-}
-
-.hero__world > .slab {
-  position: absolute;
-  transition: transform 0.12s linear;
-}
-
-/* 主板：蓝，承标题。左上到右下这条对角构图的起点。 */
-.s-main {
-  inset-inline-start: 0;
-  inset-block-start: 0;
-  inline-size: 56%;
-  inset-block-end: 38%;
-  z-index: 0;
-  --face: var(--brand-deep);
-  --ex: var(--ex-20);
-  --fg: var(--on-brand);
-  --fg-dim: rgba(255, 255, 255, 0.94);
-  --fg-faint: rgba(255, 255, 255, 0.88);
-  --accent: var(--highlight);
-  color: var(--on-brand);
-  border-radius: var(--r-lg);
-  padding: clamp(1.1rem, 2.3vw, 2.1rem) clamp(1.2rem, 2.4vw, 2.3rem);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  transform: perspective(1700px) rotateY(-5deg) rotateZ(-1deg)
-    translate3d(calc(var(--px) * 5px), calc(var(--py) * 4px), 0);
-}
-
-/* 这一块里所有文字都收成 max-content。块级行盒会一路撑到主板右缘，
-   而右缘底下压着黄块和珊瑚柱，命中测试当场判成遮挡（audit G14）。 */
-.hero__eb {
-  display: block;
-  width: max-content;
-  max-width: 100%;
-  color: var(--fg-faint);
-  text-decoration: none;
-}
-
-.hero__eb:hover {
-  color: var(--highlight);
-}
-
-.hero__h {
-  width: max-content;
-  max-width: 100%;
-  font-family: var(--font-display);
-  font-weight: 900;
-  font-size: clamp(1.75rem, 5.1vw, 4.3rem);
-  line-height: 1.06;
-  letter-spacing: -0.028em;
-}
-
-.hero__l {
-  display: block;
-  width: max-content;
-  max-width: 100%;
-  font-style: normal;
-}
-
-.hero__l:nth-of-type(2) {
-  margin-inline-start: 0.12em;
-}
-
-.hero__sub {
-  margin-block-start: 0.9rem;
-  max-width: 25em;
-  line-height: 1.6;
-  font-size: clamp(0.85rem, 0.8rem + 0.26vw, 1.02rem);
-  color: var(--fg-dim);
-}
-
-/* 黄块：一个动词。骑在主板右上角外沿，压破顶栏那条线。 */
-.s-yel {
-  inset-inline-start: 58%;
-  inset-block-start: -2.5%;
-  inline-size: 30%;
-  z-index: 6;
-  --face: var(--highlight);
-  --ex: var(--ex-14);
-  color: var(--ink);
-  border-radius: var(--r-card);
-  padding: 0.85rem 1.35rem 1rem;
-  transform: perspective(1200px) rotateY(-9deg) rotateZ(3deg)
-    translate3d(calc(var(--px) * 15px), calc(var(--py) * 12px), 0);
-}
-
-.s-yel b {
-  display: block;
-  font-family: var(--font-display);
-  font-weight: 900;
-  font-size: clamp(1.3rem, 2.9vw, 2.45rem);
-  line-height: 1.08;
-  letter-spacing: -0.012em;
-}
-
-.s-yel s {
-  display: block;
-  text-decoration: none;
-  font-family: var(--font-mono);
-  font-size: 0.79rem;
-  letter-spacing: 0.19em;
-  color: var(--ink-light);
-  margin-block-start: 0.32rem;
-}
-
-/* 珊瑚柱：数字。咬住主板右缘，填满右半场。 */
-.s-pop {
-  inset-inline-start: 59.5%;
-  inset-inline-end: 0;
-  inset-block-start: 16%;
-  inset-block-end: 31%;
-  z-index: 4;
-  --face: var(--pop-deep);
-  --ex: var(--ex-14);
-  color: var(--on-pop);
-  border-radius: var(--r-lg);
-  padding: clamp(1rem, 2vw, 1.8rem) clamp(1rem, 2vw, 1.9rem);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 0.5rem;
-  transform: perspective(1400px) rotateY(-7deg) rotateZ(-2deg)
-    translate3d(calc(var(--px) * 10px), calc(var(--py) * 8px), 0);
-}
-
-.s-pop__big {
-  font-family: var(--font-display);
-  font-weight: 900;
-  font-size: clamp(2.4rem, 5.8vw, 4.8rem);
-  line-height: 0.94;
-  letter-spacing: -0.035em;
-}
-
-.s-pop__cap {
-  font-family: var(--font-mono);
-  font-size: 0.82rem;
-  letter-spacing: 0.16em;
-}
-
-.s-pop__hr {
-  border: 0;
-  border-block-start: 2px solid rgba(255, 255, 255, 0.55);
-  margin-block: 0.55rem;
-}
-
-.s-pop__two {
-  display: flex;
-  gap: clamp(1rem, 2.6vw, 2.4rem);
-  flex-wrap: wrap;
-}
-
-.s-pop__two b {
-  display: block;
-  font-family: var(--font-display);
-  font-weight: 900;
-  font-size: clamp(1.1rem, 2vw, 1.7rem);
-  line-height: 1;
-  letter-spacing: -0.02em;
-}
-
-.s-pop__two s {
-  display: block;
-  text-decoration: none;
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  letter-spacing: 0.19em;
-  margin-block-start: 0.28rem;
-}
-
-/* 纸板：等宽实物。没有截图之后，视觉重量由真实配置片段来扛。 */
-.s-pap {
-  inset-inline-start: 16%;
-  inset-inline-end: 8%;
-  inset-block-start: 70%;
-  inset-block-end: 11.5%;
-  z-index: 3;
-  --face: var(--cream-dark);
-  --ex-color: var(--ink);
-  --ex: var(--ex-9);
-  --ex-inset: -2px;
-  color: var(--ink);
-  border: 2px solid var(--ink);
-  border-radius: var(--r-lg);
-  padding: 0.75rem clamp(1rem, 2vw, 1.7rem) 0.8rem;
-  /* 左端被 CTA 墨条咬住。这个常量让四个断点下标题起点都离墨条 ≥ 40px：
-     1440 剩 43px、1100 剩 47px、960 剩 48px、901 剩 49px。 */
-  padding-inline-start: max(1.7rem, 285px - 15.5vw);
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: clamp(0.9rem, 2.2vw, 2.2rem);
-  transform: perspective(1700px) rotateY(-3.4deg) rotateZ(0.7deg)
-    translate3d(calc(var(--px) * 7px), calc(var(--py) * 6px), 0);
-}
-
-.s-pap__l {
-  border-inline-end: 2px solid var(--ink);
-  padding-inline-end: clamp(0.9rem, 2.2vw, 2.2rem);
-  align-self: stretch;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 0.3rem;
-}
-
-.s-pap__l b {
-  font-family: var(--font-display);
-  font-weight: 900;
-  font-size: clamp(0.95rem, 1.5vw, 1.22rem);
-  letter-spacing: -0.01em;
-  white-space: nowrap;
-}
-
-.s-pap__l s {
-  text-decoration: none;
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  letter-spacing: 0.14em;
-  color: var(--fg-faint);
-  line-height: 1.6;
-  white-space: nowrap;
-}
-
-.s-pap code {
-  display: block;
-  font-family: var(--font-mono);
-  font-size: clamp(0.7rem, 0.62rem + 0.3vw, 0.95rem);
-  line-height: 1.85;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.s-pap code b {
-  color: var(--brand-deep);
-  font-weight: 700;
-}
-
-.s-pap code em {
-  font-style: normal;
-  color: var(--fg-faint);
-}
-
-/* CTA 墨条。自己不挤出，厚度在两个按钮身上。 */
-.s-cta {
-  inset-inline-start: 0.5%;
-  inset-block-start: 72%;
-  z-index: 7;
-  --face: transparent;
-  --ex: none;
-  display: flex;
-  gap: 0.6rem;
-  transform: perspective(1000px) rotateY(-2.6deg) rotateZ(-0.6deg)
-    translate3d(calc(var(--px) * 19px), calc(var(--py) * 15px), 0);
-}
-
-.hero__cta .btn {
-  font-weight: 700;
-}
-
-/* 底条：口径与出处，不复述上面的数字。 */
-.hero__rail {
-  position: absolute;
-  inset-inline: 0;
-  inset-block-end: 0;
-  z-index: 1;
-  display: flex;
-  align-items: baseline;
-  gap: clamp(0.8rem, 2.2vw, 2.2rem);
-  flex-wrap: wrap;
-  font-family: var(--font-mono);
-  font-size: 0.82rem;
-  letter-spacing: 0.13em;
-  color: var(--fg-faint);
-  border-block-start: 2px solid var(--ink);
-  padding-block-start: 0.55rem;
-}
-
-.hero__rail b {
-  font-family: var(--font-display);
-  font-weight: 900;
-  font-size: 0.95rem;
-  letter-spacing: 0;
-  color: var(--ink);
-  margin-inline-end: 0.35rem;
-}
-
-.hero__src {
-  margin-inline-start: auto;
-}
-
-/* ====================================================== 02 作品 · 横向图廊 */
-
-.ch--work {
-  padding-block: 0;
-}
-
-.work__vp {
-  position: sticky;
-  inset-block-start: 0;
-  min-block-size: 100dvh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: clamp(1.2rem, 3.5vh, 2.6rem);
-  padding-block: clamp(2rem, 6vh, 4rem);
-  overflow: clip;
-  overflow-clip-margin: 2rem;
-}
-
-.work__head {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-/* 这一章标题要给跑道让出高度，比其他章小一档 */
-.ch--work .ch-title {
-  font-size: clamp(2.2rem, 4.6vw, 4rem);
-}
-
-.work__track {
-  display: flex;
-  align-items: stretch;
-  gap: clamp(1.4rem, 2.6vw, 2.8rem);
+.hero-in {
+  max-width: var(--wrap);
+  margin: 0 auto;
   padding-inline: var(--gutter);
-  padding-block: 0.4rem 1.6rem;
-  /* 两轴都要显式写。只写 overflow-x 的话规范会把 overflow-y 计算成 auto，
-     这条轨就同时接管了竖向手势 —— 移动端「划不动」有一半是这么来的。 */
-  overflow-x: auto;
-  overflow-y: hidden;
-  scroll-snap-type: x proximity;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.4) transparent;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.84fr);
+  gap: clamp(30px, 4vw, 66px);
+  align-items: center;
 }
 
-/* GSAP 接管之后横向滚动交给 scrub，容器自己不再滚 */
-.work__track.is-pan {
-  overflow: visible;
-  scroll-snap-type: none;
+.hero-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.05rem;
+}
+
+.hero-h1 {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(2.3rem, 5.6vw, 4.3rem);
+  /* 中日韩巨字的行距不能照拉丁走：1.06 在纯拉丁下好看，中文会咬在一起。 */
+  line-height: 1.16;
+  letter-spacing: -0.022em;
+  color: var(--ink);
+  font-synthesis-weight: none;
+  -webkit-text-stroke: 0.008em currentColor;
+}
+
+.hero-h1 i {
+  display: block;
+  font-style: normal;
+}
+
+.hero-lead {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.02rem, 1.9vw, 1.32rem);
+  line-height: 1.6;
+  color: var(--brand-deep);
+}
+
+.hero-sub {
+  max-width: 34em;
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--ink-light);
+}
+
+.hero-act {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+/* 三格读数不排等宽三列。40 / 6 / 1,784 本来就不一样长，硬拉齐就读成一排
+   模板卡；按内容宽度分配，节奏是数据自己的节奏。 */
+.hero-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
+  max-width: 32em;
+}
+
+.hero-pill {
+  flex: 1 1 auto;
+  background: var(--card-bg);
+  border: 1px solid var(--rule-soft);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+}
+
+.hero-pill b {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 1.4rem;
+  line-height: 1.15;
+  color: var(--ink);
+}
+
+.hero-pill s {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+  text-decoration: none;
+}
+
+.hero-src {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+}
+
+.hero-visual {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.hero-visual__cap {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* ================================================ 02 能做什么 · 粘性侧栏 */
+
+.workflow-layout {
+  display: grid;
+  grid-template-columns: 0.35fr 1fr;
+  gap: clamp(36px, 5vw, 90px);
+  align-items: start;
+}
+
+.workflow-side {
+  position: sticky;
+  top: calc(62px + 34px);
+}
+
+.big-num {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(3.6rem, 9vw, 6.4rem);
+  line-height: 0.85;
+  color: var(--brand);
+  opacity: 0.14;
+  margin-bottom: 0.4rem;
+}
+
+.workflow-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-gap);
+  min-width: 0;
+}
+
+/* 右栏里的一个内容组：标题 + 若干件东西，组内 14px，组间由 .workflow-main 的
+   --s-gap 拉开。两层间距差三倍以上，读者才能看出「这几件是一组」。 */
+.craft-blk {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* 章头下面那一行动作。按钮与说明胶囊并排，永远不撑破版心。 */
+.act-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 1.1rem;
+}
+
+.craft-h3 {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(1.25rem, 2.4vw, 1.7rem);
+  line-height: 1.35;
+  color: var(--ink);
+  font-synthesis-weight: none;
+}
+
+.craft-lede {
+  margin-top: 0.5rem;
+  font-size: 0.98rem;
+  line-height: 1.78;
+  color: var(--ink-light);
+}
+
+/* 三张服务卡。编号用 Fraunces 大字压在右上角（#1B 编号主导卡）。 */
+/* 三张服务卡按 1.14 / 0.98 / 0.88 递减排。等宽三列是模板味最重的构图，
+   递减一档之后读起来是「有先后的三件事」，不是三个复制品。 */
+.svc-grid {
+  display: grid;
+  grid-template-columns: 1.14fr 0.98fr 0.88fr;
+  gap: 18px;
+}
+
+.svc-card {
+  position: relative;
+  overflow: hidden;
+  background: var(--card-bg);
+  border-radius: var(--r-card);
+  padding: 26px 22px 22px;
+  box-shadow: var(--card-shadow-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  transition:
+    transform 0.28s var(--ease),
+    box-shadow 0.28s var(--ease);
+}
+
+.svc-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--card-shadow-h);
+}
+
+.svc-card__no {
+  position: absolute;
+  top: -8px;
+  right: 10px;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 4.4rem;
+  line-height: 1;
+  color: var(--tint, var(--brand));
+  opacity: 0.14;
+}
+
+.svc-card h4 {
+  position: relative;
+  font-size: 1.06rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.svc-card p {
+  font-size: 0.92rem;
+  line-height: 1.78;
+  color: var(--ink-light);
+}
+
+.svc-card ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.svc-card__fit {
+  margin-top: auto;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--hairline);
+  font-size: 0.84rem;
+  color: var(--ink-faint);
+}
+
+/* 装备跑马灯。压成单行，靠 translate3d(-50%) 循环。 */
+.belt {
+  position: relative;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+}
+
+.belt ul {
+  display: flex;
+  gap: 8px;
+  width: max-content;
+  animation: belt 64s linear infinite;
+}
+
+.belt:hover ul {
+  animation-play-state: paused;
+}
+
+@keyframes belt {
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+/* 色板证据条 */
+.ds-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 18px;
+  padding: 18px 20px;
+  background: var(--card-bg);
+  border: 1px solid var(--rule-soft);
+  border-radius: var(--r-card);
+}
+
+.ds-row__sw {
+  width: 260px;
+  height: 34px;
+  flex: none;
+}
+
+.ds-row p {
+  flex: 1 1 16rem;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--ink-light);
+}
+
+.ds-row p b {
+  display: block;
+  color: var(--ink);
+}
+
+/* ==================================================== 03 做过什么 · 横推 */
+
+.work-rail {
+  position: relative;
+}
+
+.work-vp {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100vh;
+  padding-block: clamp(40px, 7vh, 80px);
+  overflow: hidden;
+}
+
+.work-head {
+  margin-bottom: clamp(20px, 3vh, 38px);
+}
+
+.work-track {
+  display: flex;
+  gap: 20px;
+  padding-inline: max(var(--gutter), calc((100vw - var(--wrap)) / 2 + var(--gutter)));
   will-change: transform;
 }
 
-.work__end {
+.work-end {
   flex: none;
-  inline-size: var(--gutter);
+  width: 1px;
 }
 
-.pcard {
-  flex: none;
-  inline-size: var(--w, 26rem);
-  max-inline-size: 88vw;
-  scroll-snap-align: start;
-  --face: var(--cream);
-  --ex-color: var(--tint-deep);
-  --ex: var(--ex-14);
-  border-radius: var(--r-lg);
-  border-block-start: 7px solid var(--tint);
-  padding: clamp(1rem, 1.6vw, 1.5rem);
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
-}
-
-/* 顶行：类型 / 年份 在左，状态胶囊在右。 */
-.pcard__top {
+.pcard__meta {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem 0.7rem;
-  flex-wrap: wrap;
-}
-
-/* 动作区在卡片内部，不再贴着卡的下沿。
-   胶囊有 4px 挤出侧面，所以 gap 要给到 0.85rem，否则侧面会压到下一枚。 */
-.pcard__act {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.85rem;
-  margin-block-start: 0.2rem;
-}
-
-/* 截图位换成数据面板：对数标度的 star / fork 条，数值是真的。
-   auto 顶到底，六张卡的数据面板才会在同一条线上。 */
-.pcard__fig {
-  margin-block-start: auto;
-  border-radius: var(--r-card);
-  background: var(--tint-soft);
-  padding: clamp(0.75rem, 1.2vw, 1.05rem);
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-}
-
-.pcard__repo {
+  gap: 10px;
   font-family: var(--font-mono);
-  font-size: 0.84rem;
-  letter-spacing: 0.04em;
-  color: var(--fg-dim);
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.pcard__state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   white-space: nowrap;
 }
 
-.pcard__bars {
-  inline-size: 100%;
-  block-size: auto;
-}
-
-.pcard__kind {
-  font-family: var(--font-mono);
-  font-size: 0.84rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--fg-faint);
-}
-
-/* v9 把中文名提成卡片主标题：读者先读中文，英文仓库名是查证用的第二行。 */
 .pcard__cn {
   font-family: var(--font-display);
   font-weight: 900;
-  font-size: clamp(1.25rem, 1.6vw, 1.62rem);
-  line-height: 1.18;
-  letter-spacing: -0.02em;
-  word-break: break-word;
+  font-size: 1.24rem;
+  line-height: 1.35;
+  color: var(--ink);
+  font-synthesis-weight: none;
 }
 
 .pcard__name {
   font-family: var(--font-mono);
-  font-size: 0.84rem;
-  letter-spacing: 0.04em;
-  color: var(--fg-faint);
-  overflow-wrap: anywhere;
+  font-size: 0.74rem;
+  color: var(--tint-text, var(--accent-text));
+  margin-top: -0.35rem;
 }
 
 .pcard__blurb {
-  font-size: 0.92rem;
-  line-height: 1.65;
-  color: var(--fg-dim);
+  font-size: 0.9rem;
+  line-height: 1.78;
+  color: var(--ink-light);
 }
 
 .pcard__stack {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: 6px;
 }
 
-/* ================================================= 03 怎么做的 · 粘性堆叠 */
+.pcard__act {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 0.2rem;
+}
 
-.cases__head {
+.pcard__fig {
+  margin-top: auto;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--hairline);
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  margin-block-end: clamp(2rem, 5vh, 3.6rem);
+  gap: 6px;
+  color: var(--tint, var(--brand));
+}
+
+.pcard__repo {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+}
+
+/* 两条对数量级条。SVG 自己带 viewBox，这里只负责让它按卡宽伸缩。 */
+.pcard__bars {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* 数字花园：四张虚线场景卡 */
+.work-garden {
+  margin-top: var(--s-block);
+}
+
+.scene-card h4 {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 0.35rem;
+}
+
+.scene-card p {
+  font-size: 0.86rem;
+  line-height: 1.72;
+  color: var(--ink-light);
+}
+
+.scene-card__go {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  margin-top: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  color: var(--tint-text, var(--accent-text));
+  text-decoration: none;
+}
+
+a.scene-card {
+  text-decoration: none;
+  transition:
+    transform 0.28s var(--ease),
+    box-shadow 0.28s var(--ease);
+}
+
+a.scene-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--card-shadow);
+}
+
+/* ================================================= 04 怎么做的 · 粘性堆叠
+   三张卡依次钉在同一位置，后一张推上来时前一张缩小并沉回底色。
+   退场用「沉降遮片」而不是 opacity：opacity 会让上一张卡透过下一张显形，
+   filter:brightness() 在纸底上会压成脏黑，等于偷偷做了个深色模式。 */
+
+.cases-stack {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(24px, 4vh, 56px);
 }
 
 .case {
   position: sticky;
-  inset-block-start: clamp(3.2rem, 8vh, 6rem);
-  --face: var(--cream);
-  --ex-color: var(--tint-deep);
-  --ex: var(--ex-14);
+  top: clamp(84px, 11vh, 118px);
+  background: var(--card-bg);
   border-radius: var(--r-lg);
-  padding: clamp(1.3rem, 2.6vw, 2.4rem);
-  margin-block-end: clamp(2.2rem, 7vh, 5rem);
+  box-shadow: var(--card-shadow);
+  padding: clamp(24px, 3vw, 42px);
   transform: scale(var(--shrink, 1));
-  transform-origin: center top;
+  transform-origin: 50% 0;
+  overflow: hidden;
 }
 
-/* 退场用沉降遮片而不是 opacity：opacity 会让上一张卡透过下一张卡显形。 */
 .case::after {
   content: '';
   position: absolute;
@@ -1374,1364 +1815,837 @@ ol {
 
 .case__hd {
   display: flex;
-  align-items: baseline;
-  gap: clamp(0.8rem, 1.8vw, 1.6rem);
   flex-wrap: wrap;
-  padding-block-end: 0.9rem;
-  border-block-end: 2px solid var(--ink);
+  align-items: baseline;
+  gap: 0.4rem 0.9rem;
+  padding-bottom: clamp(16px, 2vw, 24px);
+  margin-bottom: clamp(20px, 2.6vw, 32px);
+  border-bottom: 1px solid var(--hairline);
 }
 
 .case__no {
   font-family: var(--font-display);
   font-weight: 900;
-  font-size: clamp(2rem, 4vw, 3.4rem);
-  line-height: 0.9;
-  letter-spacing: -0.04em;
-  color: var(--tint-deep);
+  font-size: clamp(1.5rem, 3vw, 2.1rem);
+  line-height: 1;
+  color: var(--tint, var(--brand));
+  opacity: 0.4;
 }
 
 .case__name {
-  font-family: var(--font-mono);
-  font-size: clamp(1rem, 1.4vw, 1.28rem);
-  letter-spacing: 0.02em;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(1.2rem, 2.4vw, 1.65rem);
+  color: var(--ink);
+  font-synthesis-weight: none;
 }
 
 .case__cn {
-  font-family: var(--font-display);
-  font-weight: 900;
-  font-size: clamp(1.35rem, 2.4vw, 2.1rem);
-  line-height: 1.1;
-  letter-spacing: -0.025em;
+  font-size: 0.9rem;
+  color: var(--ink-faint);
 }
 
 .case__claim {
-  margin-inline-start: auto;
-  max-width: 22em;
-  font-size: 0.95rem;
-  color: var(--fg-dim);
+  flex-basis: 100%;
+  font-size: 0.98rem;
+  line-height: 1.75;
+  color: var(--ink-light);
 }
 
 .case__grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr);
-  gap: clamp(1.2rem, 2.6vw, 2.6rem);
-  padding-block-start: clamp(1rem, 2vh, 1.6rem);
-}
-
-.case__text {
-  display: flex;
-  flex-direction: column;
-  gap: clamp(0.9rem, 2vh, 1.4rem);
-}
-
-.case__blk h4,
-.case__fix h4 {
-  font-family: var(--font-mono);
-  font-size: 0.85rem;
-  letter-spacing: 0.18em;
-  color: var(--fg-faint);
-  margin-block-end: 0.35rem;
-}
-
-.case__blk p,
-.case__fix p {
-  font-size: 0.97rem;
-  line-height: 1.72;
-  color: var(--fg-dim);
-}
-
-.case__fix p {
-  color: var(--fg);
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: clamp(24px, 3.2vw, 52px);
+  align-items: start;
 }
 
 .case__side {
   display: flex;
   flex-direction: column;
-  gap: clamp(0.9rem, 2vh, 1.3rem);
+  gap: 16px;
+  min-width: 0;
 }
 
-/* 案例侧栏的图形面板。三张各一种画法，不共用一个模子。 */
+.case__res {
+  display: grid;
+  grid-template-columns: 1.1fr 0.96fr 0.94fr;
+  gap: 10px;
+}
+
+.case__res > div {
+  background: var(--cream-dark);
+  border-radius: var(--r-sm);
+  padding: 12px 14px;
+}
+
+.case__res dt {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.case__res dd {
+  margin-top: 2px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.02rem;
+  color: var(--ink);
+}
+
+.case__go {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* 案例侧栏那三块图形面板：三种画法，避免三张卡被读成同一张。 */
 .case__panel {
   border-radius: var(--r-card);
-  background: var(--dark-panel);
-  color: var(--on-dark);
-  padding: clamp(0.85rem, 1.6vw, 1.2rem);
-  font-family: var(--font-mono);
-  font-size: 0.85rem;
-  line-height: 1.7;
+  border: 1px solid var(--rule-soft);
+  background: var(--cream);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   overflow: hidden;
-}
-
-.case__panel--tiles {
-  background: var(--tint-soft);
-  color: var(--ink);
 }
 
 .case__ptop {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 0.8rem;
-  padding-block-end: 0.5rem;
-  margin-block-end: 0.6rem;
-  border-block-end: 1px solid rgba(255, 255, 255, 0.24);
-  letter-spacing: 0.14em;
-  font-size: 0.81rem;
-  color: var(--on-dark-dim);
-}
-
-.case__panel--tiles .case__ptop {
-  border-block-end-color: var(--hair);
-  color: var(--fg-faint);
-}
-
-.case__tiles {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.case__tile {
-  inline-size: 15px;
-  block-size: 15px;
-  border-radius: var(--r-xs);
-  background: var(--tint-deep);
-}
-
-.case__tile[data-alt=''] {
-  background: rgba(var(--tint-rgb), 0.45);
-}
-
-.case__grp {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-
-.case__grp span {
-  font-size: 0.81rem;
+  gap: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed var(--rule);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
   letter-spacing: 0.12em;
-  color: var(--fg-faint);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.case__ptop b {
+  font-weight: 500;
+  color: var(--tint-text, var(--accent-text));
 }
 
 .case__line {
-  white-space: pre;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.75;
+  color: var(--ink-light);
 }
 
 .case__line b {
-  color: var(--highlight);
+  color: var(--accent-text);
   font-weight: 400;
 }
 
 .case__line em {
+  color: var(--ink-faint);
   font-style: normal;
-  color: var(--on-dark-dim);
+}
+
+.case__tiles {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+}
+
+.case__tile {
+  aspect-ratio: 1;
+  border-radius: var(--r-xs);
+  background: rgba(var(--tint-rgb, var(--brand-rgb)), 0.22);
 }
 
 .case__ifs {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.3rem;
-  margin-block-start: 0.5rem;
+  gap: 5px;
 }
 
 .case__if {
-  padding: 0.1rem 0.34rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  padding: 2px 7px;
   border-radius: var(--r-xs);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  font-size: 0.80rem;
-  color: var(--on-dark);
+  background: rgba(var(--tint-rgb, var(--brand-rgb)), 0.1);
+  color: var(--ink-light);
 }
 
-.case__res {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 0.7rem;
+/* ================================================ 05 在写在跑 · 分屏 + 带 */
+
+.notes-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-gap);
 }
 
-.case__res > div {
-  border-radius: var(--r-card);
-  background: rgba(var(--tint-rgb), 0.12);
-  padding: 0.6rem 0.8rem;
-}
-
-.case__res dt {
-  font-family: var(--font-mono);
-  font-size: 0.81rem;
-  letter-spacing: 0.12em;
-  color: var(--fg-faint);
-}
-
-.case__res dd {
-  margin: 0;
+.brand-left h3 {
   font-family: var(--font-display);
   font-weight: 900;
-  font-size: clamp(1.05rem, 1.5vw, 1.4rem);
-  line-height: 1.2;
-  letter-spacing: -0.02em;
-}
-
-.case__go {
-  display: flex;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-}
-
-/* ======================================================== 04 手艺 · 交汇图 */
-
-.craft__head {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-/* 交汇图下面那句旁批要自己的空气：两块轨道卡带挤出侧面，紧贴时手写体的
-   引导弧会压在卡片下沿上。旁批是 .wrap 的直接子元素，不在 .craft__head 里。 */
-.ch--craft .wrap > .annot {
-  margin-block-start: clamp(1.3rem, 3vh, 2.2rem);
-}
-
-/* ------------------------------------------------------------ ① 交汇图
-   v8 这里是一张 bezier 连线图加两栏 dl/dt/dd：线是虚的，字是列表，
-   「收敛」这件事被写出来了，但没有被画出来。v9 把两条主线做成两块实心色块，
-   自左右向中间收细，中间压一块墨色节点 —— 论点直接是构图本身。
-
-   SVG 只画那两条带，标签一律留在 HTML：中文进 SVG 就要多背一份字体子集，
-   而且 SVG 里的文本不参与正常排版，窄屏必然撞车。 */
-
-.jx {
-  --band: clamp(4.5rem, 10vh, 8rem);
-  position: relative;
-  margin-block-start: clamp(1.4rem, 3vh, 2.4rem);
-}
-
-.jx__svg {
-  display: block;
-  inline-size: 100%;
-  block-size: var(--band);
-  /* 装饰层不接指针：否则遮挡探针会把它算成盖在字上的那一层。 */
-  pointer-events: none;
-}
-
-.jx__band--a {
-  fill: var(--brand-deep);
-}
-
-.jx__band--b {
-  fill: var(--pop-deep);
-}
-
-/* 交点节点。整章唯一的墨色实体块，位置钉在两条带收口处（viewBox y=112/200）。 */
-.jx__node {
-  position: absolute;
-  z-index: 2;
-  inset-block-start: calc(var(--band) * 0.56);
-  inset-inline-start: 50%;
-  transform: translate(-50%, -50%);
-  --face: var(--ink);
-  --ex-color: var(--ink);
-  --ex: var(--ex-6);
-  border-radius: var(--r-card);
-  padding: 0.5rem 1.05rem 0.55rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.1rem;
-  text-align: center;
-  white-space: nowrap;
-}
-
-.jx__node b {
-  font-family: var(--font-display);
-  font-weight: 900;
-  font-size: clamp(0.95rem, 1.5vw, 1.2rem);
-  letter-spacing: -0.01em;
-  color: var(--cream);
-}
-
-.jx__node s {
-  text-decoration: none;
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  letter-spacing: 0.16em;
-  color: var(--on-dark-dim);
-}
-
-.jx__grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: clamp(1.2rem, 3vw, 3rem);
-  margin-block-start: clamp(1rem, 2.4vh, 1.8rem);
-}
-
-.jx__trk {
-  --face: var(--cream);
-  --ex-color: var(--ink);
-  --ex: var(--ex-6);
-  border-radius: var(--r-lg);
-  padding: clamp(1rem, 1.9vw, 1.5rem);
-}
-
-.jx__no {
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  letter-spacing: 0.18em;
-  color: var(--fg-faint);
-}
-
-.jx__title {
-  font-family: var(--font-display);
-  font-weight: 900;
-  font-size: clamp(1.2rem, 1.9vw, 1.7rem);
-  letter-spacing: -0.02em;
-  margin-block-start: 0.2rem;
-}
-
-.jx__caps {
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
-  margin-block-start: 0.9rem;
-}
-
-.jx__caps li {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.36rem;
-  padding-block-start: 0.7rem;
-  border-block-start: 1px solid var(--hair);
-}
-
-.jx__caps li:first-child {
-  padding-block-start: 0;
-  border-block-start: 0;
-}
-
-.jx__body {
-  font-size: 0.93rem;
-  line-height: 1.68;
-  color: var(--fg-dim);
-}
-
-/* 能力胶囊按轨分色，和上面那两条带同一个色，视线能从带走到胶囊。 */
-.jx__trk[data-side='b'] .pill--cap {
-  --face: var(--pop-deep);
-  color: var(--on-pop);
-}
-
-/* 技术栈跑马灯。overflow:hidden 不是 auto：这一章不该被判成横滚章。 */
-.craft__kit {
-  margin-block-start: clamp(1.6rem, 4vh, 2.8rem);
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: none;
-  border-block: 2px solid var(--ink);
-  padding-block: 0.7rem;
-}
-
-.craft__belt {
-  display: flex;
-  gap: 0.55rem;
-  inline-size: max-content;
-  animation: belt 46s linear infinite;
-}
-
-.craft__belt .chip {
-  border-color: rgba(var(--ink-rgb), 0.3);
-  background: var(--cream);
+  font-size: clamp(1.2rem, 2.3vw, 1.6rem);
   color: var(--ink);
+  font-synthesis-weight: none;
 }
 
-@keyframes belt {
-  from {
-    transform: translate3d(0, 0, 0);
-  }
-  to {
-    transform: translate3d(-50%, 0, 0);
-  }
-}
-
-.craft__sw {
-  inline-size: min(19rem, 100%);
-  block-size: auto;
-  flex: none;
-  color: var(--ink);
-}
-
-/* ------------------------------------------------------- ② 我能接什么活
-   这一段是「不拿仓库说事」的正面替代。用户的原话是首页不要一直拿仓库项目说事 ——
-   删掉旧内容只是止损，真正要补的是「你能替我做什么」，而这在 v8 全站都没有。
-   三张卡各写一件能接的活：交付物写成胶囊（看得见边界），最后一行写清适合谁。 */
-
-.craft__svc {
-  margin-block-start: clamp(2rem, 5vh, 3.4rem);
-}
-
-.craft__svchead {
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-}
-
-.craft__h3 {
-  font-family: var(--font-display);
-  font-weight: 900;
-  font-size: clamp(1.5rem, 2.7vw, 2.3rem);
-  line-height: 1.16;
-  letter-spacing: -0.02em;
-}
-
-.craft__lede2 {
-  font-size: 1rem;
-  line-height: 1.75;
-  color: var(--fg-dim);
-  max-inline-size: 54ch;
-}
-
-/* 三张等宽卡并排是最标准的模板脸，审计第 5 关直接判红。这里让三块沿
-   挤出方向（右下）走一条对角：宽度递减、起点递降，读起来是一串有先后的
-   块，不是一排复制品。 */
-.svc {
-  display: grid;
-  grid-template-columns: 1.14fr 0.98fr 0.88fr;
-  gap: clamp(1rem, 2vw, 1.9rem);
-  margin-block-start: clamp(1.1rem, 2.6vh, 1.9rem);
-  align-items: start;
-}
-
-.svc__card:nth-child(2) {
-  margin-block-start: clamp(1.2rem, 3vw, 2.3rem);
-}
-
-.svc__card:nth-child(3) {
-  margin-block-start: clamp(2.4rem, 6vw, 4.6rem);
-}
-
-.svc__card {
-  --face: var(--cream);
-  --ex-color: var(--tint-deep);
-  --ex: var(--ex-9);
-  border-radius: var(--r-lg);
-  border-block-start: 7px solid var(--tint);
-  padding: clamp(1rem, 1.8vw, 1.5rem);
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.svc__no {
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--fg-faint);
-}
-
-.svc__title {
-  font-family: var(--font-display);
-  font-weight: 900;
-  font-size: clamp(1.15rem, 1.7vw, 1.45rem);
-  line-height: 1.25;
-  letter-spacing: -0.02em;
-}
-
-.svc__body {
+.brand-left p {
+  margin-top: 0.7rem;
   font-size: 0.94rem;
-  line-height: 1.7;
-  color: var(--fg-dim);
+  line-height: 1.8;
+  color: var(--ink-light);
 }
 
-.svc__del {
+.notes-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-block-start: 0.15rem;
+  gap: 6px;
+  margin-top: 0.9rem;
 }
 
-/* auto 顶到底：三张卡的「适合谁」在同一条线上，卡才像一组而不是三张。 */
-.svc__fit {
-  margin-block-start: auto;
-  padding-block-start: 0.8rem;
-  border-block-start: 1px solid var(--hair);
-  font-size: 0.86rem;
-  line-height: 1.6;
-  color: var(--fg-faint);
-}
-
-/* ------------------------------------------------- ③ 手上有什么 的尾注
-   设计系统这一条从 v8 的证据卡降级成一行：色板是现画的矢量，八格取当前色组，
-   换色板它自己会跟着变，不需要重出图。 */
-
-.craft__ds {
-  margin-block-start: clamp(1.4rem, 3.5vh, 2.4rem);
+.notes-tags {
   display: flex;
-  align-items: center;
   flex-wrap: wrap;
-  gap: 0.9rem clamp(1rem, 2.4vw, 2rem);
+  gap: 6px;
+  margin-top: 1rem;
 }
 
-.craft__dstxt {
-  flex: 1 1 18rem;
-  font-size: 0.9rem;
-  line-height: 1.68;
-  color: var(--fg-dim);
+.notes-list li + li {
+  border-top: 1px solid var(--hairline);
 }
 
-.craft__dstxt b {
-  margin-inline-end: 0.45rem;
-  font-weight: 700;
-  color: var(--fg);
+.notes-list a {
+  display: grid;
+  grid-template-columns: 6.4rem 1fr auto;
+  align-items: baseline;
+  gap: 0.9rem;
+  padding: 14px 12px;
+  border-radius: var(--r-sm);
+  text-decoration: none;
+  transition: background 0.2s var(--ease);
 }
 
-/* ==================================================== 05 在写 · 花园与博客 */
+.notes-list a:hover {
+  background: var(--cream-dark);
+}
 
-.notes__head {
+.notes-list s {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+  text-decoration: none;
+}
+
+.notes-list b {
+  font-weight: 600;
+  font-size: 0.97rem;
+  color: var(--ink);
+}
+
+.notes-list span {
+  color: var(--accent-text);
+  display: inline-flex;
+}
+
+/* ========================================================= 06 联系 */
+
+.ch--contact {
+  padding-bottom: clamp(40px, 6vh, 72px);
+}
+
+.contact-in {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  align-items: center;
+  text-align: center;
+  gap: 1.1rem;
 }
 
-/* v8 这里铺了 40 块彩色底卡当论据，但用户本来就有一个导航站在做同一件事，
-   四十块挤在一屏谁也看不清，等于把导航站抄了一遍还抄丑了。
-   v9 每类挑一个 + 一句「为什么是它」，剩下 34 个交回导航站，末行一个宽入口。 */
-
-/* 十二栏底盘上摆不等宽的六格：5/4/3 起手，第二行 3/4/5 镜像回来，
-   眼睛在两行之间走一个来回。等宽三连既是模板脸，也让这一章跟开场章
-   的构图向量撞在一起（审计第 5、16 两关）。 */
-.garden {
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: clamp(0.7rem, 1.4vw, 1rem);
-  margin-block-start: clamp(1.4rem, 3vh, 2.2rem);
-}
-
-.gcell:nth-child(1),
-.gcell:nth-child(6) {
-  grid-column: span 5;
-}
-
-.gcell:nth-child(2),
-.gcell:nth-child(5) {
-  grid-column: span 4;
-}
-
-.gcell:nth-child(3),
-.gcell:nth-child(4) {
-  grid-column: span 3;
-}
-
-.gcell {
-  --ex: var(--ex-6);
-  border-radius: var(--r-lg);
-  padding: clamp(0.9rem, 1.5vw, 1.2rem);
-  min-block-size: 8.5rem;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-rows: auto auto 1fr;
-  gap: 0.3rem 0.6rem;
-  text-decoration: none;
-  transition: transform 0.18s var(--e-flat);
-}
-
-.gcell:hover {
-  transform: translate(3px, 3px);
-}
-
-/* 0.88 是实算出来的下限：六组底色里最弱的一组（导航站入口那格是 --brand
-   底白字）在 0.88 下还有 4.97:1，0.78 只有 4.25，达不到 AA。入口那格直接
-   给满值。 */
-.gcell__tag {
-  grid-area: 1 / 1;
-  text-decoration: none;
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  letter-spacing: 0.16em;
-  opacity: 0.88;
-}
-
-.gcell__go {
-  grid-area: 1 / 2;
-  justify-self: end;
-  display: inline-flex;
-  opacity: 0.88;
-}
-
-.gcell__go svg {
-  inline-size: 1rem;
-  block-size: 1rem;
-}
-
-.gcell__name {
-  grid-area: 2 / 1 / 3 / -1;
+.contact-h {
   font-family: var(--font-display);
   font-weight: 900;
-  font-size: 1.06rem;
-  line-height: 1.25;
-  letter-spacing: -0.01em;
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  line-height: 1.22;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  font-synthesis-weight: none;
+  -webkit-text-stroke: 0.008em currentColor;
+}
+
+.contact-body {
+  max-width: 40em;
+  font-size: 1.02rem;
+  line-height: 1.8;
+  color: var(--ink-light);
+}
+
+.contact-act {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 0.6rem;
+}
+
+.contact-mail {
+  font-family: var(--font-mono);
+  font-size: 0.86rem;
+  color: var(--ink-light);
+}
+
+/* 五个联系方式按各自标签的长度排，不切成五等份 */
+.contact-ch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: 100%;
+  margin-top: var(--s-gap);
+}
+
+.contact-ch > a {
+  flex: 1 1 auto;
+  min-width: 9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 16px 14px;
+  background: var(--card-bg);
+  border: 1px solid var(--rule-soft);
+  border-radius: var(--r-card);
+  text-align: left;
+  text-decoration: none;
+  transition:
+    border-color 0.2s var(--ease),
+    transform 0.2s var(--ease);
+}
+
+.contact-ch > a:hover {
+  border-color: var(--brand);
+  transform: translateY(-3px);
+}
+
+.contact-cl {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.contact-cv {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--ink);
   overflow-wrap: anywhere;
 }
 
-.gcell__why {
-  grid-area: 3 / 1 / 4 / -1;
-  font-size: 0.84rem;
-  line-height: 1.55;
-  opacity: 0.84;
-}
-
-/* 六组底色，每组都实算过：最浅的一组在 0.84 透明度下仍有 6.65:1。 */
-.gcell[data-c='0'] {
-  --face: var(--brand-deep);
-  color: var(--on-brand);
-}
-.gcell[data-c='1'] {
-  --face: var(--highlight);
-  color: var(--ink);
-}
-.gcell[data-c='2'] {
-  --face: var(--pop-deep);
-  color: var(--on-pop);
-}
-.gcell[data-c='3'] {
-  --face: var(--cream-dark);
-  --ex-color: var(--ink);
-  color: var(--ink);
-}
-.gcell[data-c='4'] {
-  --face: var(--dark-panel);
-  color: var(--cream);
-}
-.gcell[data-c='5'] {
-  --face: var(--pop-soft);
-  --ex-color: var(--ink);
-  color: var(--ink);
-}
-
-/* 导航站入口横跨整行：它不是第七个小站，是一个出口。 */
-.gcell--hub {
-  grid-column: 1 / -1;
-  --face: var(--brand);
-  color: var(--on-brand);
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  grid-template-rows: auto;
-  align-items: center;
-  min-block-size: 0;
-  gap: 0.4rem 1rem;
-}
-
-/* 入口那格底色是 --brand（六组里最浅的一档），白字得给满，别再打折。 */
-.gcell--hub .gcell__tag {
-  grid-area: 1 / 1;
-  opacity: 1;
-}
-
-.gcell--hub .gcell__name {
-  grid-area: 1 / 2;
-  font-size: 1rem;
-}
-
-.gcell--hub .gcell__why {
-  grid-area: 1 / 3;
-  opacity: 1;
-  font-family: var(--font-mono);
-  white-space: nowrap;
-}
-
-.gcell--hub .gcell__go {
-  display: none;
-}
-
-
-.notes__blog {
-  margin-block-start: clamp(2rem, 5vh, 3.4rem);
-  display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
-  gap: clamp(1.2rem, 3vw, 2.6rem);
-  align-items: start;
-}
-
-.notes__panel {
-  --face: var(--cream-dark);
-  --ex-color: var(--ink);
-  --ex: var(--ex-6);
-  border-radius: var(--r-lg);
-  padding: clamp(1rem, 2vw, 1.6rem);
-}
-
-.notes__panel h3 {
-  font-family: var(--font-display);
-  font-weight: 900;
-  font-size: clamp(1.15rem, 1.8vw, 1.55rem);
-  letter-spacing: -0.02em;
-}
-
-.notes__meta {
-  font-family: var(--font-mono);
-  font-size: 0.85rem;
-  letter-spacing: 0.1em;
-  color: var(--fg-faint);
-  margin-block: 0.3rem 0.9rem;
-}
-
-.notes__panel p {
-  font-size: 0.95rem;
-  line-height: 1.7;
-  color: var(--fg-dim);
-}
-
-.notes__tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-block: 0.9rem;
-}
-
-/* 计数用等宽字跟标签名分开，不用透明度。0.72 的 alpha 会把胶囊里的
-   brand-deep 压到 3.79:1，低于 AA —— 这正是「灰字丑」的成因，换字族解决。 */
-.notes__tags b {
-  margin-inline-start: 0.34rem;
-  font-family: var(--font-mono);
-  font-size: 0.94em;
-  font-weight: 700;
-  color: inherit;
-}
-
-/* v8 这里是六个 li，只有标题和日期，点不开 —— 数据源里当时根本没存链接。
-   v9 整条是 <a>，日期在左、标题居中、箭头靠右，hover 整条右移。 */
-
-.notes__list {
-  display: flex;
-  flex-direction: column;
-}
-
-.notes__list li {
-  border-block-start: 1px solid var(--hair);
-}
-
-.notes__list li:first-child {
-  border-block-start: 0;
-}
-
-.notes__list a {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.35rem 0.85rem;
-  padding-block: 0.72rem;
-  text-decoration: none;
-  color: inherit;
-  transition:
-    transform 0.18s var(--e-flat),
-    color 0.18s var(--e-flat);
-}
-
-.notes__list a:hover {
-  transform: translateX(4px);
-  color: var(--accent);
-}
-
-.notes__list b {
-  font-weight: 650;
-  font-size: 0.98rem;
-  line-height: 1.5;
-}
-
-.notes__list s {
-  text-decoration: none;
-  flex: none;
-  font-family: var(--font-mono);
-  font-size: 0.82rem;
-  color: var(--fg-faint);
-}
-
-.notes__go {
-  display: inline-flex;
-  color: var(--fg-faint);
-}
-
-.notes__go svg {
-  inline-size: 1rem;
-  block-size: 1rem;
-}
-
-
-/* ========================================================= 06 联系 · 满幅 */
-
-.ch--contact {
-  padding-block-end: clamp(2rem, 5vh, 3.5rem);
-}
-
-.contact__h {
-  font-family: var(--font-display);
-  font-weight: 900;
-  font-size: clamp(2.6rem, 8.2vw, 7.5rem);
-  line-height: 0.98;
-  letter-spacing: -0.04em;
-  max-width: 12em;
-}
-
-.contact__body {
-  max-width: 34em;
-  margin-block-start: clamp(0.8rem, 2vh, 1.3rem);
-  font-size: clamp(1rem, 0.95rem + 0.3vw, 1.2rem);
-  color: var(--fg-dim);
-}
-
-.contact__act {
-  display: flex;
-  align-items: center;
-  gap: clamp(0.8rem, 2vw, 1.6rem);
-  flex-wrap: wrap;
-  margin-block-start: clamp(1.3rem, 3vh, 2.2rem);
-}
-
-.contact__mail {
-  font-family: var(--font-mono);
-  font-size: 0.86rem;
-  letter-spacing: 0.06em;
-  color: var(--fg-dim);
-}
-
-.contact__ch {
-  display: flex;
-  flex-direction: column;
-  margin-block-start: clamp(1.8rem, 4vh, 3rem);
-  border-block-start: 2px solid rgba(255, 255, 255, 0.4);
-}
-
-.contact__ch > a,
-.contact__ch > span {
-  display: flex;
-  align-items: baseline;
-  gap: clamp(0.7rem, 2vw, 1.6rem);
-  padding-block: 0.75rem;
-  border-block-end: 1px solid var(--hair);
-  text-decoration: none;
-}
-
-.contact__cl {
-  flex: none;
-  inline-size: 5.5rem;
-  font-family: var(--font-mono);
-  font-size: 0.84rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--fg-faint);
-}
-
-.contact__cv {
-  font-weight: 650;
-  font-size: 1.02rem;
-}
-
-.contact__cn {
+.contact-cn {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
-  margin-inline-start: auto;
-  flex: none;
+  gap: 0.3em;
   white-space: nowrap;
-  font-size: 0.86rem;
-  color: var(--fg-dim);
-}
-
-.contact__cn svg {
-  inline-size: 0.8em;
-  block-size: 0.8em;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
+  font-size: 0.76rem;
+  color: var(--accent-text);
 }
 
 .foot {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.6rem clamp(1rem, 3vw, 2.4rem);
-  margin-block-start: clamp(1.8rem, 4vh, 3rem);
-  padding-block-start: 1rem;
-  border-block-start: 1px solid var(--hair);
-  font-family: var(--font-mono);
-  font-size: 0.84rem;
-  letter-spacing: 0.08em;
-  color: var(--fg-faint);
+  align-items: center;
+  gap: 8px 20px;
+  margin-top: var(--s-block);
+  padding-top: 22px;
+  border-top: 1px solid var(--rule-soft);
+  font-size: 0.8rem;
+  color: var(--ink-faint);
 }
 
 .foot a {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.3em;
   white-space: nowrap;
-  color: var(--fg-dim);
+  color: var(--accent-text);
+  text-decoration: none;
 }
 
-.foot a svg {
-  inline-size: 0.8em;
-  block-size: 0.8em;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
+.foot a:hover {
+  text-decoration: underline;
 }
 
 /* ============================================================ 案例内页 */
 
 .cpage {
   background: var(--cream);
-  color: var(--ink);
-  min-block-size: 100dvh;
-  padding-block: clamp(1.2rem, 3vh, 2rem) clamp(3rem, 8vh, 6rem);
+  padding-block: clamp(40px, 6vh, 76px) var(--s-section);
+}
+
+.cpage .wrap {
+  max-width: 62rem;
 }
 
 .cpage__back {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
+  gap: 0.4em;
+  font-size: 0.88rem;
+  color: var(--accent-text);
   text-decoration: none;
-  color: var(--ink-light);
+  margin-bottom: var(--s-gap);
 }
 
-.cpage__back svg {
-  inline-size: 0.9em;
-  block-size: 0.9em;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
+.cpage__back:hover {
+  text-decoration: underline;
 }
 
 .cpage__hd {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: 0.6rem;
-  margin-block-start: clamp(1.4rem, 4vh, 2.6rem);
+  margin-bottom: var(--s-gap);
 }
 
 .cpage__no {
   font-family: var(--font-mono);
-  font-size: 0.8rem;
-  letter-spacing: 0.2em;
-  color: var(--tint-deep);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
 }
 
 .cpage__h {
   font-family: var(--font-display);
   font-weight: 900;
-  font-size: clamp(2.1rem, 5.4vw, 4.4rem);
-  line-height: 1.04;
-  letter-spacing: -0.035em;
-  max-width: 16em;
+  font-size: clamp(1.9rem, 4.6vw, 3rem);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  font-synthesis-weight: none;
 }
 
 .cpage__claim {
-  max-width: 34em;
-  font-size: clamp(1rem, 0.95rem + 0.3vw, 1.18rem);
+  max-width: 42em;
+  font-size: 1.02rem;
+  line-height: 1.8;
   color: var(--ink-light);
 }
 
 .cpage__meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem 1.6rem;
-  margin-block-start: 1rem;
+  gap: 8px 18px;
   font-family: var(--font-mono);
-  font-size: 0.86rem;
-  color: var(--fg-faint);
-}
-
-.cpage__slab {
-  --face: var(--dark-panel);
-  --ex-color: var(--ink);
-  --ex: var(--ex-9);
-  color: var(--on-dark);
-  border-radius: var(--r-lg);
-  padding: clamp(1rem, 2.2vw, 1.8rem);
-  margin-block-start: clamp(1.6rem, 4vh, 2.8rem);
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  line-height: 1.85;
-  overflow: hidden;
-}
-
-.cpage__slab b {
-  color: var(--highlight);
-  font-weight: 400;
-}
-
-.cpage__slab em {
-  font-style: normal;
-  color: var(--on-dark-dim);
+  font-size: 0.72rem;
+  color: var(--ink-faint);
 }
 
 .cpage__body {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: clamp(1.4rem, 3.4vh, 2.4rem);
-  max-width: 46em;
-  margin-block-start: clamp(1.8rem, 5vh, 3.2rem);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-gap);
+  margin-top: var(--s-gap);
 }
 
 .cpage__body h2 {
   font-family: var(--font-display);
   font-weight: 900;
-  font-size: clamp(1.3rem, 2.2vw, 1.9rem);
-  letter-spacing: -0.025em;
-  margin-block-end: 0.45rem;
+  font-size: clamp(1.15rem, 2.2vw, 1.45rem);
+  color: var(--ink);
+  margin-bottom: 0.5rem;
+  font-synthesis-weight: none;
 }
 
 .cpage__body p {
+  max-width: 46em;
+  font-size: 1rem;
+  line-height: 1.85;
   color: var(--ink-light);
-  line-height: 1.8;
 }
 
 .cpage__res {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.8rem;
-  margin-block-start: clamp(1.6rem, 4vh, 2.6rem);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: var(--s-gap);
 }
 
 .cpage__res > div {
-  --face: var(--cream-dark);
-  --ex-color: var(--ink);
-  --ex: var(--ex-4);
-  border-radius: var(--r-card);
-  padding: 0.8rem 1rem;
+  padding: 18px 20px;
 }
 
 .cpage__res dt {
   font-family: var(--font-mono);
-  font-size: 0.83rem;
-  letter-spacing: 0.12em;
-  color: var(--fg-faint);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
 }
 
 .cpage__res dd {
-  margin: 0;
+  margin-top: 4px;
   font-family: var(--font-display);
-  font-weight: 900;
-  font-size: clamp(1.1rem, 1.8vw, 1.6rem);
-  letter-spacing: -0.02em;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--ink);
 }
 
 .cpage__prov {
-  max-width: 46em;
-  margin-block-start: clamp(1.4rem, 4vh, 2.4rem);
-  font-size: 0.88rem;
-  color: var(--fg-faint);
-}
-
-.cpage__prov p {
-  margin-block-start: 0.35rem;
-}
-
-.cpage__prov b {
-  font-weight: 650;
-  color: var(--ink);
+  margin-top: var(--s-gap);
+  padding: 22px 24px;
+  border-radius: var(--r-card);
+  background: var(--cream-dark);
+  border: 1px solid var(--rule-soft);
 }
 
 .cpage__prov h2 {
-  margin-block-end: 0.35rem;
   font-family: var(--font-display);
   font-weight: 900;
-  font-size: clamp(1.1rem, 1.8vw, 1.45rem);
-  letter-spacing: -0.025em;
+  font-size: 1.05rem;
+  margin-bottom: 0.6rem;
   color: var(--ink);
 }
 
-/* 控制台里的清单：18 路接口与 22 个适配器，逐个是一枚小标签。 */
-.cpage__tokens {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem 0.4rem;
-  margin-block-start: 0.85rem;
+.cpage__prov p {
+  font-size: 0.86rem;
+  line-height: 1.8;
+  color: var(--ink-light);
 }
 
-.cpage__tokens li {
-  padding: 0.06rem 0.44rem;
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  border-radius: var(--r-xs);
-  font-size: 0.84rem;
-  line-height: 1.6;
-  color: var(--on-dark-dim);
+.cpage__prov b {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  color: var(--accent-text);
 }
 
 .cpage__go {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.7rem;
-  margin-block-start: clamp(1.4rem, 4vh, 2.2rem);
+  gap: 12px;
+  margin-top: var(--s-gap);
 }
 
-/* ============================================================== 窄屏 */
+.cpage__tokens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.cpage__tokens li {
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  padding: 2px 7px;
+  border-radius: var(--r-xs);
+  background: rgba(var(--brand-rgb), 0.12);
+  color: var(--on-dark-dim);
+}
+
+/* 案例内页顶部的深色规格板：复用代码面板的底色，但不做窗口栏。 */
+.cpage__slab {
+  background: var(--tn-bg);
+  border-radius: var(--r-md);
+  padding: 22px 24px;
+  box-shadow: 0 10px 40px rgba(26, 26, 46, 0.16);
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  line-height: 1.95;
+  color: var(--tn-fg);
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.cpage__slab b {
+  font-weight: 400;
+  color: var(--tn-kw);
+}
+
+.cpage__slab em {
+  font-style: normal;
+  color: var(--tn-cmt);
+}
+
+/* ============================================================== 窄屏
+   断点只有一个：900px。lib/bp.ts 的 NARROW_MAX 与这里必须同时改。
+   窄屏 = [0,900]，宽屏 = [901,∞)，两者严格互补 —— v8 的移动端空白事故
+   就是因为两边都写 900，正好 900px 时 CSS 拆了排、JS 还在建 pin。 */
 
 @media (max-width: 900px) {
-  /* 开场：绝对定位的构筑物退成一列，块与块之间靠间距和厚度分层。 */
+  .nav-links {
+    display: none;
+  }
+
+  /* 窄屏开场必须一屏装完（第 19 关）。竖排之后代码面板整块压在文案上面，
+     所以这里做三件事：面板只留前 6 行、掉字幅小一档、块间距收紧。 */
   .ch--hero {
-    overflow: visible;
+    padding-top: calc(62px + clamp(24px, 3.4vh, 60px));
+    padding-bottom: clamp(28px, 4vh, 56px);
   }
 
-  .hero__stage {
-    min-block-size: 0;
-    padding: 0 var(--hgut) 0;
-  }
-
-  .hero__world {
-    position: static;
-    inset: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 0.28rem;
-  }
-
-  html,
-  body,
-  #root,
-  .ch {
-    overflow-x: clip;
-  }
-
-  .s-pap,
-  .s-main {
-    padding-block: 0.75rem;
-  }
-
-  .s-pap code {
-    font-size: 0.83rem;
-    line-height: 1.5;
-  }
-
-  .hero__rail {
-    padding-block-start: 0.4rem;
-  }
-
-  .hero__world > .slab {
-    position: static;
-    transform: none;
-    inline-size: auto;
-  }
-
-  .s-main {
-    inset-block-end: auto;
-    --ex: var(--ex-9);
-  }
-
-  .hero__h {
-    font-size: clamp(1.9rem, 8.6vw, 2.9rem);
-  }
-
-  .s-yel {
-    --ex: var(--ex-6);
-    align-self: flex-start;
-    padding: 0.62rem 1.4rem 0.7rem;
-  }
-
-  .s-pop {
-    inset-block-end: auto;
-    --ex: var(--ex-6);
-    padding-block: 0.85rem;
-    gap: 0.35rem;
-  }
-
-  .s-pap {
-    inset-block-end: auto;
-    --ex: var(--ex-4);
+  .hero-in {
     grid-template-columns: minmax(0, 1fr);
-    gap: 0.55rem;
-    padding-inline-start: clamp(1rem, 2vw, 1.7rem);
+    gap: 18px;
   }
 
-  .s-pap__l {
-    border-inline-end: 0;
-    border-block-end: 2px solid var(--ink);
-    padding-inline-end: 0;
-    padding-block-end: 0.45rem;
-    flex-direction: row;
-    align-items: baseline;
-    justify-content: flex-start;
-    text-align: start;
-    gap: 0.7rem;
+  .hero-copy {
+    gap: 0.78rem;
   }
 
-  .s-pap code {
-    white-space: normal;
-    overflow: visible;
-    text-overflow: clip;
-    font-size: 0.86rem;
-    line-height: 1.6;
+  .hero-visual {
+    order: -1;
+    gap: 8px;
   }
 
-  .s-pap code em {
-    display: block;
-  }
-
-  .hero__rail {
-    position: static;
-  }
-
-  /* 出处那句在窄屏会自己占满一行，把首屏顶出去 37px。同一句话页脚
-     「数据核实于 …」已经写了一遍，这里直接收掉，不丢信息。 */
-  .hero__src {
+  .hero-visual__cap {
     display: none;
   }
 
-  .topbar__nav {
+  .code-mac__bd {
+    padding: 14px 16px;
+  }
+
+  .hero-visual .code-mac pre {
+    font-size: 0.68rem;
+  }
+
+  .hero-visual .code-mac__bd code > span:nth-child(n + 7) {
     display: none;
   }
 
-  /* 作品：窄屏不建跑道，六张卡竖着堆。
-     用户报的「作品通道空白占满一页且无法滑动」根因在 worksPan() 里那句
-     rail.style.height = innerHeight + distance + 'px'：它是手写的内联样式，
-     gsap.context().revert() 只还原自己 tween 过的属性，清不掉它。视口一旦
-     宽过断点（手机横屏就够），跑道被钉成 2600px；转回竖屏后 CSS 切成移动版、
-     内容缩回 900px，剩下的全是空白，同时 is-pan 把 track 的 overflow 改成
-     visible，于是既有空白又划不动。
-     四道保险：① worksPan 返回卸载钩子清内联高度（lib/motion.ts）
-     ② 断点收敛成互补区间（lib/bp.ts，CSS ≤900 / JS ≥901）
-     ③ 这里从结构上不给跑道存在的机会
-     ④ 下面三条 !important 兜底任何残留的内联值。 */
-  .work__rail {
-    block-size: auto !important;
+  .hero-h1 {
+    line-height: 1.1;
   }
 
-  .work__vp {
-    position: static;
-    min-block-size: 0;
-    padding-block: var(--ch-pad);
-    /* v8 这里漏了重置：overflow: clip 在 iOS Safari 16 以下根本不认。 */
-    overflow: visible;
-  }
-
-  .work__track {
-    display: grid;
+  .workflow-layout {
     grid-template-columns: minmax(0, 1fr);
-    gap: 1.1rem;
-    padding-block: 0.4rem 0;
-    overflow: visible;
-    scroll-snap-type: none;
-    transform: none !important;
+    gap: 26px;
   }
 
-  .pcard {
-    inline-size: 100%;
-    max-inline-size: none;
-    --ex: var(--ex-9);
+  .workflow-side {
+    position: static;
   }
 
-  .work__end {
-    display: none;
+  .svc-grid,
+  .numgrid {
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  /* 案例：不叠了，一张一张往下读 */
+  .scene-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .brand-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .case__grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 22px;
+  }
+
   .case {
     position: static;
     transform: none;
-    --ex: var(--ex-9);
   }
 
   .case::after {
     display: none;
   }
 
-  .case__claim {
-    margin-inline-start: 0;
+  .contact-ch {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .case__grid,
-  .jx__grid,
-  .svc,
-  .notes__blog,
   .cpage__res {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .wt-header,
+  .wt-row {
+    grid-template-columns: 52px 1fr;
+  }
+
+  .wt-b {
+    grid-column: 2;
+  }
+
+  .notes-list a {
+    grid-template-columns: 1fr auto;
+  }
+
+  .notes-list s {
+    grid-column: 1 / -1;
+  }
+
+  /* 窄屏彻底不建横向跑道，也不做横滑：六张卡竖排。
+     不 pin 就不可能再出现「横屏转竖屏留下一屏死白」，也没有藏在屏幕右边
+     需要猜的内容。横滑只作为「桌面 + 降低动效」的兜底存在（见文件末尾）。 */
+  .work-rail {
+    height: auto !important;
+  }
+
+  .work-vp {
+    position: static;
+    min-height: 0;
+    overflow: visible;
+    padding-block: 0;
+  }
+
+  .work-track {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    transform: none !important;
+    overflow: visible;
+    padding-inline: var(--gutter);
+  }
+
+  .work-end {
+    display: none;
+  }
+
+  .hscroll-card {
+    width: auto;
+  }
+
+  .logic-flow {
+    padding-left: 44px;
+  }
+
+  .logic-flow::before {
+    left: 15px;
+  }
+
+  .logic-step__dot {
+    left: -44px;
+    width: 32px;
+    height: 32px;
+    font-size: 0.74rem;
+  }
+
+  .case__res {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .dark-reveal {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 560px) {
+  /* 拉丁副题在手机上是第四行同义重复，掉了它开场才装得下 */
+  .hero-lead {
+    display: none;
+  }
+
+  /* 手机上三格必须还在同一行，换行就把开场顶出一屏。三列宽度按读数长度分
+     （1,784 最长、6 最短），既保证一行装下，也不是等宽三块。 */
+  .hero-pills {
+    display: grid;
+    grid-template-columns: 1.04fr 0.84fr 1.12fr;
+    gap: 8px;
+  }
+
+  .hero-pill {
+    padding: 9px 10px;
+  }
+
+  .hero-pill b {
+    font-size: 1.12rem;
+  }
+
+  .hero-pill s {
+    font-size: 0.52rem;
+    letter-spacing: 0.06em;
+  }
+
+  .hero-src {
+    font-size: 0.6rem;
+  }
+
+  .scene-grid,
+  .cpage__res,
+  .case__res {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  /* 竖排之后对角错位没有意义，只会变成三段莫名其妙的空隙。 */
-  .svc__card:nth-child(2),
-  .svc__card:nth-child(3) {
-    margin-block-start: 0;
-  }
-
-  /* 交汇图：两条带并排收敛这件事在 390 宽下画不出来，退成一条竖向的
-     分隔带 + 居中节点，两轨改成上下两块，色块本身仍然承担分色。 */
-  .jx {
-    --band: 3.6rem;
-  }
-
-  .jx__node {
-    inset-block-start: calc(var(--band) * 0.56);
-    padding-inline: 0.85rem;
-  }
-
-  /* 花园：桌面那套 5/4/3 在 390 宽下每格只剩 90px，退成六栏底盘 ——
-     首格通栏当引子，其余两两并排；末行入口仍然通栏。 */
-  .garden {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-  }
-
-  .gcell:nth-child(n) {
-    grid-column: span 3;
-  }
-
-  .gcell:nth-child(1) {
-    grid-column: span 6;
-  }
-
-  .gcell {
-    min-block-size: 7rem;
-  }
-
-  .gcell--hub {
-    grid-template-columns: auto minmax(0, 1fr);
-  }
-
-  .gcell--hub .gcell__why {
-    grid-area: 2 / 1 / 3 / -1;
-    white-space: normal;
-  }
-
-  .contact__cn {
-    margin-inline-start: 0;
+  .contact-ch > a {
     flex-basis: 100%;
-    text-align: start;
+  }
+}
+
+/* 矮视口（1024×768 这类笔电）：宽度够、高度不够，开场同样要一屏装完。
+   只收紧节奏，不动字号，避免宽屏上出现两套字幅。 */
+@media (min-width: 901px) and (max-height: 820px) {
+  .ch--hero {
+    padding-top: calc(62px + clamp(20px, 3vh, 52px));
+    padding-bottom: clamp(24px, 3.4vh, 48px);
+  }
+
+  .hero-copy {
+    gap: 0.85rem;
   }
 }
 
 /* --------------------------------------------------------------------
-   窄机身（≤400px）。390×844 的 iPhone 刚好卡在 G19 的容差线上，但
-   360×800 这一档（大量安卓机的 CSS 宽度）实测开场章 839px，比视口高
-   39px —— 底条被顶出首屏。这里不改结构、不删内容，只把纵向的空气按比例
-   收一遍：块间距、块内上下内距、配置片段的行距。
-   -------------------------------------------------------------------- */
-@media (max-width: 400px) {
-  .hero__world {
-    gap: 0.14rem;
+   减弱动效。palettes.css 里已经把 transition / animation 全局压到 0.01ms，
+   这里只处理它管不到的两件事：入场态必须直接落到终点，跑马灯必须停。 */
+
+@media (prefers-reduced-motion: reduce) {
+  .js .reveal:not(.is-in),
+  .js .rise:not(.is-in) {
+    opacity: 1;
+    transform: none;
   }
 
-  .s-pap,
-  .s-main {
-    padding-block: 0.5rem;
+  .belt ul {
+    animation: none;
   }
 
-  .s-yel {
-    padding: 0.45rem 1.2rem 0.5rem;
+  .hl-circle {
+    animation: none;
   }
 
-  .s-pop {
-    padding-block: 0.6rem;
-    gap: 0.28rem;
+  .work-track {
+    transform: none !important;
+  }
+}
+
+/* 桌面 + 降低动效：JS 横推不接管，跑道必须自己能滑，否则第 4-6 张卡够不着。
+   限定 901px 以上是为了不覆盖窄屏那套竖排（两处选择器同权重，后写的会赢）。 */
+@media (prefers-reduced-motion: reduce) and (min-width: 901px) {
+  .work-rail {
+    height: auto !important;
   }
 
-  .s-pap {
-    gap: 0.4rem;
+  .work-vp {
+    position: static;
+    min-height: 0;
+    overflow: visible;
+    padding-block: clamp(24px, 4vh, 48px);
   }
 
-  .s-pap__l {
-    padding-block-end: 0.32rem;
+  .work-track {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scroll-padding-inline: var(--gutter);
   }
 
-  .s-pap code {
-    font-size: 0.82rem;
-    line-height: 1.5;
+  .work-track::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .work-track::-webkit-scrollbar-thumb {
+    background: var(--brand);
+    border-radius: 2px;
+  }
+
+  .hscroll-card {
+    scroll-snap-align: center;
   }
 }

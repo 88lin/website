@@ -146,11 +146,16 @@ export function CasePage({ slug }: { slug: string }) {
 
         <div className="cpage__go">
           {c.link ? (
-            <a className="btn btn--solid" href={c.link} target="_blank" rel="noreferrer noopener">
+            <a className="cta-btn" href={c.link} target="_blank" rel="noreferrer noopener">
               {c.linkLabel || '在线'} <ArrowOut />
             </a>
           ) : null}
-          <a className="btn btn--ghost" href={c.repo} target="_blank" rel="noreferrer noopener">
+          <a
+            className="cta-btn cta-btn--ghost"
+            href={c.repo}
+            target="_blank"
+            rel="noreferrer noopener"
+          >
             仓库 <ArrowOut />
           </a>
         </div>

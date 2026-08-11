@@ -1,11 +1,11 @@
 /**
- * 06 联系 · 满幅色块。
+ * 06 联系 · 居中收口。
  *
- * 最后一屏只做一件事：把唯一重要的动作放大到不可能错过。
- * 前五章都在给证据，这一屏不需要再证明什么，所以没有卡、没有网格、没有图形，
- * 就是一整块珊瑚红加一行巨字，加一张平铺的联系方式清单。
+ * v9 这一屏是一整块珊瑚红满幅色块。放大了唯一重要的动作，代价是整屏 #A8452F ——
+ * 用户点名不喜欢的颜色，一次性铺满最后一屏。v10 换成参考站的收口写法：
+ * 还是纸底，靠居中、字号与留白把 CTA 顶上去，颜色只留在那一枚按钮上。
  *
- * CTA 有磁吸：指针靠近时按钮往指针方向偏一点。全站只有这一个控件这么做——
+ * CTA 有磁吸：指针靠近时按钮往指针方向偏一点。全站只有这一个控件这么做 ——
  * 它是整页唯一真正想让人点的东西，反馈该给在这里。
  */
 
@@ -38,36 +38,41 @@ export function Contact() {
   const magnet = useMagnet<HTMLAnchorElement>()
 
   return (
-    <section id="contact" className="ch ch--contact" data-tone="coral" aria-labelledby="contact-h">
+    <section id="contact" className="ch ch--contact" data-tone="alt" aria-labelledby="contact-h">
       <div className="wrap">
-        <p className="eyebrow">LET US BUILD SOMETHING</p>
-        <h2 className="contact__h" id="contact-h">
-          {contact.headline}
-        </h2>
-        <p className="contact__body">{contact.body}</p>
+        <div className="contact-in">
+          <span className="section-number" aria-hidden="true">
+            06
+          </span>
+          <p className="label-caps">LET US BUILD SOMETHING</p>
+          <h2 className="contact-h" id="contact-h">
+            {contact.headline}
+          </h2>
+          <p className="contact-body">{contact.body}</p>
 
-        <div className="contact__act">
-          <a
-            className="btn btn--paper btn--magnet btn--lg"
-            href={contact.primary.href}
-            ref={magnet}
-          >
-            {CTA_LABEL}
-          </a>
-          <span className="contact__mail">{contact.primary.value}</span>
-        </div>
-
-        <div className="contact__ch">
-          {contact.channels.map((c) => (
-            <a key={c.id} href={c.href} target="_blank" rel="noreferrer noopener">
-              <span className="contact__cl">{c.label}</span>
-              <span className="contact__cv">{c.value}</span>
-              <span className="contact__cn">
-                打开
-                <ArrowOut />
-              </span>
+          <div className="contact-act">
+            <a
+              className="cta-btn cta-btn--lg cta-btn--magnet"
+              href={contact.primary.href}
+              ref={magnet}
+            >
+              {CTA_LABEL}
             </a>
-          ))}
+            <span className="contact-mail">{contact.primary.value}</span>
+          </div>
+
+          <div className="contact-ch">
+            {contact.channels.map((c) => (
+              <a key={c.id} href={c.href} target="_blank" rel="noreferrer noopener">
+                <span className="contact-cl">{c.label}</span>
+                <span className="contact-cv">{c.value}</span>
+                <span className="contact-cn">
+                  打开
+                  <ArrowOut />
+                </span>
+              </a>
+            ))}
+          </div>
         </div>
 
         <footer className="foot">

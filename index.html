@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN" data-palette="E">
+<html lang="zh-CN" data-palette="A">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -12,20 +12,27 @@
       content="茉灵智库（88lin）个人主页与作品集。AI 研究者与 Agent 工程实践者，把前沿 AI 变成可交付、可维护的工程结果。承接 Agent 工作流落地、创意前端与 WebGL、设计系统与文档。"
     />
     <meta name="author" content="88lin · 茉灵智库" />
-    <meta name="theme-color" content="#FDF8F1" />
+    <meta name="theme-color" content="#FEFCF6" />
     <link rel="canonical" href="https://88lin.github.io/website/" />
-    <!-- v9 换标。旧标是深蓝底两个圆，跟站点配色毫无关系，缩到 16px 是一团糊。
-         新标取「两条主线交在一个点」的同构形：两根粗斜杠加一个亮色节点，
-         浅底（深底在浏览器标签栏反而糊），16px 下只剩一个叉和一个亮点，形状可辨。 -->
-    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
-    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
-    <link rel="mask-icon" href="./favicon.svg" color="#A8452F" />
-    <!-- v8 起展示字换成思源黑 Black（22.6 KB 的中日韩子集），**不再预载**：
-         实测把中日韩字体一起预载会在 1.6 Mbps 节流下抢掉 LCP 的带宽，为了一笔
-         很小的 CLS 赔上半秒首屏，不划算。它走 font-display: swap，先用系统字顶。
-         唯一的例外是手写体：只有 2 KB 出头，但首屏那句旁批就用它，不预载的话会在
-         首屏画完之后才换字，制造全站唯一一处 CLS。font 预载必须带 crossorigin，
-         同源也不例外。 -->
+    <!-- v10 图标：前九版每版都换了图形，但用户始终看到旧图标。真因不是图形没变，
+         是站点从来没有过 favicon.ico。浏览器在标签栏/书签/历史里会绕过下面
+         这些 <link> 直接去要根目录的 /favicon.ico，要不到就一直吃缓存里的旧图。
+         所以这一版补齐 .ico 兜底 + 全尺寸 PNG + webmanifest，并全部挂 ?v=10 破缓存。
+         .ico 必须排在 svg 前面：老浏览器按出现顺序取第一个能认的。
+         注意：https://88lin.github.io/favicon.ico（用户主页仓库根目录）不在本仓库
+         控制范围内，那一份要在 88lin/88lin.github.io 里自己放。 -->
+    <link rel="icon" href="./favicon.ico?v=10" sizes="48x48" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg?v=10" />
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png?v=10" />
+    <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16.png?v=10" />
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png?v=10" />
+    <link rel="mask-icon" href="./favicon.svg?v=10" color="#2B7FD8" />
+    <link rel="manifest" href="./site.webmanifest?v=10" />
+    <!-- v10 起展示字是 Fraunces（两档拉丁子集，共 21 KB），中文全部走系统黑体栈。
+         展示字**不预载**：它排的是标题，font-display: swap 会先用系统字顶上，
+         抢 LCP 带宽换那一点点换字抖动不划算。唯一预载手写体：只有 2 KB 出头，
+         但首屏那句旁批就用它，不预载就会在首屏画完之后才换字，制造全站唯一一处
+         CLS。font 预载必须带 crossorigin，同源也不例外。 -->
     <link rel="preload" as="font" type="font/woff2" href="./fonts/Caveat.woff2" crossorigin />
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="zh_CN" />

@@ -1,25 +1,35 @@
 /**
- * 03 作品 · 横向图廊。
+ * 03 做过什么 · 横推卡轨 + 虚线场景卡。
  *
  * 一条钉住的跑道，纵向滚动被换算成横向推进。为什么值得为它花一个 pin：
  * 六个项目的分量差三个数量级，竖着排会被读成一张清单，横着排 + 卡宽按对数分配，
  * 第一眼就看得出谁是主力。
  *
- * v9 改了三处：
- *  1) 「打开站点 / 源码」从卡片外沿的那一行挪进卡片内部，做成两枚胶囊按钮
- *     （一实心一描边，颜色跟卡片色相走）。原来的写法贴在卡的裁切边上，滑起来看不见。
- *  2) 技术栈标签与状态灯一并胶囊化，按卡片色相分色，不再是灰底方角。
- *  3) 窄屏彻底不建横向跑道，改竖排堆叠 —— 见 lib/bp.ts 与 index.css 里的说明。
- *     这类失效不是补丁能补干净的，只能从结构上让它无处发生。
+ * v10 只换外壳不换骨架：卡片改成参考站 #26 的 .hscroll-card（白纸 + 细投影 +
+ * 手写体角标），色相只染角标、状态灯、标签与量级条，卡面永远是白的。
+ * 「打开站点 / 源码」两枚按钮留在卡片内部 —— v8 把它们贴在卡的裁切边上，
+ * 横滑时正好被切掉，用户反馈「看不到」是准确的。
  *
  * 零位图：原来放截图的那一格是数据面板，仓库路径 + 两条对数标度的 star / fork 条。
  * 条长是算出来的，不是画上去的。全站的仓库统计数字只在这里出现这一次。
+ *
+ * 章尾接导航站六张虚线场景卡（dst 的 .scene-card），标签用与地面同色的底
+ * 抠在边框缺口上 —— 那是设计系统里最好认的一个零件。
  */
 
 import { useCallback, useRef } from 'react'
 import { ArrowOut } from '../components/Icons'
+import { Reveal } from '../components/Reveal'
 import { WIDE_MQ } from '../lib/bp'
-import { projects, worksIntro, type Project } from '../content/site'
+import {
+  gardenFeatured,
+  gardenIntro,
+  projects,
+  worksIntro,
+  type GardenGroup,
+  type Project,
+  type Tint,
+} from '../content/site'
 import { useLazyScene, useMediaQuery, worksPan, type SceneApi } from '../lib/motion'
 
 const TOP = Math.log(1 + 4581)
@@ -35,8 +45,20 @@ const STATE: Record<Project['state'], string> = {
   archived: '已归档',
 }
 
+/**
+ * 场景卡的色相按「类」定，不按下标轮换 —— 下标轮换会让两张都写着「工具」的卡
+ * 一黄一红，看起来像随机上色。绑到类上，颜色就成了可读的信息。
+ */
+const GROUP_TINT: Record<GardenGroup, Tint> = {
+  特效: 'coral',
+  工具: 'blue',
+  内容: 'yellow',
+  组件: 'coral',
+}
+
 const num = (n: number) => n.toLocaleString('en-US')
 const repoOf = (url: string) => url.replace('https://github.com/', '')
+const no2 = (i: number) => String(i + 1).padStart(2, '0')
 
 /** 两条量级条。没有文字进 SVG：中文字形不进子集，等宽数字交给 HTML 那一行。 */
 function Bars({ stars, forks, name }: { stars: number; forks: number; name: string }) {
@@ -55,45 +77,57 @@ function Bars({ stars, forks, name }: { stars: number; forks: number; name: stri
   )
 }
 
-function Card({ p }: { p: Project }) {
+function Card({ p, i }: { p: Project; i: number }) {
   return (
     <article
-      className="slab pcard tilt"
+      className="hscroll-card"
       data-card=""
       data-tint={p.tint}
       style={{ '--w': `${widthOf(p.stars)}rem` } as React.CSSProperties}
     >
-      <div className="pcard__top">
-        <p className="pcard__kind">
+      <span className="hscroll-card__n" aria-hidden="true">
+        {no2(i)}
+      </span>
+
+      <p className="pcard__meta">
+        <span>
           {p.kind} <span aria-hidden="true">/</span> {p.year}
-        </p>
-        <span className="pill pill--state" data-live={p.state}>
-          <i aria-hidden="true" />
+        </span>
+        <span className="pcard__state">
+          <i className="dot" data-live={p.state} aria-hidden="true" />
           {STATE[p.state]}
         </span>
-      </div>
+      </p>
 
       <h3 className="pcard__cn">{p.cn}</h3>
       <p className="pcard__name">{p.name}</p>
       <p className="pcard__blurb">{p.blurb}</p>
 
       <ul className="pcard__stack">
-        {p.stack.slice(0, 3).map((s, i) => (
-          <li className="pill pill--tag" data-k={i} key={s}>
+        {p.stack.slice(0, 3).map((s) => (
+          <li className="pill pill--tint" key={s}>
             {s}
           </li>
         ))}
       </ul>
 
-      {/* 按钮在卡片内部。v8 把它们放在 .pcard__foot 里贴着卡的下沿，
-          横滑时正好压在裁切边上，用户反馈「看不到」是准确的。 */}
       <div className="pcard__act">
         {p.live ? (
-          <a className="pill pill--go" href={p.live} target="_blank" rel="noreferrer noopener">
+          <a
+            className="cta-btn cta-btn--sm"
+            href={p.live}
+            target="_blank"
+            rel="noreferrer noopener"
+          >
             打开站点 <ArrowOut />
           </a>
         ) : null}
-        <a className="pill pill--src" href={p.repo} target="_blank" rel="noreferrer noopener">
+        <a
+          className="cta-btn cta-btn--ghost cta-btn--sm"
+          href={p.repo}
+          target="_blank"
+          rel="noreferrer noopener"
+        >
           源码 <ArrowOut />
         </a>
       </div>
@@ -131,23 +165,69 @@ export function Work() {
   useLazyScene(rail, build, wide)
 
   return (
-    <section id="work" className="ch ch--work" data-tone="blue" aria-labelledby="work-h">
-      <div className="work__rail" ref={rail}>
-        <div className="work__vp">
-          <div className="wrap work__head">
-            <p className="eyebrow">SHIPPED &amp; RUNNING</p>
+    <section id="work" className="ch" data-tone="paper" aria-labelledby="work-h">
+      <div className="work-rail" ref={rail}>
+        <div className="work-vp">
+          <div className="wrap work-head">
+            <span className="section-number" aria-hidden="true">
+              03
+            </span>
+            <p className="label-caps">SHIPPED &amp; RUNNING</p>
             <h2 className="ch-title" id="work-h">
               {worksIntro.headline}
             </h2>
             <p className="ch-lede">{worksIntro.body}</p>
           </div>
-          <div className="work__track" ref={track}>
-            {projects.map((p) => (
-              <Card p={p} key={p.slug} />
+
+          <div className="work-track" ref={track}>
+            {projects.map((p, i) => (
+              <Card p={p} i={i} key={p.slug} />
             ))}
-            <span className="work__end" aria-hidden="true" />
+            <span className="work-end" aria-hidden="true" />
           </div>
         </div>
+      </div>
+
+      {/* 导航站。每类挑一个，附一句「为什么是它」，剩下 34 个交给导航站本身 —— */}
+      {/* v8 在这里铺过 40 块彩色底卡，等于把用户自己的导航站抄了一遍还抄丑了。 */}
+      <div className="wrap work-garden">
+        <div className="ch-head">
+          <p className="label-caps">SIDE GARDEN</p>
+          <h3 className="ch-title">{gardenIntro.headline}</h3>
+          <p className="ch-lede">{gardenIntro.body}</p>
+          <div className="act-row">
+            <a
+              className="cta-btn cta-btn--ghost cta-btn--sm"
+              href={gardenIntro.hub}
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              {gardenIntro.hubLabel} · 全部 {gardenIntro.total} 个 <ArrowOut />
+            </a>
+            <span className="pill pill--mono">另有 {gardenIntro.rest} 个未在此列出</span>
+          </div>
+        </div>
+
+        <Reveal className="scene-grid">
+          {gardenFeatured.map((it) => (
+            <a
+              className="scene-card"
+              data-card=""
+              data-tint={GROUP_TINT[it.group]}
+              key={it.name}
+              href={it.href}
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              <span className="scene-card__label">{it.group}</span>
+              <h4>{it.name}</h4>
+              <p>{it.why}</p>
+              <span className="scene-card__go">
+                打开 <ArrowOut />
+              </span>
+            </a>
+          ))}
+        </Reveal>
       </div>
     </section>
   )

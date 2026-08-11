@@ -30,21 +30,36 @@ SRC_DS = Path("/workspace/fonts/ds")
 SRC_NOTO = Path("/workspace/fonts/noto")
 SRC_SMILEY = Path("/workspace/fonts/smiley")
 
-# (源文件, 字重, 字符桶, 输出名, 许可证源文件, 额外定轴)
-# v8 换字：展示档从得意黑换回思源黑 Black。得意黑字形自带 -8° 倾斜，
-# 配这一版方正的实心块体会打架，且倾斜字的右上角要额外留白，块面排版容不下。
-# 思源黑是可变字体，900 这一档同样要先 instancer 定轴再子集。
+# (源文件, 字重, 字符桶, 输出名, 许可证源文件, 额外定轴, 保留字距)
+#
+# v10 换字：展示档从思源黑 Black 换成 Fraunces（拉丁衬线），中文全部交给系统栈。
+# 理由有两条，都不是审美偏好：
+#   1) 思源黑的中日韩子集要 29 KB，占掉 40 KB 预算的七成，却只为了让标题比系统
+#      黑体粗一点点 —— 同样的字节数买不到任何形状上的差异。
+#   2) 本站标题是中英混排，中文块面 + 拉丁衬线的对比本身就是版式信息；两边都用
+#      黑体反而分不出层级。拉丁子集只要 101 字，两档合起来 22 KB。
+#
+# Fraunces 是四轴可变字体（opsz 9–144 / wght 100–900 / SOFT 0–100 / WONK 0–1）。
+# opsz 必须按各档的实际用途定死，不能吃默认值 9：
+#   · 700 档只排 0.86–1.32rem 的小字（章节标签、卡片小标），opsz 定 24，
+#     笔画对比低、字腔开，小字号下不糊。
+#   · 900 档从 0.86rem 一路排到 11rem 的巨号编号，opsz 定 48 取折中 ——
+#     再往上（96/144）发丝衬线在 1rem 处会直接消失。
+# SOFT=0 取锐利端点；WONK=0 关掉那套古怪替换字形，本站只排大写与数字，
+# 留着 WONK 只会在极少数字母上制造不一致。
 JOBS = [
-    # v9 起只留展示档。正文两档（Regular 85.7 KB + Semibold 31.7 KB）改成
-    # 系统栈，不再下载 —— 见 index.css 顶部的字体说明与代价交代。
-    (SRC_NOTO / "NotoSansSC.ttf", 900, "display", "NotoSansSC-Display.woff2", "OFL-NotoSansSC.txt", {}),
-    (SRC_DS / "JetBrainsMono.ttf", 400, "mono", "JetBrainsMono-Regular.woff2", "OFL-JetBrainsMono.txt", {}),
-    (SRC_DS / "Caveat.ttf", 600, "hand", "Caveat.woff2", "OFL-Caveat.txt", {}),
+    (SRC_DS / "Fraunces.ttf", 700, "display", "Fraunces-700.woff2", "OFL-Fraunces.txt",
+     {"opsz": 24, "SOFT": 0, "WONK": 0}, True),
+    (SRC_DS / "Fraunces.ttf", 900, "display", "Fraunces-900.woff2", "OFL-Fraunces.txt",
+     {"opsz": 48, "SOFT": 0, "WONK": 0}, True),
+    (SRC_DS / "JetBrainsMono.ttf", 400, "mono", "JetBrainsMono-Regular.woff2", "OFL-JetBrainsMono.txt", {}, False),
+    (SRC_DS / "Caveat.ttf", 600, "hand", "Caveat.woff2", "OFL-Caveat.txt", {}, False),
 ]
 
 LICENSE_SRC = {
     "OFL-SmileySans.txt": SRC_SMILEY,
     "OFL-NotoSansSC.txt": SRC_NOTO,
+    "OFL-Fraunces.txt": SRC_DS,
     "OFL-JetBrainsMono.txt": SRC_DS,
     "OFL-Caveat.txt": SRC_DS,
 }
@@ -52,6 +67,7 @@ LICENSE_SRC = {
 LICENSE_NAME = {
     "OFL-SmileySans.txt": "LICENSE-SmileySans.txt",
     "OFL-NotoSansSC.txt": "LICENSE-NotoSansSC.txt",
+    "OFL-Fraunces.txt": "LICENSE-Fraunces.txt",
     "OFL-JetBrainsMono.txt": "LICENSE-JetBrainsMono.txt",
     "OFL-Caveat.txt": "LICENSE-Caveat.txt",
 }
@@ -60,6 +76,8 @@ LICENSE_NAME = {
 STALE = [
     "NotoSansSC-Regular.woff2",
     "NotoSansSC-Semibold.woff2",
+    "NotoSansSC-Display.woff2",
+    "LICENSE-NotoSansSC.txt",
     "SmileySans-Display.woff2",
     "LICENSE-SmileySans.txt",
     "Fraunces.woff2",
@@ -67,7 +85,6 @@ STALE = [
     "JetBrainsMono-Bold.woff2",
     "NotoSerifSC-Display.woff2",
     "ZhiMangXing.woff2",
-    "LICENSE-Fraunces.txt",
     "LICENSE-NotoSerifSC.txt",
     "LICENSE-ZhiMangXing.txt",
 ]
@@ -91,7 +108,8 @@ def read_chars(bucket: str) -> str:
     return text
 
 
-def build(src: Path, weight: int, bucket: str, out_name: str, extra: dict[str, float]) -> tuple[int, int]:
+def build(src: Path, weight: int, bucket: str, out_name: str, extra: dict[str, float],
+          keep_kern: bool = False) -> tuple[int, int]:
     text = read_chars(bucket)
     font = TTFont(src, lazy=False)
     if "fvar" in font:
@@ -111,8 +129,15 @@ def build(src: Path, weight: int, bucket: str, out_name: str, extra: dict[str, f
     opts.flavor = "woff2"
     opts.desubroutinize = True
     opts.harfbuzz_repacker = True
-    opts.drop_tables += ["DSIG", "GSUB", "GPOS", "MATH", "BASE", "JSTF"]
-    opts.layout_features = []
+    # 展示档要留 GPOS 的 kern：Fraunces 排的是 11rem 的编号与全大写英文，
+    # "WORK THAT" 这种 K/T/A 连排缺了字距会松得一眼看出来。等宽与手写体不留 ——
+    # 等宽本来就不该有字距调整，手写体只排几个短标签，省 GPOS 更划算。
+    if keep_kern:
+        opts.drop_tables += ["DSIG", "GSUB", "MATH", "BASE", "JSTF"]
+        opts.layout_features = ["kern"]
+    else:
+        opts.drop_tables += ["DSIG", "GSUB", "GPOS", "MATH", "BASE", "JSTF"]
+        opts.layout_features = []
     opts.name_IDs = [1, 2, 3, 4, 6]
     opts.name_languages = ["*"]
     opts.notdef_outline = False
@@ -143,10 +168,10 @@ def main() -> None:
 
     total = 0
     rows = []
-    for src, weight, bucket, out_name, lic, extra in JOBS:
+    for src, weight, bucket, out_name, lic, extra, keep_kern in JOBS:
         if not src.exists():
             sys.exit(f"缺少源字体 {src}")
-        n, size = build(src, weight, bucket, out_name, extra)
+        n, size = build(src, weight, bucket, out_name, extra, keep_kern)
         total += size
         rows.append((out_name, weight, n, size))
         lic_src = LICENSE_SRC[lic] / lic

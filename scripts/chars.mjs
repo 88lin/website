@@ -24,7 +24,7 @@ const ROUTES = ['', 'case/lofi/', 'case/repair/', 'case/video-vip/']
  *  站内每个族名都带 Web 后缀（自托管子集），系统同名字体走 local() 回落，
  *  不能混进来，否则会把系统字排到的字符也塞进子集。 */
 const BUCKET = {
-  'noto sans sc black web': 'display',
+  'fraunces web': 'display',
   'jetbrains mono web': 'mono',
   'caveat web': 'hand',
 }
@@ -106,7 +106,9 @@ await browser.close()
 // 兜底字符：这些不一定出现在当前 DOM 里，但换行、省略号、日期分隔符随时会用到
 // 破折号一个都不给：全站禁用（audit G18），子集里留着只会有人手滑用上。
 const ALWAYS = {
-  // 得意黑排的是标题与巨型读数，拉丁与数字它自己带全
+  // v10 起 display 桶是 Fraunces（纯拉丁衬线）。中日韩标点照样收进来：
+  // --font-display 是混排栈，汉字逐字回落到系统黑体，收了也只是空转，
+  // 但漏收就会在换字体时少一批标点。× 是「4,684 star × 502 fork」那种读数用的。
   display: '，。、·…「」（）？！0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,%×',
   mono: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,:;/·→+-%★⑂ ',
   hand: '，。、·…「」（）0123456789',

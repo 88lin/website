@@ -1,164 +1,201 @@
 /**
- * 02 能做什么 · 交汇图 + 服务。
+ * 02 能做什么 · 粘性侧栏 + 深墨表头。
  *
- * v8 这一章塞了六个子模块：收敛图、两栏 dl、跑马灯、两张证据卡、六行数字口径表。
- * 谁都不突出，整章读起来像一个杂物抽屉。v9 砍到三段，并且换了它在全站的位置 ——
- * 从第四章提到第二章，因为它是唯一一段能回答「你能替我做什么」的内容。
+ * 骨架来自 demo-readme-tutorial.html 的 .workflow-layout：左栏 0.35fr 粘住，
+ * 放一个 Fraunces 巨号章序（opacity .14，是纹理不是内容）与章头；右栏 1fr 走内容。
+ * 这样读者滚整整一章，章名一直在视线里，不需要回头找「现在读的是哪一节」。
  *
- *  ① 交汇图：两条主线做成两块实体色块，各自带三枚能力胶囊，朝中间的菱形交点收。
- *     收敛这件事本身就是论点，所以它必须是画出来的，不是写出来的。
- *  ② 我能接什么活：三张服务卡，每张写清交付物和适合谁。这是「不拿仓库说事」的正面替代。
- *  ③ 手上有什么：36 项跑马灯，压成单行。
+ * 内容顺序是从抽象到可下单：两条主线（表格）→ 三件能接的活（卡）→ 手上的装备
+ * （跑马灯）→ 两件实物证据（色板与导航站）。第一屏说立场，最后一行给证据。
  *
- * 砍掉的两块各有理由：六行数字口径表和 notes 章的统计条重复；导航站证据卡和
- * notes 章的小站精选重复。同一件事在一页里说两遍，两遍都会变弱。
- *
- * 零位图：设计系统那处实物用现画的色板矢量代替截图，八格取自 palettes.css 的当前组。
+ * 这一章不出现 star / fork：那是第 03 章作品卡的事，全站只出现一次。
  */
 
 import { ArrowOut } from '../components/Icons'
-import { Annot } from '../components/Ink'
-import { craftEvidence, services, servicesIntro, stack, trackA, trackB, tracksIntro } from '../content/site'
-import { useStagger } from '../lib/motion'
+import { Reveal } from '../components/Reveal'
+import {
+  craftEvidence,
+  garden,
+  servicesIntro,
+  services,
+  stack,
+  trackA,
+  trackB,
+  tracksIntro,
+  type Track,
+} from '../content/site'
 
-const ALL = stack.clusters.flatMap((c) => c.items)
-/** 跑马灯靠 translate3d(-50%) 循环，所以内容必须是严格的两份。 */
-const BELT = [...ALL, ...ALL]
+type TrackGroup = { id: string; title: string; items: Track[] }
 
-/** 当前色板的八个主色，取自 palettes.css，组件不另配色值。 */
-const SWATCH = [
-  '--brand',
-  '--brand-deep',
-  '--highlight',
-  '--warning',
-  '--pop',
-  '--pop-deep',
-  '--ink',
-  '--cream-dark',
-]
+/** 色板证据条：A 组里真正在用的七个色阶，按主 → 辅 → 强调排。 */
+const SWATCH = ['brand-deep', 'brand', 'brand-tint', 'highlight', 'pop', 'pop-deep', 'ink']
 
-const DS = craftEvidence.find((e) => e.id === 'ds')!
+/** 导航站证据条：四类小站的实际条目数，比例由数组现算，不写死。 */
+const GROUPS = ['特效', '工具', '内容', '组件'] as const
+const COUNTS = GROUPS.map((g) => garden.filter((x) => x.group === g).length)
+const BAR_FILL = ['brand-deep', 'brand', 'brand-tint', 'highlight']
 
-function Swatches() {
+/** 装备清单压平成一条。跑马灯要跑满一圈，所以渲染两份。 */
+const GEAR = stack.clusters.flatMap((c) => c.items)
+
+function TrackTable({ t }: { t: TrackGroup }) {
   return (
-    <svg className="craft__sw" viewBox="0 0 320 44" role="img" aria-label="设计系统当前色板的八个主色">
-      {SWATCH.map((v, i) => (
-        <rect
-          key={v}
-          x={2 + i * 40}
-          y={4}
-          width={36}
-          height={36}
-          rx={10}
-          fill={`var(${v})`}
-          stroke="currentColor"
-          strokeOpacity="0.16"
-        />
+    <div className="wtable">
+      <div className="wt-header">
+        <span>{t.id}</span>
+        <span>{t.title}</span>
+        <span>WHAT IT MEANS</span>
+      </div>
+      {t.items.map((it, i) => (
+        <div className="wt-row" key={it.id}>
+          <span className="wt-k">
+            {t.id}
+            {i + 1}
+          </span>
+          <span className="wt-t">{it.title}</span>
+          <span className="wt-b">{it.body}</span>
+        </div>
       ))}
-    </svg>
-  )
-}
-
-/**
- * 交汇图。两条轨是实体色块（不是描边线），朝中间的菱形节点收。
- * 轨上的六个能力点由 trackA / trackB 派生，不在这里另写一份。
- */
-function Junction() {
-  return (
-    <div className="jx">
-      <svg className="jx__svg" viewBox="0 0 1200 200" aria-hidden="true" preserveAspectRatio="none">
-        <path className="jx__band jx__band--a" d="M 0 24 C 300 24 380 88 596 96 L 596 128 C 360 120 280 56 0 56 Z" />
-        <path className="jx__band jx__band--b" d="M 1200 24 C 900 24 820 88 604 96 L 604 128 C 840 120 920 56 1200 56 Z" />
-      </svg>
-
-      <div className="jx__grid">
-        {[trackA, trackB].map((t, side) => (
-          <div className="slab jx__trk" key={t.id} data-side={side === 0 ? 'a' : 'b'}>
-            <p className="jx__no">{side === 0 ? 'TRACK A' : 'TRACK B'}</p>
-            <h3 className="jx__title">{t.title}</h3>
-            <ul className="jx__caps">
-              {t.items.map((it, i) => (
-                <li key={it.id}>
-                  <span className="pill pill--cap" data-k={i}>
-                    {it.title}
-                  </span>
-                  <span className="jx__body">{it.body}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
-
-      <div className="slab jx__node">
-        <b>可交付的产品</b>
-        <s>THE JOIN</s>
-      </div>
     </div>
   )
 }
 
 export function Craft() {
-  const rows = useStagger<HTMLDivElement>(70)
-
   return (
-    <section id="craft" className="ch ch--craft" data-tone="yellow" aria-labelledby="craft-h">
+    <section id="craft" className="ch" data-tone="alt" aria-labelledby="craft-h">
       <div className="wrap">
-        <div className="craft__head">
-          <p className="eyebrow">TWO TRACKS · ONE JOIN</p>
-          <h2 className="ch-title" id="craft-h">
-            {tracksIntro.headline}
-          </h2>
-          <p className="ch-lede">{tracksIntro.body}</p>
-        </div>
-
-        <Junction />
-
-        <Annot seed="craft-join">交点只有一条：能力可以不确定，接口和退路必须确定</Annot>
-
-        <div className="craft__svc">
-          <div className="craft__svchead">
-            <h3 className="craft__h3">{servicesIntro.headline}</h3>
-            <p className="craft__lede2">{servicesIntro.body}</p>
+        <div className="workflow-layout">
+          <div className="workflow-side">
+            <span className="big-num" aria-hidden="true">
+              02
+            </span>
+            <p className="label-caps">WHAT I CAN DO</p>
+            <h2 className="ch-title" id="craft-h">
+              {servicesIntro.headline}
+            </h2>
+            <p className="ch-lede">{servicesIntro.body}</p>
           </div>
-          <div className="svc" ref={rows}>
-            {services.map((s) => (
-              <article className="slab svc__card rise" data-card="" data-stagger="" data-tint={s.tint} key={s.id}>
-                <p className="svc__no">{s.no}</p>
-                <h4 className="svc__title">{s.title}</h4>
-                <p className="svc__body">{s.body}</p>
-                <ul className="svc__del">
-                  {s.deliverables.map((d, i) => (
-                    <li className="pill pill--tag" data-k={i} key={d}>
-                      {d}
+
+          <div className="workflow-main">
+            <Reveal className="craft-blk">
+              <div>
+                <h3 className="craft-h3">{tracksIntro.headline}</h3>
+                <p className="craft-lede">{tracksIntro.body}</p>
+              </div>
+              <TrackTable t={trackA} />
+              <TrackTable t={trackB} />
+            </Reveal>
+
+            <Reveal className="svc-grid">
+              {services.map((s) => (
+                <article className="svc-card" data-card="" data-tint={s.tint} key={s.id}>
+                  <span className="svc-card__no" aria-hidden="true">
+                    {s.no}
+                  </span>
+                  <h4>{s.title}</h4>
+                  <p>{s.body}</p>
+                  <ul>
+                    {s.deliverables.map((d) => (
+                      <li className="pill pill--tint" key={d}>
+                        {d}
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="svc-card__fit">{s.fit}</p>
+                </article>
+              ))}
+            </Reveal>
+
+            <Reveal className="craft-blk">
+              <div>
+                <h3 className="craft-h3">{stack.headline}</h3>
+                <p className="craft-lede">{stack.body}</p>
+              </div>
+              {/* 第一份是真内容，第二份只为把带子接成一个环，对读屏隐藏 */}
+              <div className="belt">
+                <ul>
+                  {GEAR.map((g) => (
+                    <li className="chip" key={g}>
+                      {g}
+                    </li>
+                  ))}
+                  {GEAR.map((g) => (
+                    <li className="chip" key={`dup-${g}`} aria-hidden="true">
+                      {g}
                     </li>
                   ))}
                 </ul>
-                <p className="svc__fit">{s.fit}</p>
-              </article>
-            ))}
+              </div>
+            </Reveal>
+
+            <Reveal className="craft-blk">
+              <div className="ds-row">
+                <svg
+                  className="ds-row__sw"
+                  viewBox="0 0 260 34"
+                  role="img"
+                  aria-label="A 组色板：蓝三阶、柠檬黄、珊瑚红两阶与墨蓝"
+                >
+                  {SWATCH.map((c, i) => (
+                    <rect key={c} x={i * 37.5} y="0" width="35" height="34" rx="4" fill={`var(--${c})`} />
+                  ))}
+                </svg>
+                <p>
+                  <b>{craftEvidence[0].title}</b>
+                  {craftEvidence[0].caption}
+                </p>
+                <a
+                  className="cta-btn cta-btn--ghost cta-btn--sm"
+                  href={craftEvidence[0].href}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
+                  {craftEvidence[0].linkLabel} <ArrowOut />
+                </a>
+              </div>
+
+              <div className="ds-row">
+                <svg
+                  className="ds-row__sw"
+                  viewBox="0 0 260 34"
+                  role="img"
+                  aria-label={GROUPS.map((g, i) => `${g} ${COUNTS[i]} 个`).join('，')}
+                >
+                  {COUNTS.reduce<{ x: number; out: React.ReactElement[] }>(
+                    (acc, n, i) => {
+                      const w = ((260 - 9) * n) / garden.length
+                      acc.out.push(
+                        <rect
+                          key={GROUPS[i]}
+                          x={acc.x}
+                          y="0"
+                          width={w}
+                          height="34"
+                          rx="4"
+                          fill={`var(--${BAR_FILL[i]})`}
+                        />,
+                      )
+                      acc.x += w + 3
+                      return acc
+                    },
+                    { x: 0, out: [] },
+                  ).out}
+                </svg>
+                <p>
+                  <b>{craftEvidence[1].title}</b>
+                  {craftEvidence[1].caption}
+                </p>
+                <a
+                  className="cta-btn cta-btn--ghost cta-btn--sm"
+                  href={craftEvidence[1].href}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
+                  {craftEvidence[1].linkLabel} <ArrowOut />
+                </a>
+              </div>
+            </Reveal>
           </div>
-        </div>
-
-        <div className="craft__kit">
-          <ul className="craft__belt">
-            {BELT.map((s, i) => (
-              <li className="chip" key={`${s}-${i}`} aria-hidden={i >= ALL.length || undefined}>
-                {s}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="craft__ds">
-          <Swatches />
-          <p className="craft__dstxt">
-            <b>{DS.title}</b>
-            {DS.caption}
-          </p>
-          <a className="pill pill--src" href={DS.href} target="_blank" rel="noreferrer noopener">
-            {DS.linkLabel} <ArrowOut />
-          </a>
         </div>
       </div>
     </section>

@@ -1,155 +1,142 @@
 /**
- * 01 开场 · 立体色块建构。
+ * 01 开场 · 两栏 + macOS 代码面板。
  *
- * 五块有厚度的板子在一个共同的透视坐标系里搭成一条左上到右下的对角构图。
- * 厚度不是模糊阴影，是 1px 步进的实心 box-shadow 链（见 index.css 的 --ex-*），
- * 所以块体读起来是「挤出来的」而不是「浮起来的」。
+ * v9 是五块「挤出来」的立体色块堆成的对角构图。用户对 v9 的判词是「整个页面
+ * 配色我都不喜欢，太丑了」，而那些块体的暗侧正是 filter:brightness(.74) 压出来的
+ * 「黑色」。v10 整套挤出机制作废，改用 88lin 自己设计系统的 hero 骨架：
+ * 左文右物，两栏 minmax(0,1fr) / minmax(0,.84fr)。
+ *
+ * 右边那块是用户点名的 #5A macOS 代码面板，装的是 video_vip 真实在跑的降级配置。
+ * 它是整页唯一的深色实体：一整页奶油底需要一个锚点，否则版面没有重量。
  *
  * 三条不让步的规则：
- *  1) 零位图。视觉重量由色块体积、巨字与真实配置片段扛，不靠截图。
- *  2) 整章锁在一屏内（audit G19），顶栏算在里面，不做常驻悬浮导航。
- *  3) 每块自带 perspective()，不共享 transform-style: preserve-3d。
- *     共享 3D 上下文会让子元素被父块的面切开，v8 原型阶段实测过。
+ *  1) 零位图。视觉重量由巨字、代码面板与真实数字扛，不靠截图。
+ *  2) star / fork 不出现在这一章（全站只在 03 的作品卡上出现一次）。
+ *  3) 三格读数全部由数组长度派生，不写死。
  */
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { CodeMac, type Tok } from '../components/CodeMac'
 import { Circle } from '../components/Ink'
-import { AS_OF, CONTACT_HREF, garden, hero, metrics, profile, projects } from '../content/site'
-import { onSignal } from '../lib/bus'
-import { prefersReducedMotion } from '../lib/caps'
+import { AS_OF, CONTACT_EMAIL, CONTACT_HREF, garden, hero, profile, projects, writing } from '../content/site'
 
-/** 顺序跟 site.ts 的 chapters 一致。v9 把「能做什么」提到了作品前面，
-    顶栏也得跟着换，否则点导航是往回跳。 */
-const NAV = [
-  { id: 'craft', label: '能做什么' },
-  { id: 'work', label: '做过什么' },
-  { id: 'cases', label: '怎么做的' },
-  { id: 'notes', label: '在写在跑' },
+/**
+ * 面板里这几行是 video_vip 的真实规格，不是示意图：18 路解析接口可切换、
+ * 出错退避两次后换下一路、22 个域名各一份适配器。案例 03 讲的就是它。
+ */
+const CODE: Tok[][] = [
+  [{ t: '# 接口一定会挂，所以按「可切换」设计', c: 'cmt' }],
+  [{ t: 'providers', c: 'kw' }, { t: ':' }],
+  [{ t: '  - ' }, { t: 'primary', c: 'str' }, { t: '         # 默认A', c: 'cmt' }],
+  [{ t: '  - ' }, { t: 'secondary', c: 'str' }, { t: '       # 七哥解析', c: 'cmt' }],
+  [{ t: '  - ' }, { t: 'local', c: 'str' }, { t: '           # 共 18 路可切', c: 'cmt' }],
+  [{ t: 'on_error', c: 'kw' }, { t: ':' }],
+  [{ t: '  retry', c: 'kw' }, { t: ': ' }, { t: '2', c: 'num' }, { t: '            # 退避重试', c: 'cmt' }],
+  [{ t: '  then', c: 'kw' }, { t: ': ' }, { t: 'next', c: 'fnc' }, { t: '         # 不猜最快，人一秒切', c: 'cmt' }],
+  [{ t: 'hosts', c: 'kw' }, { t: ': ' }, { t: '22', c: 'num' }, { t: '            # 每域名一份适配器', c: 'cmt' }],
+  [{ t: 'cache', c: 'kw' }, { t: ':' }],
+  [{ t: '  ttl', c: 'kw' }, { t: ': ' }, { t: '600', c: 'num' }, { t: '           # 解析结果只留十分钟', c: 'cmt' }],
+  [{ t: 'report', c: 'kw' }, { t: ': ' }, { t: 'issue', c: 'fnc' }, { t: '        # 挂了开 issue，不私聊', c: 'cmt' }],
 ]
 
-/** 纸板上那三行是 video_vip 里真实在用的降级策略，不是示意图。 */
-const YAML = [
-  { k: 'providers:', v: 'primary → secondary → local', c: '# 一家挂了换下一家' },
-  { k: 'on_error:', v: 'retry x2 → degrade → next', c: '# 断网也能出结果' },
-  { k: 'contract:', v: '输出格式与 provider 解耦', c: '# 换上游不改业务代码' },
-]
+const num = (n: number) => n.toLocaleString('en-US')
 
-/** 底条只给口径，不复述上面已经放大过的数字。 */
-const RAIL = [metrics[2], metrics[3], metrics[4]]
+/** 三格读数。全部由数据派生：站点数、在维护的项目数、建站天数。 */
+const PILLS = [
+  { v: String(garden.length), k: 'SITES ONLINE' },
+  { v: String(projects.length), k: 'MAINTAINED' },
+  { v: num(writing.days), k: 'DAYS RUNNING' },
+]
 
 export function Hero() {
-  const world = useRef<HTMLDivElement | null>(null)
+  const [done, setDone] = useState(false)
+  const timer = useRef<number | undefined>(undefined)
 
-  // 指针视差：只写两个自定义属性，位移交给合成器，主线程不参与排版。
-  // bus 的 y 轴向上为正，这里的块体要跟着指针走，所以取负。
-  useEffect(() => {
-    const el = world.current
-    if (!el || prefersReducedMotion()) return
-    return onSignal((s) => {
-      el.style.setProperty('--px', s.pointerIn ? s.px.toFixed(3) : '0')
-      el.style.setProperty('--py', s.pointerIn ? (-s.py).toFixed(3) : '0')
-    })
-  }, [])
+  useEffect(() => () => window.clearTimeout(timer.current), [])
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(CONTACT_EMAIL)
+    } catch {
+      return // 不支持或没授权就静默失败：邮箱本来就明文摆在那儿，手选也能复制
+    }
+    setDone(true)
+    window.clearTimeout(timer.current)
+    timer.current = window.setTimeout(() => setDone(false), 1600)
+  }
 
   return (
     <section id="hero" className="ch ch--hero" data-tone="paper" aria-labelledby="hero-h">
-      <header className="topbar">
-        <a className="topbar__mark" href="#hero">
-          <span className="topbar__cn">{profile.name}</span>
-          <span className="topbar__la">@88LIN</span>
-        </a>
-        <nav className="topbar__nav" aria-label="章节">
-          {NAV.map((n) => (
-            <a key={n.id} href={`#${n.id}`}>
-              {n.label}
-            </a>
-          ))}
-        </nav>
-      </header>
+      <div className="hero-in">
+        <div className="hero-copy">
+          <a
+            className="label-caps"
+            href="https://github.com/88lin"
+            target="_blank"
+            rel="noreferrer noopener"
+          >
+            {hero.latin}
+          </a>
 
-      <div className="hero__stage">
-        <div className="hero__world" ref={world}>
-          <section className="slab s-main">
-            <a
-              className="eyebrow hero__eb"
-              href="https://github.com/88lin"
-              target="_blank"
-              rel="noreferrer noopener"
+          <h1 className="hero-h1" id="hero-h">
+            <i>{hero.line1}</i>
+            <i>
+              {hero.line2Pre}
+              <span className="hl-yellow">{hero.line2Mark}</span>
+              {hero.line2Mid}
+              <Circle seed="hero-keep">{hero.line2Circle}</Circle>
+            </i>
+            <i>{hero.line3}</i>
+          </h1>
+
+          <p className="hero-lead">{profile.latinTagline}</p>
+          <p className="hero-sub">{hero.sub}</p>
+
+          {/* 整页唯一真正想让人带走的字符串，给它一键复制比再放一个按钮实用 */}
+          <div className="hero-cmd">
+            <span className="hero-cmd__p" aria-hidden="true">
+              mail:
+            </span>
+            <code>{CONTACT_EMAIL}</code>
+            <button
+              className="hero-cmd__copy"
+              type="button"
+              onClick={copy}
+              data-done={done ? '1' : undefined}
             >
-              {hero.latin}
-            </a>
-            <div>
-              <h1 className="hero__h" id="hero-h">
-                <i className="hero__l wipe is-in">{hero.line1}</i>
-                <i className="hero__l wipe is-in">
-                  {hero.line2Pre}
-                  <mark className="mark">{hero.line2Mark}</mark>
-                  {hero.line2Mid}
-                  <Circle seed="hero-keep">{hero.line2Circle}</Circle>
-                </i>
-                <i className="hero__l wipe is-in">{hero.line3}</i>
-              </h1>
-              <p className="hero__sub">{hero.sub}</p>
-            </div>
-          </section>
+              {done ? 'COPIED' : 'COPY'}
+            </button>
+          </div>
 
-          <aside className="slab s-yel">
-            <b>可切换</b>
-            <s>SWITCHABLE BY DESIGN</s>
-          </aside>
-
-          <aside className="slab s-pop">
-            <span className="s-pop__big">1,784</span>
-            <span className="s-pop__cap">天 · 从第一次提交到今天，一直在跑</span>
-            <hr className="s-pop__hr" />
-            <div className="s-pop__two">
-              <div>
-                <b>{garden.length}</b>
-                <s>SITES ONLINE</s>
-              </div>
-              <div>
-                <b>{projects.length}</b>
-                <s>MAINTAINED</s>
-              </div>
-            </div>
-          </aside>
-
-          <aside className="slab s-pap">
-            <div className="s-pap__l">
-              <b>降级配置</b>
-              <s>
-                resilience.yml
-                <br />
-                88lin/video_vip
-              </s>
-            </div>
-            <div>
-              {YAML.map((l) => (
-                <code key={l.k}>
-                  <b>{l.k}</b> {l.v} <em>{l.c}</em>
-                </code>
-              ))}
-            </div>
-          </aside>
-
-          <div className="slab s-cta hero__cta">
-            <a className="btn btn--solid" href={CONTACT_HREF}>
+          <div className="hero-act">
+            <a className="cta-btn" href={CONTACT_HREF}>
               {hero.primaryCta}
             </a>
-            <a className="btn btn--yellow" href="#cases">
+            <a className="cta-btn cta-btn--ghost" href="#cases">
               {hero.secondaryCta}
             </a>
           </div>
 
-          <div className="hero__rail">
-            {RAIL.map((m) => (
-              <span key={m.label}>
-                <b>{m.value}</b>
-                {m.label}
-              </span>
+          <div className="hero-pills">
+            {PILLS.map((p) => (
+              <div className="hero-pill" key={p.k}>
+                <b>{p.v}</b>
+                <s>{p.k}</s>
+              </div>
             ))}
-            <span className="hero__src">数据取自 GITHUB 公开接口，截至 {AS_OF}</span>
           </div>
+
+          <p className="hero-src">
+            数据取自 GITHUB 公开接口与博客统计条，截至 {AS_OF}
+          </p>
+        </div>
+
+        <div className="hero-visual">
+          <p className="hero-visual__cap">
+            <span>FALLBACK BY DESIGN</span>
+            <span>88lin/video_vip</span>
+          </p>
+          <CodeMac file="resilience.yml" code={CODE} />
         </div>
       </div>
     </section>

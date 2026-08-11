@@ -1,20 +1,23 @@
 /**
- * 上线前自动验收。二十二关，任何一关 fail 都让进程以非零码退出。
+ * 上线前自动验收。二十五关，任何一关 fail 都让进程以非零码退出。
  *
- *  1 子路径部署与解码   2 Lighthouse          3 对比度矩阵
+ *  1 子路径部署与解码   2 Lighthouse          3 对比度矩阵（逐节点）
  *  4 破折号             5 版式纪律与禁用清单   6 reduced-motion 降级
  *  7 章节密度与色调     8 外链可达             9 字体子集 / 预算 / 设计系统规则
- * 10 滚动手感          11 CSS 3D 与指针视差    12 作品横推与案例堆叠
+ * 10 滚动手感          11 交互与依赖纪律       12 作品横推与案例堆叠
  * 13 视觉证据          14 遮挡                15 形状锁
  * 16 章间差异度        17 配色纪律            18 AI 味扫描
- * 19 首屏承载        20 零位图              21 移动端可用性（双引擎）
- * 22 可点性
+ * 19 首屏承载          20 零位图              21 移动端可用性（双引擎）
+ * 22 可点性            23 60/30/10 像素配额    24 禁用令牌与裸 hex
+ * 25 图标全套与缓存破坏
  *
- * 用法：node scripts/audit.mjs [--skip-lh] [--skip-links] [--only=1,13,19]
+ * 用法：node scripts/audit.mjs [--skip-lh] [--skip-links] [--only=1,13,19] [--self-test]
  *
- * v7 说明：1-12 是从 v6 继承下来的「对不对」，13-19 是这一版新加的「好不好看」。
- * v6 的教训是十二关全绿但页面很丑——因为没有一关在量构图、密度、遮挡和纪律。
- * 13-19 全部是可判定的几何与字符断言，不是主观描述。
+ * v7 说明：1-12 是从 v6 继承下来的「对不对」，13-19 是那一版加的「好不好看」。
+ * v10 说明：23-25 对应用户这一轮点名的三件事 —— 配色比例、旧色残留、favicon。
+ * 其中 25 与计划书里写的「逐节点对比度」不同：第 3 关本来就是逐节点对比度
+ * （两条路由 × 两个断点遍历全部可见文本节点），再写一遍是复制品；
+ * 而「图标全套」是用户第一痛点且原本 22 关一处都没覆盖，所以把 25 换成它。
  */
 import { chromium, webkit } from 'playwright'
 import { readFile, readdir, writeFile, stat } from 'node:fs/promises'
@@ -35,11 +38,11 @@ const want = (id) => !only || only.has(String(id))
 /** 六章。顺序、id、色调都跟 content/site.ts 对齐，错一个就说明内容层被改过。 */
 const CHAPTERS = [
   { id: 'hero', tone: 'paper' },
-  { id: 'craft', tone: 'yellow' },
-  { id: 'work', tone: 'blue' },
-  { id: 'cases', tone: 'sand' },
+  { id: 'craft', tone: 'alt' },
+  { id: 'work', tone: 'paper' },
+  { id: 'cases', tone: 'alt' },
   { id: 'notes', tone: 'paper' },
-  { id: 'contact', tone: 'coral' },
+  { id: 'contact', tone: 'alt' },
 ]
 const ROUTES = ['', 'case/lofi/', 'case/repair/', 'case/video-vip/']
 
@@ -54,6 +57,10 @@ const PALETTE_VARS = [
   '--cream', '--cream-dark', '--card-bg', '--preview-bg',
   '--ink', '--ink-light', '--ink-faint', '--dark-panel',
   '--on-brand', '--on-pop', '--on-dark-dim',
+  /* palettes.css 每组末尾都有一套「只挪到 AA 够用为止」的可读变体
+     （A 组是 --brand-text/-surface #2674C5、--pop-text/-surface #D43A50）。
+     v9 漏收这四个，于是把色板自己的 AA 档判成了「板外色」。 */
+  '--brand-text', '--brand-surface', '--pop-text', '--pop-surface',
 ]
 async function loadPalette(browser) {
   if (PALETTE) return PALETTE
@@ -474,13 +481,15 @@ if (want(5)) {
     const m = await page.evaluate(() => {
       const vw = window.innerWidth
       const txt = document.querySelector('#root').innerText
-      const title = document.querySelector('.hero__h')
+      const title = document.querySelector('.hero-h1')
       const tRect = title ? title.getBoundingClientRect() : null
       const heroCentered =
         !title || getComputedStyle(title).textAlign === 'center' || (tRect && tRect.left / vw > 0.25)
 
-      // 章节编号 eyebrow。cases 的 01/02/03 是 .case__no，本来就该编号，白名单放行
-      const numbered = [...document.querySelectorAll('.eyebrow')]
+      // 章节编号 eyebrow。v10 的章节序号是独立的 .section-number（Fraunces 巨号淡字，
+      // 参考站 .big-num 的做法），不是小标签；cases 的 01/02/03 是 .case__no。
+      // 这一条查的仍是「小标签里塞编号」这种模板味，所以只看 .label-caps。
+      const numbered = [...document.querySelectorAll('.label-caps')]
         .map((h) => (h.innerText || '').trim())
         .filter((t) => /^\d{2}\b/.test(t))
 
@@ -499,6 +508,10 @@ if (want(5)) {
           return r.width > 40 && r.height > 40
         })
         if (kids.length < 3) continue
+        /* 一格字都没有的等宽方块阵是马赛克（v10 里是 .case__tiles，18 路接口
+           一格一个），不是卡片行。禁的是「三张等宽内容卡」这种模板构图，
+           数据点阵拉不齐反而读不成一组。 */
+        if (kids.every((k) => !(k.textContent || '').trim())) continue
         const rows = new Map()
         for (const k of kids) {
           const r = k.getBoundingClientRect()
@@ -520,6 +533,9 @@ if (want(5)) {
         if (!/50%|9999px|999px/.test(cs.borderRadius)) continue
         if ((el.textContent || '').trim()) continue
         if ((el.parentElement?.textContent || '').trim()) continue
+        /* macOS 窗口的三颗交通灯不是装饰圆点，是用户点名要的 #5A 组件的一部分：
+           去掉它那块面板就不读作窗口了。这里只放行这一处，其余圆点照禁。 */
+        if (el.closest('.code-mac__dots')) continue
         dots.push(el.className || el.tagName)
       }
 
@@ -531,7 +547,7 @@ if (want(5)) {
         dots: [...new Set(dots)],
         emoji: (txt.match(/[\u{1F300}-\u{1FAFF}\u{1F900}-\u{1F9FF}\u{2700}-\u{27BF}\u{FE0F}]/gu) || []).slice(0, 6),
         scrollHint: (txt.match(/向下滚|往下滚|滚动查看|scroll\s*down|↓/gi) || []).slice(0, 4),
-        ctaWrapped: [...document.querySelectorAll('.hero__cta .btn')].filter((b) => b.getClientRects().length > 1)
+        ctaWrapped: [...document.querySelectorAll('.hero-act .cta-btn')].filter((b) => b.getClientRects().length > 1)
           .length,
       }
     })
@@ -573,7 +589,7 @@ if (want(6)) {
   await page.waitForTimeout(1000)
 
   const m = await page.evaluate(() => {
-    const reveals = [...document.querySelectorAll('.rise, .wipe, .swing, [data-stagger]')]
+    const reveals = [...document.querySelectorAll('.reveal')]
     return {
       reveals: reveals.length,
       hidden: reveals
@@ -587,12 +603,21 @@ if (want(6)) {
         })
         .map((e) => e.className)
         .slice(0, 5),
-      jsPan: document.querySelectorAll('.work__track.is-pan').length,
-      trackX: getComputedStyle(document.querySelector('.work__track')).overflowX,
+      jsPan: document.querySelectorAll('.work-track.is-pan').length,
+      trackX: getComputedStyle(document.querySelector('.work-track')).overflowX,
       caseScale: [...document.querySelectorAll('.case')]
         .map((c) => +new DOMMatrixReadOnly(getComputedStyle(c).transform).a.toFixed(3))
         .filter((s) => Math.abs(s - 1) > 0.002).length,
-      deckPx: getComputedStyle(document.querySelector('.hero__world')).getPropertyValue('--px').trim() || '0',
+      /* v9 这里读的是开场 3D 色块的 --px。v10 废掉了整套挤出与指针视差，
+         这条改成查「降级下还有没有 CSS 关键帧在跑」—— 对应 index.css 降级块里
+         关掉的 .belt ul 与 .hl-circle 两处循环动画。 */
+      keyframed: [...document.querySelectorAll('#root *')]
+        .filter((el) => {
+          const n = getComputedStyle(el).animationName
+          return n && n !== 'none'
+        })
+        .map((el) => `${String(el.className).split(' ')[0] || el.tagName}:${getComputedStyle(el).animationName}`)
+        .slice(0, 5),
     }
   })
   const ov = await page.evaluate(findOverflow)
@@ -605,7 +630,7 @@ if (want(6)) {
   if (m.jsPan) probs.push('降级下横推仍被 JS 接管（.is-pan 还在）')
   if (!/auto|scroll/.test(m.trackX)) probs.push(`降级后未退回原生横滑：overflow-x=${m.trackX}`)
   if (m.caseScale) probs.push(`${m.caseScale} 张案例卡带着非 1 的 scale（堆叠动效没停）`)
-  if (parseFloat(m.deckPx) !== 0) probs.push(`降级下开场视差仍在写 --px=${m.deckPx}`)
+  if (m.keyframed.length) probs.push(`降级下仍有 ${m.keyframed.length} 处 CSS 关键帧在跑：${m.keyframed.join(' | ')}`)
   if (ov.length) probs.push(`横向溢出 ${ov.length} 处：${ov.slice(0, 2).join(' | ')}`)
   if (errs.length) probs.push(`运行时错误：${errs.slice(0, 3).join(' | ')}`)
 
@@ -614,7 +639,7 @@ if (want(6)) {
     : pass(
         '6',
         'prefers-reduced-motion 降级',
-        `0 个 gsap/lenis 请求、${m.reveals} 个入场元素全部落终态、横推退回 overflow-x:${m.trackX}、案例卡 scale 全为 1、开场视差 --px=0、0 溢出 0 错误`,
+        `0 个 gsap/lenis 请求、${m.reveals} 个 .reveal 全部落终态、横推退回 overflow-x:${m.trackX}、案例卡 scale 全为 1、0 处 CSS 关键帧、0 溢出 0 错误`,
       )
 }
 
@@ -730,10 +755,17 @@ if (want(8) && !SKIP_LINKS) {
   pass('8', '外链可达', 'skipped')
 }
 
-/* === 11. CSS 3D 与指针视差 ===========================================
-   v7 把 3D 从「常驻 WebGL 织带」收敛成「分层视差 + 卡片 CSS 3D」。
-   这一关守三件事：产物里不许再有 three；桌面端指针真的驱动三层位移；
-   减弱动效下位移必须归零（第 6 关已经查过 --px，这里查三层是否真的错开）。 */
+/* === 11. 交互与依赖纪律 ==============================================
+   v7-v9 这一关守的是「CSS 3D 与指针视差」：开场四块 .slab 挤出 + .tilt 卡。
+   v10 把整套立体挤出作废了（用户原话「黑色」指的就是挤出侧面的暗面），
+   所以这一关换成守 v10 真实存在的交互层，判据同样是数不是描述：
+
+     ① 产物与依赖里都不许再有 three（这条从 v7 一路留下来，唯一没变的）
+     ② 顶部 3px 进度条的 rAF 管线真的在跑：页顶 --p≈0，滚到底 --p≈1
+     ③ 顶栏是参考站那套常驻玻璃条：position:fixed + backdrop-filter 有模糊
+     ④ 用户点名的 #5A macOS 代码面板真的渲染出来了 —— 深色面体、三色圆点
+        颜色互不相同、语法着色至少 3 种，不是一个空壳
+     ⑤ .reveal 入场管线在正常动效下真的会加 is-in（第 6 关查的是降级侧） */
 if (want(11)) {
   const probs = []
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } })
@@ -741,33 +773,36 @@ if (want(11)) {
   const urls = []
   page.on('response', (r) => urls.push(r.url()))
   await page.goto(URL_BASE, { waitUntil: 'load' })
-  await page.waitForTimeout(1500)
-  await page.mouse.move(1200, 260)
-  await page.waitForTimeout(120)
-  await page.mouse.move(1240, 300)
-  await page.waitForTimeout(500)
+  await page.waitForTimeout(1600)
+
+  const head = await page.evaluate(() => {
+    const bar = document.querySelector('.scrollbar i')
+    return +(getComputedStyle(bar).getPropertyValue('--p').trim() || -1)
+  })
+  await scrollThrough(page)
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight))
+  await page.waitForTimeout(900)
+
   const m = await page.evaluate(() => {
-    const deck = document.querySelector('.hero__world')
-    const cs = getComputedStyle(deck)
-    const panes = [...document.querySelectorAll('#hero .slab')].map((p) => {
-      const mx = new DOMMatrixReadOnly(getComputedStyle(p).transform)
-      return { x: +mx.m41.toFixed(2), y: +mx.m42.toFixed(2), rot: +Math.round(Math.atan2(mx.b, mx.a) * 5730) / 100 }
-    })
-    const tiltCss = [...document.styleSheets]
-      .flatMap((s) => {
-        try {
-          return [...s.cssRules]
-        } catch {
-          return []
-        }
-      })
-      .some((r) => r.selectorText && /\.tilt/.test(r.selectorText) && /perspective/.test(r.style.transform || ''))
+    const bar = document.querySelector('.scrollbar i')
+    const nav = document.querySelector('.nav')
+    const navCS = nav ? getComputedStyle(nav) : null
+    const mac = document.querySelector('.code-mac')
+    const macBody = mac?.querySelector('.code-mac__bd')
+    const dots = [...(mac?.querySelectorAll('.code-mac__dots i') || [])]
+    const toks = [...(mac?.querySelectorAll('.code-mac__bd code span span') || [])]
+    const reveals = [...document.querySelectorAll('.reveal')]
     return {
-      px: cs.getPropertyValue('--px').trim(),
-      py: cs.getPropertyValue('--py').trim(),
-      panes,
-      tilt: document.querySelectorAll('.tilt').length,
-      tiltCss,
+      tail: +(getComputedStyle(bar).getPropertyValue('--p').trim() || -1),
+      navPos: navCS ? navCS.position : '-',
+      navBlur: navCS ? navCS.backdropFilter || navCS.webkitBackdropFilter || 'none' : 'none',
+      macBg: macBody ? getComputedStyle(macBody).backgroundColor : '-',
+      macRadius: mac ? parseFloat(getComputedStyle(mac).borderTopLeftRadius) : -1,
+      dotColors: [...new Set(dots.map((d) => getComputedStyle(d).backgroundColor))],
+      dotSize: dots.length ? Math.round(dots[0].getBoundingClientRect().width) : -1,
+      tokColors: [...new Set(toks.map((t) => getComputedStyle(t).color))].length,
+      reveals: reveals.length,
+      revealed: reveals.filter((r) => r.classList.contains('is-in')).length,
     }
   })
   await ctx.close()
@@ -775,25 +810,34 @@ if (want(11)) {
   if (urls.some((u) => /\/three-|three\.module/.test(u))) probs.push('产物里仍在请求 three')
   const pkg = JSON.parse(await readFile(path.join(ROOT, 'package.json'), 'utf8'))
   if (pkg.dependencies?.three || pkg.devDependencies?.['@types/three']) probs.push('package.json 里还留着 three 依赖')
-  if (!parseFloat(m.px) && !parseFloat(m.py)) probs.push(`指针没有驱动视差（--px=${m.px} --py=${m.py}）`)
-  if (m.panes.length < 4) probs.push(`开场色块 ${m.panes.length} 块，期望至少 4 块`)
+
+  if (!(head >= 0 && head < 0.02)) probs.push(`页顶进度条 --p=${head}，应约等于 0`)
+  if (!(m.tail > 0.9)) probs.push(`滚到底进度条 --p=${m.tail}，应约等于 1（rAF 管线没跑）`)
+  if (m.navPos !== 'fixed') probs.push(`顶栏不是常驻（position=${m.navPos}）`)
+  if (!/blur\(/.test(m.navBlur)) probs.push(`顶栏缺背景模糊（backdrop-filter=${m.navBlur}）`)
+
+  if (m.macRadius < 0) probs.push('找不到 #5A macOS 代码面板 .code-mac')
   else {
-    const xs = new Set(m.panes.map((p) => p.x))
-    const rots = new Set(m.panes.map((p) => p.rot))
-    if (xs.size < 3) probs.push(`色块位移没错开：x=${m.panes.map((p) => p.x).join(' / ')}`)
-    if (rots.size < 3) probs.push(`色块角度没错开：rot=${m.panes.map((p) => p.rot).join(' / ')}`)
+    const rgb = (m.macBg.match(/\d+/g) || []).slice(0, 3).map(Number)
+    if (rgb.length === 3 && lum({ r: rgb[0], g: rgb[1], b: rgb[2] }) > 0.1)
+      probs.push(`代码面板面体不是深色（${m.macBg}）`)
+    if (Math.abs(m.macRadius - 12) > 0.6) probs.push(`代码面板圆角 ${m.macRadius}px，规格是 12px`)
+    if (m.dotColors.length !== 3) probs.push(`macOS 三色圆点只有 ${m.dotColors.length} 种颜色：${m.dotColors.join(' ')}`)
+    if (Math.abs(m.dotSize - 11) > 1) probs.push(`macOS 圆点直径 ${m.dotSize}px，规格是 11px`)
+    if (m.tokColors < 3) probs.push(`代码面板语法着色只有 ${m.tokColors} 种，不像代码`)
   }
-  if (!m.tilt) probs.push('没有任何 .tilt 卡片')
-  if (!m.tiltCss) probs.push('.tilt 规则里没有 perspective()，卡片不是真 3D')
+  if (!m.reveals) probs.push('页面上没有任何 .reveal 入场元素')
+  else if (m.revealed < m.reveals * 0.8)
+    probs.push(`滚完全页只有 ${m.revealed}/${m.reveals} 个 .reveal 拿到 is-in`)
 
   probs.length
-    ? fail('11', 'CSS 3D 与指针视差', probs.join('; '))
+    ? fail('11', '交互与依赖纪律', probs.join('; '))
     : pass(
         '11',
-        'CSS 3D 与指针视差',
-        `0 个 three 请求、package.json 已清依赖；指针 --px=${m.px} --py=${m.py} 驱动三层错位（x ${m.panes
-          .map((p) => p.x)
-          .join(' / ')}，rot ${m.panes.map((p) => p.rot).join(' / ')}°）；${m.tilt} 张 .tilt 卡带 perspective`,
+        '交互与依赖纪律',
+        `0 个 three 请求、package.json 已清依赖；进度条 --p ${head} → ${m.tail}；顶栏 fixed + ${m.navBlur}；` +
+          `#5A 代码面板面体 ${m.macBg} 圆角 ${m.macRadius}px、${m.dotColors.length} 色圆点 ${m.dotSize}px、` +
+          `${m.tokColors} 种语法色；${m.revealed}/${m.reveals} 个 .reveal 入场`,
       )
 }
 
@@ -809,14 +853,14 @@ if (want(12)) {
   await page.waitForTimeout(1200)
 
   const railTop = await page.evaluate(() => {
-    const el = document.querySelector('.work__rail')
+    const el = document.querySelector('.work-rail')
     return el ? el.getBoundingClientRect().top + window.scrollY : -1
   })
   const samples = []
   for (const f of [0.05, 0.55, 1]) {
     await page.evaluate(
       ([top, frac]) => {
-        const el = document.querySelector('.work__rail')
+        const el = document.querySelector('.work-rail')
         const h = el ? el.offsetHeight - window.innerHeight : 0
         window.scrollTo({ top: top + h * frac, behavior: 'instant' })
       },
@@ -824,13 +868,13 @@ if (want(12)) {
     )
     await page.waitForTimeout(f === 1 ? 2400 : 800)
     samples.push(
-      await page.evaluate(() => +new DOMMatrixReadOnly(getComputedStyle(document.querySelector('.work__track')).transform).m41.toFixed(1)),
+      await page.evaluate(() => +new DOMMatrixReadOnly(getComputedStyle(document.querySelector('.work-track')).transform).m41.toFixed(1)),
     )
   }
   const tail = await page.evaluate(() => {
-    const cards = [...document.querySelectorAll('.pcard')]
+    const cards = [...document.querySelectorAll('.hscroll-card')]
     const last = cards[cards.length - 1]
-    const track = document.querySelector('.work__track')
+    const track = document.querySelector('.work-track')
     const r = last.getBoundingClientRect()
     return {
       name: last?.querySelector('.pcard__name')?.textContent?.trim().slice(0, 16) || '?',
@@ -839,7 +883,7 @@ if (want(12)) {
       n: cards.length,
     }
   })
-  const jsPan = await page.evaluate(() => document.querySelectorAll('.work__track.is-pan').length)
+  const jsPan = await page.evaluate(() => document.querySelectorAll('.work-track.is-pan').length)
 
   // 案例堆叠：第二张压上来时，第一张必须已经缩小并沉降
   await page.evaluate(() => {
@@ -872,9 +916,9 @@ if (want(12)) {
      所以这里改成验「真的竖排了」：单列网格、无残留 transform、不横向溢出、
      六张卡自上而下依次排开。 */
   const narrow = await page2.evaluate(() => {
-    const track = document.querySelector('.work__track')
+    const track = document.querySelector('.work-track')
     const cs = getComputedStyle(track)
-    const cards = [...document.querySelectorAll('.pcard')]
+    const cards = [...document.querySelectorAll('.hscroll-card')]
     // 满宽的基准是跑道的内容盒（要减掉左右 gutter），不是视口
     const vpW =
       track.clientWidth - (parseFloat(cs.paddingInlineStart) || 0) - (parseFloat(cs.paddingInlineEnd) || 0)
@@ -891,7 +935,7 @@ if (want(12)) {
   })
   await ctx2.close()
 
-  if (!jsPan) probs.push('桌面端横推没被接管（.work__track 上没有 is-pan）')
+  if (!jsPan) probs.push('桌面端横推没被接管（.work-track 上没有 is-pan）')
   const moved = Math.abs(samples[2] - samples[0])
   if (moved < 200) probs.push(`横推行程只有 ${moved}px（样本 ${samples.join(' → ')}）`)
   if (!(samples[0] > samples[1] && samples[1] > samples[2])) probs.push(`横推方向不单调：${samples.join(' → ')}`)
@@ -994,7 +1038,7 @@ if (want(13)) {
   const site = await page.evaluate(() => ({
     vec: document.querySelectorAll('svg').length,
     bitmap: document.querySelectorAll('img, picture').length,
-    workCards: document.querySelectorAll('.pcard').length,
+    workCards: document.querySelectorAll('.hscroll-card').length,
   }))
   await ctx.close()
 
@@ -1198,8 +1242,11 @@ if (want(15)) {
   await page.waitForTimeout(1500)
   await scrollThrough(page)
   const m = await page.evaluate(() => {
-    // v9 放开 --r-pill(999) 给按钮 / 标签 / 状态灯；其余四档不变。
-    const ALLOWED = [0, 6, 11, 14, 24, 999]
+    /* v10 的刻度直接取自参考站：4（代码行内小块）/ 10（cta-btn）/ 11（macOS 圆点）/
+       12（code-mac、hero-cmd）/ 14（favicon 与小卡）/ 16（--card-r，全站卡片）/
+       20（大面板）/ 999（胶囊）。比 v9 多了三档，因为组件是从两个参考站原样搬来的，
+       它们各自有各自的刻度；宁可把刻度写全，也不要为了凑一套数改坏移植过来的组件。 */
+    const ALLOWED = [0, 4, 10, 11, 12, 14, 16, 20, 999]
     const off = []
     const cards = []
     const square = []
@@ -1235,15 +1282,19 @@ if (want(15)) {
   })
   await ctx.close()
   if (m.off.length) probs.push(`圆角越界 ${m.off.length} 处：${m.off.slice(0, 6).join(' | ')}`)
-  const cardRadii = new Set(m.cards.map((c) => c.split(':')[1]))
-  if (cardRadii.size > 1) probs.push(`[data-card] 圆角不统一：${m.cards.join(' | ')}`)
-  if (![...cardRadii][0] || Math.abs(parseFloat([...cardRadii][0]) - 24) > 0.6)
-    probs.push(`[data-card] 圆角应为 24px，实得 ${[...cardRadii].join('/')}`)
+  /* v9 要求 [data-card] 只能有一个圆角值（24px）。v10 是两档：主卡 16px（--card-r），
+     虚线场景卡 14px —— 后者是 dst 那套「Caveat 标签挂在虚线缺口上」的原尺寸，
+     改成 16 标签缺口会错位。所以放开到两档，但仍锁死「只有这两档」。 */
+  const CARD_OK = [14, 16]
+  const cardRadii = [...new Set(m.cards.map((c) => parseFloat(c.split(':')[1])))]
+  if (!cardRadii.length) probs.push('页面上没有任何 [data-card]')
+  const cardBad = cardRadii.filter((v) => !CARD_OK.some((a) => Math.abs(a - v) < 0.6))
+  if (cardBad.length) probs.push(`[data-card] 圆角只允许 14/16，实得越界值 ${cardBad.join('/')}（全量 ${m.cards.join(' | ')}）`)
   if (m.square.length)
     probs.push(`卡内 ${m.square.length} 处大面积色块是直角：${m.square.slice(0, 6).join(' | ')}`)
   probs.length
     ? fail('15', '形状锁', probs.join('\n      '))
-    : pass('15', '形状锁', `面积 >1500px² 的有背景元素圆角全部 ∈ {0, 6, 11, 14, 24, 999, pill}；${m.cards.length} 类 [data-card] 统一 24px；卡内 0 处大面积直角块`)
+    : pass('15', '形状锁', `面积 >1500px² 的有背景元素圆角全部 ∈ {0,4,10,11,12,14,16,20,999,pill}；${m.cards.length} 类 [data-card] 落在 14/16 两档（实得 ${cardRadii.join('/')}）；卡内 0 处大面积直角块`)
 }
 
 /* === 20. 零位图 ======================================================
@@ -1388,7 +1439,14 @@ if (want(17)) {
   if (/prefers-color-scheme\s*:\s*dark/.test(cssNoComment)) probs.push('CSS 里有 prefers-color-scheme: dark')
   if (!/color-scheme\s*:\s*light/.test(cssNoComment)) probs.push('没有声明 color-scheme: light')
   if (!/name="color-scheme"\s+content="light"/.test(html)) probs.push('index.html 缺 <meta name="color-scheme" content="light">')
-  const blacks = [...cssNoComment.matchAll(/#0{3,8}\b/g)].map((m) => m[0])
+  /* 纯黑扫描要绕开遮罩：mask-image / -webkit-mask-image 的渐变里 #000 是
+     「这一段不透明」的 alpha 停靠点，不是画在屏幕上的颜色。v10 的横滚轨道
+     两端淡出用的就是它，误判成「深黑」会逼人改成半透明写法，反而更脏。 */
+  const blacks = cssNoComment
+    .split('\n')
+    .filter((l) => !/mask-image/.test(l))
+    .join('\n')
+    .match(/#0{3,8}\b/g) || []
   if (blacks.length) probs.push(`${blacks.length} 处纯黑 ${[...new Set(blacks)].join(' ')}`)
 
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce', colorScheme: 'dark' })
@@ -1415,8 +1473,16 @@ if (want(17)) {
     return n.length === 3 ? hex({ r: n[0], g: n[1], b: n[2] }) : null
   }
   const groundHexes = [...new Set(Object.values(m.grounds).map(toHex).filter(Boolean))]
-  if (groundHexes.length < 3 || groundHexes.length > 5)
-    probs.push(`章节底色 ${groundHexes.length} 种（${groundHexes.join(' ')}），应在 3-5 之间`)
+  /* v9 要求章节底色 3-5 种，那是为了拦「整页一个色，读不出章节边界」。
+     v10 按参考站的做法走两档严格交替（cream / cream-dark），章节边界靠交替
+     而不是靠多色。所以下限放到 2，上限收到 4 —— 交替仍然成立，同时继续拦住
+     「六章六个饱和底」这种把页面刷花的做法（用户这一轮点名的正是那个）。 */
+  if (groundHexes.length < 2 || groundHexes.length > 4)
+    probs.push(`章节底色 ${groundHexes.length} 种（${groundHexes.join(' ')}），应在 2-4 之间`)
+  // 底色必须真的在交替，不能六章全同一个
+  const toneSeq = CHAPTERS.map((c) => toHex(m.grounds[c.id] || '') || '?')
+  const alternating = toneSeq.every((t, i) => i === 0 || t !== toneSeq[i - 1])
+  if (!alternating) probs.push(`章节底色没有逐章交替：${toneSeq.join(' → ')}`)
   const bodyHex = toHex(m.bodyBg)
   if (bodyHex && lum({ r: parseInt(bodyHex.slice(1, 3), 16), g: parseInt(bodyHex.slice(3, 5), 16), b: parseInt(bodyHex.slice(5, 7), 16) }) < 0.5)
     probs.push(`系统深色下 body 背景反转成 ${bodyHex}`)
@@ -1429,10 +1495,14 @@ if (want(17)) {
   /* 浅色小字只能压在色板的暗档上。v8 这里写死了 palette A 的四个 -deep 值，
      换组就废；改成从色板里按相对亮度筛：L < 0.25 才算暗档。中间调（brand-tint、
      highlight、cream-dark）压白字必然不够，这条就是拦它们的。 */
-  const rgbOf = (h) => ({ r: parseInt(h.slice(1, 3), 16), g: parseInt(h.slice(3, 5), 16), b: parseInt(h.slice(5, 7), 16) })
-  const DARK_TIER = new Set([...pal.set].filter((h) => lum(rgbOf(h)) < 0.25))
+  /* 判据是「合成之后的底真的够暗」，不是「底色的 hex 在色板名单里」。
+     名单法在 v10 站不住：① 代码面板走的是 Tokyo Night 第二套配色（用户点名
+     要的 #5A macOS 窗口），把它并进色板，G24 的白名单就废了；② 案例内页的
+     .cpage__tokens 是 rgba(brand,.12) 压在深色板上，合成值 #1C273C 永远不会
+     出现在任何名单里。两者都是真暗档。中间调（brand-tint / highlight /
+     cream-dark）压白字仍然照拦 —— 它们的相对亮度都在 0.25 以上。 */
   const wrong = contrastReport
-    .filter((c) => !c.large && lum(c.fg) > 0.5 && !DARK_TIER.has(c.bgHex))
+    .filter((c) => !c.large && lum(c.fg) > 0.5 && lum(c.bg) >= 0.25)
     .map((c) => `${c.cls}"${c.text.slice(0, 10)}" 压 ${c.bgHex}`)
   if (wrong.length) probs.push(`${wrong.length} 处小号浅色字没压在暗档上：${[...new Set(wrong)].slice(0, 4).join(' | ')}`)
 
@@ -1461,7 +1531,7 @@ if (want(18)) {
     out.dash = (txt.match(/[\u2014\u2013]/g) || []).length
     out.dashCtx = (txt.match(/.{0,12}[\u2014\u2013].{0,12}/g) || []).slice(0, 4)
     out.scrollHint = (txt.match(/向下滚|往下滚|滚动查看|scroll\s*down|↓/gi) || []).slice(0, 4)
-    out.version = [...document.querySelectorAll('.eyebrow')]
+    out.version = [...document.querySelectorAll('.label-caps')]
       .map((e) => (e.innerText || '').trim())
       .filter((t) => /\bv\s?\d+(\.\d+)?\b/i.test(t))
     out.stage = (txt.match(/阶段\s?[1-9１-９一二三四五]/g) || []).slice(0, 4)
@@ -1529,7 +1599,7 @@ if (want(18)) {
 }
 
 /* === 19. 首屏承载 ====================================================
-   开场必须在一屏内讲完。标题按「刻意断行」判：每个 .hero__l 只能占一行，
+   开场必须在一屏内讲完。标题按「刻意断行」判：.hero-h1 里每个 <i> 只能占一行，
    自动折行就说明字号或列宽没配好；总行数桌面 ≤ 3、手机 ≤ 4。 */
 if (want(19)) {
   const probs = []
@@ -1551,8 +1621,8 @@ if (want(19)) {
     await page.waitForTimeout(1400)
     const m = await page.evaluate(() => {
       const sec = document.getElementById('hero')
-      const h = document.querySelector('.hero__h')
-      const lines = [...document.querySelectorAll('.hero__l')]
+      const h = document.querySelector('.hero-h1')
+      const lines = [...document.querySelectorAll('.hero-h1 > i')]
       const lh = parseFloat(getComputedStyle(h).lineHeight) || parseFloat(getComputedStyle(h).fontSize) * 1.1
       return {
         secH: Math.round(sec.scrollHeight),
@@ -1562,9 +1632,9 @@ if (want(19)) {
           .map((l, i) => ({ i, rects: l.getClientRects().length, h: Math.round(l.getBoundingClientRect().height) }))
           .filter((l) => l.h > lh * 1.6),
         rendered: lines.reduce((s, l) => s + Math.max(1, Math.round(l.getBoundingClientRect().height / lh)), 0),
-        sub: (document.querySelector('.hero__sub')?.textContent || '').trim().length,
-        ctaWrapped: [...document.querySelectorAll('.hero__cta .btn')].filter((b) => b.getClientRects().length > 1).length,
-        ctaN: document.querySelectorAll('.hero__cta .btn').length,
+        sub: (document.querySelector('.hero-sub')?.textContent || '').trim().length,
+        ctaWrapped: [...document.querySelectorAll('.hero-act .cta-btn')].filter((b) => b.getClientRects().length > 1).length,
+        ctaN: document.querySelectorAll('.hero-act .cta-btn').length,
       }
     })
     await ctx.close()
@@ -1619,13 +1689,13 @@ if (want(21)) {
       const tag = `${eng.name}/${phase}`
       if (m.scrollW > m.clientW + 1) probs.push(`${tag} 横向溢出 ${m.scrollW - m.clientW}px`)
       if (m.cards !== 6) probs.push(`${tag} 作品卡渲染 ${m.cards} 张，应为 6`)
-      if (m.railInline !== '') probs.push(`${tag} .work__rail 残留内联高度 "${m.railInline}"`)
+      if (m.railInline !== '') probs.push(`${tag} .work-rail 残留内联高度 "${m.railInline}"`)
       if (m.railH != null && m.railContent != null && m.railH > m.railContent + 8)
-        probs.push(`${tag} .work__rail 高 ${m.railH}px 超出内容 ${m.railContent}px`)
+        probs.push(`${tag} .work-rail 高 ${m.railH}px 超出内容 ${m.railContent}px`)
       if (m.trackTransform && m.trackTransform !== 'none')
-        probs.push(`${tag} .work__track 残留 transform ${m.trackTransform}`)
+        probs.push(`${tag} .work-track 残留 transform ${m.trackTransform}`)
       if (m.trackScrollW != null && m.trackScrollW > m.trackClientW + 4)
-        probs.push(`${tag} .work__track 仍可横滚 ${m.trackScrollW}/${m.trackClientW}`)
+        probs.push(`${tag} .work-track 仍可横滚 ${m.trackScrollW}/${m.trackClientW}`)
       if (m.pinSpacers) probs.push(`${tag} 残留 ${m.pinSpacers} 个 .pin-spacer`)
       if (m.badAxis.length) probs.push(`${tag} ${m.badAxis.length} 个横滚容器没锁竖轴：${m.badAxis.slice(0, 3).join(' | ')}`)
       const deadZone = m.gaps.filter((g) => g.gap > m.vh * 0.6)
@@ -1695,10 +1765,10 @@ if (want(22)) {
     const { bad, info } = await page.evaluate(CLICK_PROBE)
     await ctx.close()
     if (info.posts !== 6) bad.push(`博客列表 ${info.posts} 条，应为 6`)
-    if (info.cells !== 7) bad.push(`花园 ${info.cells} 格，应为 6 精选 + 1 导航站`)
+    if (info.cells !== 6) bad.push(`花园 ${info.cells} 张精选卡，应为 6`)
     if (info.btns < 10) bad.push(`作品卡内按钮共 ${info.btns} 枚，六张卡至少 10 枚（4 张带 live + 6 张源码）`)
     for (const b of bad) probs.push(`${vp.name} ${b}`)
-    sheet.push(`${vp.name} 博客${info.posts}条 花园${info.cells}格 卡内按钮${info.btns}枚 全站${info.links}个链接 0 死壳`)
+    sheet.push(`${vp.name} 博客${info.posts}条 花园${info.cells}卡+导航站${info.hub}条 卡内按钮${info.btns}枚 全站${info.links}个链接 0 死壳`)
   }
   probs.length ? fail('22', '可点性', [...new Set(probs)].join('\n      ')) : pass('22', '可点性', sheet.join('；'))
 }
@@ -1739,7 +1809,7 @@ if (want(9)) {
   /* v9 删掉了两档中文正文 Web 字体，正文改走苹果系统栈（详见下面的字体栈断言），
      所以这里只剩三个需要子集覆盖的自带字族。 */
   const FAMILY = {
-    'noto sans sc black web': 'display',
+    'fraunces web': 'display',
     'jetbrains mono web': 'mono',
     'caveat web': 'hand',
   }
@@ -1805,7 +1875,11 @@ if (want(9)) {
   const files = await readdir(FONTS)
   for (const f of files) {
     if (!f.endsWith('.woff2')) continue
-    const base = f.replace(/-(Regular|Semibold|Display|Numerals)?\.woff2$/, '').replace('.woff2', '')
+    /* 字族名 = 去掉字重/字型后缀。v10 的 Fraunces 出两档（-700 / -900），
+       共用一份 OFL，所以数字后缀也要一起剥掉，否则会误报缺许可证。 */
+    const base = f
+      .replace(/-(Regular|Semibold|Display|Numerals|\d{3})?\.woff2$/, '')
+      .replace('.woff2', '')
     if (!files.some((x) => x.startsWith('LICENSE-') && x.includes(base))) probs.push(`${f} 缺少同名 LICENSE 文件`)
   }
 
@@ -1825,11 +1899,13 @@ if (want(9)) {
     if (!sansDecl.includes(need)) probs.push(`--font-sans 缺 ${need} 兜底`)
   }
   const faceFams = [...css.matchAll(/@font-face\s*\{[^}]*?font-family:\s*['"]([^'"]+)['"]/g)].map((m) => m[1])
-  const bodyFace = faceFams.filter((f) => /noto sans sc web/i.test(f))
-  if (bodyFace.length) probs.push(`index.css 仍有正文中文 @font-face：${bodyFace.join(' ')}`)
-  const hexes = [...css.matchAll(/#[0-9a-fA-F]{3,8}\b/g)].map((m) => m[0])
-  if (hexes.length) probs.push(`index.css 里有 ${hexes.length} 处硬编码颜色：${hexes.slice(0, 6).join(' ')}`)
-  if (/color-mix\(/.test(css)) probs.push('index.css 使用了被禁的 color-mix()')
+  /* v10 连 display 档的中文 Web 字体也删了（Noto Sans SC Black 一档就要 29 KB），
+     中文全部走系统栈，所以这里查的是「index.css 里不许再有任何中文 Web 字族」。 */
+  const bodyFace = faceFams.filter((f) => /noto sans sc|source han|siyuan|huiwen/i.test(f))
+  if (bodyFace.length) probs.push(`index.css 仍有中文 @font-face：${bodyFace.join(' ')}`)
+  /* 裸 hex 与 color-mix() 的判定 v10 挪到第 24 关：v10 有一份必须写死的白名单
+     （Tokyo Night 语法色、macOS 三色圆点、--rule/--rule-soft），
+     白名单写两遍必然走样，所以只留一处。 */
 
   const covered = Object.entries(tables)
     .map(([k, v]) => `${k} ${v.size}字`)
@@ -1839,7 +1915,7 @@ if (want(9)) {
     : pass(
         '9',
         '字体子集 / 预算 / 设计系统规则',
-        `${covered}；四条路由 × 两个断点 0 缺字。总量 ${total.toFixed(1)} KB ≤ ${BUDGET} KB（${inv.join(' · ')}）。正文走系统栈，首位 -apple-system，Windows / Linux 各有兜底；0 处正文中文 @font-face、0 处 Inter、0 处硬编码色、0 处 color-mix()`,
+        `${covered}；四条路由 × 两个断点 0 缺字。总量 ${total.toFixed(1)} KB ≤ ${BUDGET} KB（${inv.join(' · ')}）。中文走系统栈，首位 -apple-system，Windows / Linux 各有兜底；0 处中文 @font-face、0 处 Inter（裸 hex / color-mix 见第 24 关）`,
       )
 }
 
@@ -1921,6 +1997,251 @@ if (want(2) && !SKIP_LH) {
   probs.length ? fail('2', 'Lighthouse', `${line}\n      未达标: ${probs.join('; ')}`) : pass('2', 'Lighthouse', line)
 } else if (want(2)) {
   pass('2', 'Lighthouse', 'skipped')
+}
+
+/* === 23. 60/30/10 像素配额 ===========================================
+   用户这一轮最重的一句是「整个页面的配色我都不喜欢，太丑了」。v9 的毛病不在
+   色值本身，在比例：一整章刷 #EFCE9A，黄色成了页面主色。所以这一关不看令牌，
+   直接量成品像素 —— 整页截图逐像素归族，比例不对就报红。
+
+   归族走 HSL 而不是「离哪个色板值最近」：反锯齿会在字缘生出几十种中间色，
+   最近邻会把它们硬塞进某个品牌色里，比例就假了。
+   已知口径（写清楚免得下次误读）：奶油底上的墨字 #1A1A2E 亮度只有 0.14，
+   会被算进 dark 族。也就是说 dark 的实测值天然偏高、这道门偏严，不是偏松。 */
+if (want(23)) {
+  const sharp = (await import('sharp')).default
+  const probs = []
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' })
+  const page = await ctx.newPage()
+  await page.goto(URL_BASE, { waitUntil: 'load' })
+  await page.waitForTimeout(1600)
+  await scrollThrough(page)
+  await page.evaluate(() => window.scrollTo(0, 0))
+  await page.waitForTimeout(600)
+  const shot = await page.screenshot({ fullPage: true, type: 'png' })
+  await ctx.close()
+
+  const { data, info } = await sharp(shot).removeAlpha().raw().toBuffer({ resolveWithObject: true })
+  const tally = { cream: 0, gray: 0, dark: 0, yellow: 0, green: 0, blue: 0, violet: 0, red: 0 }
+  for (let i = 0; i < data.length; i += 3) {
+    const r = data[i]
+    const g = data[i + 1]
+    const b = data[i + 2]
+    const mx = Math.max(r, g, b)
+    const mn = Math.min(r, g, b)
+    const L = (mx + mn) / 510
+    const chroma = (mx - mn) / 255
+    if (chroma < 0.09) {
+      tally[L >= 0.8 ? 'cream' : L <= 0.3 ? 'dark' : 'gray']++
+      continue
+    }
+    if (L <= 0.22) {
+      tally.dark++
+      continue
+    }
+    const d = mx - mn
+    let h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4
+    h = (h * 60 + 360) % 360
+    tally[h < 25 ? 'red' : h < 70 ? 'yellow' : h < 165 ? 'green' : h < 260 ? 'blue' : h < 320 ? 'violet' : 'red']++
+  }
+  const px = info.width * info.height
+  const pct = Object.fromEntries(Object.entries(tally).map(([k, v]) => [k, +((v / px) * 100).toFixed(2)]))
+
+  if (pct.cream < 60) probs.push(`奶油族只占 ${pct.cream}%（< 60%，60/30/10 的底盘不够）`)
+  if (pct.yellow > 8) probs.push(`黄族 ${pct.yellow}% > 8%（用户点名讨厌大面积黄）`)
+  if (pct.red > 6) probs.push(`红族 ${pct.red}% > 6%`)
+  if (pct.dark > 12) probs.push(`深色族 ${pct.dark}% > 12%（用户点名讨厌黑）`)
+  /* 绿色的唯一合法来源是 macOS 面板里 Tokyo Night 的字符串色 #9ECE6A 与
+     交通灯绿点 #27C93F。它们是「代码面板」这个语义的一部分，换成品牌色
+     那块面板就不读作代码了。除此之外全站不许有绿。 */
+  if (pct.green > 0.8) probs.push(`绿族 ${pct.green}% > 0.8%（用户点名不要绿色；仅允许代码面板里的语法绿）`)
+  const chromatic = { yellow: pct.yellow, red: pct.red, blue: pct.blue, green: pct.green, violet: pct.violet }
+  const top = Object.entries(chromatic).sort((a, b) => b[1] - a[1])[0]
+  if (top[0] !== 'blue') probs.push(`非中性面积最大的是 ${top[0]} ${top[1]}%，应当是蓝（A 组主色）`)
+
+  const sheet = `${info.width}×${info.height} 全页 ${(px / 1e6).toFixed(1)}M 像素 · ` +
+    Object.entries(pct)
+      .sort((a, b) => b[1] - a[1])
+      .map(([k, v]) => `${k} ${v}%`)
+      .join(' · ')
+  probs.length
+    ? fail('23', '60/30/10 像素配额', [...probs, `实测：${sheet}`].join('\n      '))
+    : pass('23', '60/30/10 像素配额', `${sheet}（口径：墨色正文计入 dark，故 dark 偏高、门槛偏严）`)
+}
+
+/* === 24. 禁用令牌与裸 hex ============================================
+   v9 的四个色值就是用户点名的四样东西：咖啡 #A8452F、绿 #2F6B5B、
+   屎黄 #EFCE9A、以及 filter:brightness() 压出来的黑。这一关保证它们不会
+   靠一次手滑回到代码里。注释要先剥掉 —— 上面那几行说明文字本身就命中 grep。 */
+if (want(24)) {
+  const probs = []
+  const BANNED = [
+    ['#A8452F', 'v9 咖啡色 --brand'],
+    ['#2F6B5B', 'v9 绿色 --pop'],
+    ['#EFCE9A', 'v9 屎黄 --highlight'],
+    ['#F6EBDC', 'v9 sand 章底'],
+    ['#FDF8F1', 'v9 theme-color'],
+    ['#2A1D18', 'v9 深棕'],
+    ['filter:brightness(', '立体挤出暗面'],
+    ['filter: brightness(', '立体挤出暗面'],
+    ['color-mix(', '部分 Android WebView 整块失效'],
+  ]
+  /* 白名单：这三组必须写死，理由各不相同。
+     ① --rule / --rule-soft：上游 A 组没有对应令牌，参考站自己也是写死的
+     ② Tokyo Night 语法色：它是一套有名字的配色方案，换色就不读作代码了
+     ③ macOS 交通灯：同上，那是 macOS 的固有色
+     ④ #000：只出现在 mask-image 的渐变停靠点，是 alpha 不是颜色 */
+  const HEX_OK = new Set(
+    [
+      '#D9D4C6', '#E8E2D5',
+      '#1A1B26', '#2D2D3A', '#A9B1D6', '#7AA2F7', '#9ECE6A', '#BB9AF7', '#FF9E64', '#7C87B8',
+      '#FF5F56', '#FFBD2E', '#27C93F',
+      '#000',
+    ].map((s) => s.toUpperCase()),
+  )
+
+  const strip = (src, file) => {
+    let s = src.replace(/\/\*[\s\S]*?\*\//g, ' ')
+    if (/\.html$/.test(file)) s = s.replace(/<!--[\s\S]*?-->/g, ' ')
+    if (/\.tsx?$/.test(file)) s = s.replace(/(^|[^:'"\w])\/\/[^\n]*/g, '$1 ')
+    return s
+  }
+
+  const files = ['index.html', 'src/styles/index.css']
+  for (const d of ['src']) {
+    for (const f of await readdir(path.join(ROOT, d), { recursive: true })) {
+      if (/\.tsx?$/.test(f)) files.push(path.join(d, f))
+    }
+  }
+  let scanned = 0
+  for (const f of files) {
+    const raw = await readFile(path.join(ROOT, f), 'utf8')
+    const body = strip(raw, f)
+    scanned++
+    for (const [tok, why] of BANNED) {
+      if (body.toUpperCase().includes(tok.toUpperCase())) probs.push(`${f} 出现禁用令牌 ${tok}（${why}）`)
+    }
+    // tsx 里一个颜色都不许写：颜色只能来自 CSS 令牌
+    if (/\.tsx$/.test(f)) {
+      const h = [...body.matchAll(/#[0-9a-fA-F]{3,8}\b/g)].map((m) => m[0])
+      if (h.length) probs.push(`${f} 里有 ${h.length} 处内联色值：${[...new Set(h)].slice(0, 4).join(' ')}`)
+    }
+  }
+  const cssBody = strip(await readFile(path.join(ROOT, 'src', 'styles', 'index.css'), 'utf8'), 'index.css')
+  const stray = [...new Set([...cssBody.matchAll(/#[0-9a-fA-F]{3,8}\b/g)].map((m) => m[0].toUpperCase()))].filter(
+    (h) => !HEX_OK.has(h),
+  )
+  if (stray.length) probs.push(`index.css 里有 ${stray.length} 处白名单外的裸 hex：${stray.join(' ')}`)
+  // palettes.css 是上游 vendor，只许原样引用，不许在站点层覆盖它的定义
+  const pal = await readFile(path.join(ROOT, 'src', 'styles', 'palettes.css'), 'utf8')
+  if (!/--brand:\s*#2B7FD8/i.test(pal)) probs.push('palettes.css 的 A 组 --brand 不是 #2B7FD8（vendor 被改过）')
+
+  probs.length
+    ? fail('24', '禁用令牌与裸 hex', probs.join('\n      '))
+    : pass(
+        '24',
+        '禁用令牌与裸 hex',
+        `${scanned} 个源文件（index.html + index.css + 全部 tsx/ts）剥注释后 0 处禁用令牌、tsx 0 处内联色值；` +
+          `index.css 裸 hex 全部落在 ${HEX_OK.size} 项白名单内（--rule×2 / Tokyo Night×8 / macOS 交通灯×3 / mask 用 #000）；palettes.css vendor 未被改动`,
+      )
+}
+
+/* === 25. 图标全套与缓存破坏 ==========================================
+   用户原话：「都说了网站图标要改，你怎么迭代了 9 次 favicon 都没动过啊」。
+   查下来图形其实每版都换了，真因是站点从来没有 .ico 兜底 —— 浏览器在标签栏
+   会绕过 <link> 直接要根目录 /favicon.ico，要不到就一直吃缓存里的旧图。
+   原来的 22 关一条都没覆盖图标，所以这一关是新加的第 25 关。
+
+   （与计划书的偏离：计划里第 25 关写的是「逐节点对比度」，但第 3 关本来就是
+     逐节点对比度 —— 两条路由 × 两个断点遍历全部可见文本节点、按字号切
+     4.5/3.0 双阈值。再写一份是复制品，所以换成这一关。） */
+if (want(25)) {
+  const probs = []
+  const NEED = {
+    'favicon.svg': { min: 300 },
+    'favicon.ico': { min: 1500 },
+    'favicon-16.png': { min: 200, w: 16 },
+    'favicon-32.png': { min: 300, w: 32 },
+    'apple-touch-icon.png': { min: 500, w: 180 },
+    'icon-192.png': { min: 800, w: 192 },
+    'icon-512.png': { min: 1500, w: 512 },
+    'site.webmanifest': { min: 200 },
+  }
+  const sizes = []
+  for (const [f, spec] of Object.entries(NEED)) {
+    let buf
+    try {
+      buf = await readFile(path.join(DIST, f))
+    } catch {
+      probs.push(`dist 缺少 ${f}`)
+      continue
+    }
+    if (buf.length < spec.min) probs.push(`${f} 只有 ${buf.length} B，疑似空壳（下限 ${spec.min} B）`)
+    sizes.push(`${f} ${buf.length}B`)
+    if (f.endsWith('.png')) {
+      // PNG: 8 字节签名 + IHDR，宽高是 16..23 的大端 32 位
+      const w = buf.readUInt32BE(16)
+      const h = buf.readUInt32BE(20)
+      if (w !== spec.w || h !== spec.w) probs.push(`${f} 实际 ${w}×${h}，应为 ${spec.w}×${spec.w}`)
+    }
+    if (f === 'favicon.ico') {
+      // ICO 目录头：0..1 保留=0，2..3 类型=1，4..5 帧数（小端）
+      const frames = buf.readUInt16LE(4)
+      if (buf.readUInt16LE(2) !== 1) probs.push('favicon.ico 不是图标类型')
+      if (frames < 3) probs.push(`favicon.ico 只有 ${frames} 帧，应含 16/32/48 三帧`)
+      sizes[sizes.length - 1] += `(${frames}帧)`
+    }
+  }
+
+  // index.html 里每一条图标 link 都要带 ?v=10，并且真的取得到
+  const html = await readFile(path.join(DIST, 'index.html'), 'utf8')
+  const links = [...html.matchAll(/<link\b[^>]*rel="([^"]*)"[^>]*>/g)]
+    .filter((m) => /(^|\s)(icon|apple-touch-icon|mask-icon|manifest)(\s|$)/.test(m[1]))
+    .map((m) => ({ rel: m[1], href: (m[0].match(/href="([^"]+)"/) || [])[1] || '' }))
+  if (links.length < 7) probs.push(`index.html 只有 ${links.length} 条图标 link，应为 7 条`)
+  for (const l of links) {
+    if (!/\?v=10\b/.test(l.href)) probs.push(`rel="${l.rel}" 的 href 没有破缓存参数：${l.href}`)
+    const r = await fetch(new URL(l.href, URL_BASE).href).catch(() => null)
+    if (!r || !r.ok) probs.push(`rel="${l.rel}" 取不到：${l.href}（${r ? r.status : 'ERR'}）`)
+  }
+  if (!links.some((l) => l.rel === 'icon' && /\.ico\?/.test(l.href))) probs.push('没有 .ico 兜底 link（这是九版都没修掉的真因）')
+
+  // manifest 能解析、图标可达、512 标了 maskable
+  try {
+    const mf = JSON.parse(await readFile(path.join(DIST, 'site.webmanifest'), 'utf8'))
+    for (const k of ['name', 'short_name', 'start_url', 'display', 'theme_color', 'background_color', 'icons']) {
+      if (!mf[k]) probs.push(`site.webmanifest 缺字段 ${k}`)
+    }
+    const byS = Object.fromEntries((mf.icons || []).map((i) => [i.sizes, i]))
+    for (const s of ['192x192', '512x512']) if (!byS[s]) probs.push(`manifest 缺 ${s} 图标`)
+    if (byS['512x512'] && !/maskable/.test(byS['512x512'].purpose || ''))
+      probs.push('manifest 的 512 图标没标 purpose:maskable')
+    for (const ic of mf.icons || []) {
+      const r = await fetch(new URL(ic.src, URL_BASE + 'site.webmanifest').href).catch(() => null)
+      if (!r || !r.ok) probs.push(`manifest 图标取不到：${ic.src}`)
+    }
+    const palm = await loadPalette(browser)
+    const cream = palm.hexOf['--cream']
+    if (cream && String(mf.theme_color).toUpperCase() !== cream)
+      probs.push(`manifest theme_color=${mf.theme_color}，应与 --cream ${cream} 一致`)
+    const metaTheme = (html.match(/<meta\s+name="theme-color"\s+content="([^"]+)"/) || [])[1]
+    if (cream && String(metaTheme).toUpperCase() !== cream)
+      probs.push(`<meta theme-color>=${metaTheme}，应与 --cream ${cream} 一致`)
+    const maskColor = (html.match(/rel="mask-icon"[^>]*color="([^"]+)"/) || [])[1]
+    if (maskColor && !palm.set.has(String(maskColor).toUpperCase()))
+      probs.push(`mask-icon color=${maskColor} 不在当前色板内`)
+  } catch (e) {
+    probs.push(`site.webmanifest 解析失败：${String(e).slice(0, 60)}`)
+  }
+
+  probs.length
+    ? fail('25', '图标全套与缓存破坏', probs.join('\n      '))
+    : pass(
+        '25',
+        '图标全套与缓存破坏',
+        `${Object.keys(NEED).length} 个图标产物齐全且尺寸正确（${sizes.join(' · ')}）；` +
+          `${links.length} 条 <link> 全部带 ?v=10 且实测 200；manifest 可解析、192/512 双档、512 标 maskable、theme_color 与 --cream 一致`,
+      )
 }
 
 await browser.close()

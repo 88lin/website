@@ -10,11 +10,11 @@ export const MOBILE_PROBE = () => {
   const de = document.documentElement
   const vh = window.innerHeight
 
-  /* ① 跑道：worksPan() 会往 .work__rail 写内联 height。窄屏不该建跑道，
+  /* ① 跑道：worksPan() 会往 .work-rail 写内联 height。窄屏不该建跑道，
         所以内联样式必须是空的，元素高度必须由内容决定。 */
-  const rail = document.querySelector('.work__rail')
-  const track = document.querySelector('.work__track')
-  const vp = document.querySelector('.work__vp')
+  const rail = document.querySelector('.work-rail')
+  const track = document.querySelector('.work-track')
+  const vp = document.querySelector('.work-vp')
   const railInline = rail ? rail.style.height : null
   const railH = rail ? Math.round(rail.getBoundingClientRect().height) : null
   const railContent = rail
@@ -92,7 +92,7 @@ export const MOBILE_PROBE = () => {
     pinSpacers,
     badAxis: [...new Set(badAxis)],
     gaps: gaps.sort((a, b) => b.gap - a.gap).slice(0, 4),
-    cards: document.querySelectorAll('.pcard').length,
+    cards: document.querySelectorAll('.hscroll-card').length,
   }
 }
 
@@ -105,7 +105,7 @@ export const CLICK_PROBE = () => {
   const dead = (h) => !h || h === '#' || h.trim() === ''
 
   // ① 博客最新六条
-  const posts = [...document.querySelectorAll('.notes__list li')]
+  const posts = [...document.querySelectorAll('.notes-list li')]
   info.posts = posts.length
   posts.forEach((li, i) => {
     const a = li.querySelector('a')
@@ -115,8 +115,9 @@ export const CLICK_PROBE = () => {
     if (!/^https?:\/\//.test(h)) bad.push(`博客第 ${i + 1} 条 href 不是绝对地址：${h}`)
   })
 
-  // ② 数字花园精选（含末尾导航站那块）
-  const cells = [...document.querySelectorAll('.gcell')]
+  /* ② 数字花园精选。v10 换成 dst 那套虚线 .scene-card，六张精选卡本身就是 <a>；
+        「导航站」那条从格子里挪到了章头的 .work-garden 行动条，所以单独查。 */
+  const cells = [...document.querySelectorAll('.scene-card')]
   info.cells = cells.length
   cells.forEach((c, i) => {
     if (c.tagName.toLowerCase() !== 'a') return bad.push(`花园第 ${i + 1} 格不是 <a>`)
@@ -124,14 +125,19 @@ export const CLICK_PROBE = () => {
     if (dead(h)) return bad.push(`花园第 ${i + 1} 格 href 为空`)
     if (!/^https?:\/\//.test(h)) bad.push(`花园第 ${i + 1} 格 href 不是绝对地址：${h}`)
   })
+  const hub = [...document.querySelectorAll('.work-garden a')].filter((a) =>
+    /^https?:\/\/88lin\.github\.io/.test(hrefOf(a) || ''),
+  )
+  info.hub = hub.length
+  if (!hub.length) bad.push('花园章找不到指向导航站的链接')
 
   // ③ 作品卡的按钮必须真的落在卡里（用户原话：按钮要放在卡片内部）
-  const cards = [...document.querySelectorAll('.pcard')]
+  const cards = [...document.querySelectorAll('.hscroll-card')]
   info.cards = cards.length
   let btns = 0
   cards.forEach((card, i) => {
     const cr = card.getBoundingClientRect()
-    const acts = [...card.querySelectorAll('.pcard__act .pill')]
+    const acts = [...card.querySelectorAll('.pcard__act .cta-btn')]
     if (!acts.length) return bad.push(`作品卡 ${i + 1} 没有卡内按钮`)
     btns += acts.length
     for (const a of acts) {
