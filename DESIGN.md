@@ -1,4 +1,4 @@
-# DESIGN.md ｜ v5「接口机架」
+# DESIGN.md ｜ v11「实验志 Field Notes」
 
 这份文件记录的是**判断**，不是清单。每一条都写清楚：当时看到了什么、为什么这么定、代价是什么。
 读者是三个月后的我自己，以及任何要改这套东西的人。
@@ -7,337 +7,219 @@
 
 ## 0. 一句话概念
 
-整个站是**一面竖着的设备机架**。页面不是"内容区块"，是九个**机位（bay）**；
-你滚动的时候不是在翻页，是**沿着机架往下走**。有些机位在面板上开了**窗口**，
-透过窗口能看见机架背后真正在跑的东西——那是一层实时 WebGL 场景，不是装饰图。
-
-命名一路贯彻：`bay` / `chassis` / `bezel` / `rail` / `strip` / `raceway` / `plate` / `relay` / `silk`。
-代码里没有 `section` `card` `hero-wrapper` 这种词。
-
-**明确排除的东西**（用户设定的硬禁）：柔和浅色极简、深色模式、居中对齐的平庸 Hero、
-无重点排版、模板化布局。这五条在每次评审时逐条对照。
+整个站是**一本实验室笔记本**。页面不是「内容区块」，是八条编号实验（EXP.00–07）；
+每条实验有登记序号、量度、结论。数据面板里的数字是标尺刻度，不是装饰线；
+卡片上的手写批注是实验记录，不是文案点缀。整站读起来像翻一本手写的工程志。
 
 ---
 
-## 1. 色彩系统
+## 1. 从 v1 到 v11：为什么做第 11 版
 
-站点底色是**饱和电光蓝**，不是白也不是黑。这是整个方案最大的一次赌注：
-在中文技术站里几乎没人敢把 `#1b4fd8` 当页面背景，但它同时躲开了"浅色极简"和"深色模式"两条禁令。
+前九版各有判断但互不继承。v10 把配色拉回设计系统 A 组蓝/柠檬黄/珊瑚红，
+解决了 v9 用户反馈的「屎黄色」问题，但版式和组件语言仍然混杂。
+
+v11 做的第一件事：**版式与组件语言对齐自有设计系统**。88lin 自己有
+mydesign-system（https://88lin.github.io/mydesign-system），里面每个零件都有名字、
+有规格、有用法。v11 不再造轮子，直接搬 CodeMac、specimen-grid、ruler、
+hand-drawn frame 等组件。这不是偷懒，是让个人站和设计系统的视觉语言一致——
+招聘方点开导航站看到的是同一套东西。
+
+---
+
+## 2. 配色：60/30/10 铁律
+
+配色方案来自 `palettes.css` 的 **Design System A**（`data-palette="A"`）。
+
+| 角色 | 色值 | 用途 | 面积预算 |
+|------|------|------|----------|
+| 奶油底 `--cream` | `#FEFCF6` | 地面、卡片背景 | ≥ 60% |
+| 蓝 `--brand` | `#2B7FD8` | 主色、链接、标题强调 | ~30% |
+| 柠檬黄 `--highlight` | `#F4D758` | 标签、批注、量级条 | ≤ 8% |
+| 珊瑚红 `--pop` | `#E84A5F` | 朱红印章、少量强调、状态灯 | ≤ 6% |
+
+v9 的教训：整屏饱和底色（`#EFCE9A`）= 用户原话「屎黄色」。
+v11 的规则：**彩色只做零件，不做地面**。地面永远是奶油或深奶油两档纸色交替
+（`data-tone="paper" | "alt"`），由 `chapters[]` 数组的 `tone` 字段严格交替。
+
+深色像素（`--dark-panel` `#151821`）只出现在 CodeMac 代码面板和表格深墨表头，
+由 audit G23 卡在 12% 面积上限。
+
+---
+
+## 3. 排版
+
+| 用途 | 字体 | 来源 |
+|------|------|------|
+| 展示标题 | Fraunces 900 | Google Fonts，两档拉丁子集共 21 KB，不预载（font-display: swap） |
+| 中文正文 | 系统黑体栈 | `-apple-system, "PingFang SC", "Microsoft YaHei", sans-serif` |
+| 手写批注 | Caveat | 预加载（首屏旁批），2 KB woff2 |
+| 等宽数据 | JetBrains Mono | 标尺刻度、代码面板、量级数据 |
+
+标题用 `clamp()` 响应式：`clamp(2rem, 5vw + 1rem, 4rem)`。
+正文 `1.125rem`（18px），行高 `1.65`。
+批注文字 `.annot` 用 Caveat，颜色 `--ink-faint`，字号 `0.85em`。
+
+---
+
+## 4. 八章结构
+
+| EXP | id | 标题 | 地面色 | 内容 |
+|-----|----|------|--------|------|
+| 00 | hero | 开场 | paper | 姓名、角色、一句定义 + Three.js 星图 |
+| 01 | metrics | 读数 | alt | 六格量度面板（仓库、文章、脚本接口…），标尺刻度 |
+| 02 | craft | 主线 | paper | 能力汇流图 + 双轨服务 + 技术栈网格 |
+| 03 | work | 作品 | alt | 横推卡轨（6 仓库，卡宽按 star 对数分配） |
+| 04 | cases | 案例 | paper | 三案例详情页（CodeMac 面板 + 流程 + 令牌体系） |
+| 05 | garden | 标本馆 | alt | 导航站精选（scene-card 虚线框） |
+| 06 | notes | 写作 | paper | 博客入口 + 最近文章 |
+| 07 | contact | 联系 | alt | 一句话 + 朱红印章 |
+
+为什么这个顺序：先说能做什么（craft 含三条可承接的服务），仓库和数字退到读数与作品章当证据。
+案例在作品后面——你得先知道我做了什么，才能判断案例里的问题怎么解。
+标本馆和写作是「还有这些」，联系是收尾。EXP 编号承载信息：它是这本志的登记序号。
+
+---
+
+## 5. 3D 星图（Atlas）
+
+`Atlas` 组件渲染一个 Three.js 星座图，展示六个核心仓库的关系网络。
+
+### 技术实现
+
+- **双层渲染**：静态 SVG 始终在 DOM（确保首屏可读），WebGL canvas 在桌面端叠加
+- **动态导入**：Three.js 通过 `React.lazy` + `import()` 加载（~122KB gz），不在首屏包
+- **确定性布局**：mulberry32 PRNG 生成器，同一种子 → 同一布局（SVG 和 WebGL 位置完全同步）
+- **标签碰撞避免**：`orbitLabelPoints()` 对每条轨道搜索 32 个候选角度，贪心选择距所有障碍物最远的点
+
+### 数据驱动
+
+`src/lib/atlas.ts` 定义星图数据结构：
+- `StarNode`：每个仓库节点（位置、半径、颜色、标签）
+- `OrbitEdge`：轨道连线（hub → 节点的角度和距离）
+- `SHORT` 映射：短名显示（lofi / repair / gzh / diataxis / wesum）
+
+### 性能约束
+
+- Three.js 包体单独 chunk（`atlas-[hash].js`，~482 KB raw / ~122 KB gz）
+- 移动端只渲染 SVG（零 WebGL 开销）
+- `useMediaQuery(WIDE_MQ)` 控制是否挂载 canvas
+
+---
+
+## 6. 关键组件
+
+### CodeMac（代码面板）
+macOS 窗口样式的代码面板，规格逐条照抄 88lin 设计系统：
+- 12px 圆角、隐藏溢出、40px 模糊投影
+- 标题栏 `#2D2D3A` + 11px 三色圆点 + 等宽文件名
+- 面体 `#1A1B26`，内距 22px
+- 语法色 Tokyo Night（**全站唯一允许写死色值的地方之一**）
+- 全页唯一的深色实体，充当奶油底的视觉锚点
+- 内容用词法记号数组 `Tok[]`，不用正则高亮（中文注释不误伤）
+
+### 手绘边框系统
+Catmull-Rom 样条 → 三阶 Bézier，用 SVG `<path>` 绘制不规则边框。
+用于案例页的「实验志」封面效果。
+
+### 朱红印章
+`data-stamp` 属性标记的元素渲染为朱红色圆形印章，
+`--pop` 色值 + `transform: rotate(-12deg)`。品牌签名零件。
+
+### 量度面板（Metrics）
+六格网格，每格一个数字 + 标签 + 来源脚注。
+背景色 `--cream-dark`（深奶油），数字用 Fraunces 900。
+标尺刻度 `.ruler` 用 SVG 绘制毫米级刻度线。
+
+---
+
+## 7. 动效体系
+
+### 视差（pointer bus）
+`src/lib/bus.ts` — rAF 合帧的指针广播。
+`pointermove` 在高刷屏上一秒 240 次，合帧后一帧最多写一次。
+订阅者：`Hero` 首屏截图的 CSS transform。
+
+### 滚动揭示
+`useReveal` + `useStagger`（`src/lib/motion.ts`）。
+元素进入视口时添加 `.is-in` 类触发 CSS transition。
+`prefers-reduced-motion: reduce` 时跳过所有动画。
+
+### 横推卡轨（Work 章节）
+GSAP ScrollTrigger pin + 水平平移。
+卡宽按 star 数的对数分配（24rem 起，最多加 12rem）。
+`useMediaQuery(WIDE_MQ)` 控制：≤900px 不 pin，竖排展示。
+
+---
+
+## 8. 静态生成
+
+构建管线：`build:client` → `build:ssr` → `prerender`
 
 ```
---chassis      #1b4fd8   正文 #fffdf4 6.62:1 · 次级 #c8d6ff 4.62:1
---chassis-deep #12308c   正文 #fffdf4 11.6:1 · 次级 #afc3f5 6.70:1
---chassis-lift #4c82f0   正文 #0a0c22 4.81:1 · 次级 #0d1a3f 4.63:1
---lemon        #f2da2e   正文 #10122b 12.6:1 · 次级 #6b4e00 5.85:1
---jade         #12a594   正文 #10122b 5.60:1 · 次级 #022a25 5.06:1
---amber        #f07a12   正文 #10122b 6.15:1 · 次级 #4a1d00 5.19:1
---verm         #e01234   正文 #ffffff 4.96:1（没有次级层）
---verm-hot     #ff3a2c   只做灯，永远不承载文字
---panel        #fffdf4   只做面板，永远不做页面底色
---ink          #10122b   只做字和丝印
---screen       #0a0d24   只做小读数窗，单格内占比不超过 ~30%
+tsc -b --noCheck && vite build          # 客户端
+vite build --ssr src/entry-server.tsx   # SSR bundle
+node scripts/prerender.mjs             # 生成 HTML
 ```
 
-**朱红是被迫改的。** 原本定的 `#F02D4A` 实测白字 4.045:1、墨字 4.25:1，两边都过不了 4.5。
-不是"接近达标"，是**不达标**——所以压深到 `#e01234`，白字 4.96:1。视觉上损失了一点荧光感，
-换来的是 CH.08（唯一的转化区块）上每一个字都合规。
+四条路由预渲染：
+- `/` → 首页（~69 KB）
+- `/case/lofi/` → lofi 案例页（~13.5 KB）
+- `/case/repair/` → repair 案例页（~13.7 KB）
+- `/case/video-vip/` → video-vip 案例页（~14.7 KB）
 
-**琥珀是后加的第五个色相。** 四色（蓝/柠檬/翡翠/朱红）排到第九格时，
-`data-ground` 的循环开始重复，机架读起来像贴了壁纸。加 `--amber` 之后九格没有相邻重复。
-
-**白色是被保留的。** `--panel` 从 3D 模块的配色数组里删掉了——早期版本里
-成千上万个白色小方块是整个画面最吵的东西，压过了所有前景文字。
-现在白色只留给**当前机位的活动设备边框**，它于是重新变成一个信号：*这一格是活的*。
-
-每个底色都定义了自己的浏览器表面：`::selection`、`caret-color`、滚动条、
-`:focus-visible` 3px 环。这是"细节控"评审最容易抓的地方，也是最便宜的加分项。
+部署到 GitHub Pages：`https://88lin.github.io/website/`
 
 ---
 
-## 2. 版式
+## 9. Token 纪律
 
-### 显示字号越界，是故意的
-craft floor 写着显示字号封顶 6rem。Hero 用的是 `clamp(2.6rem, 6.6vw, 8.5rem)`，**越界了**。
-理由：这是一个只有一屏机会说服人的委托型主页，标题必须是画面的第一层级。
+所有颜色**只能**来自 `palettes.css` 的语义 token。禁止：
+- 在组件或业务 CSS 中写死 hex 值（CodeMac 的 Tokyo Night 语法色是唯一例外）
+- 引用 palette 字母（`A` / `B`），只引用角色名（`--brand` / `--highlight` / `--pop`）
+- 用 `rgba()` 拼接非 token 的色值
 
-但**原本想要 11rem，最后压到 8.5rem**——因为 Hero 是 `1.42fr / 0.58fr` 两栏，
-最长的一行是 8 个汉字，11rem 时会撞到右栏的窗口。**约束来自最长行，不来自审美。**
-
-### 行高下限抬到 1.0
-中文没有 ascender/descender 的呼吸空间，1.1 的行高在 8.5rem 下会散成三条独立的线。
-全站行高下限设 1.0。代价已经在评审里被抓到：标点的下缘和下一行的顶部几乎相接。
-**这是知情后的选择**，不是疏忽——CJK 大字号本来就该这么排。
-
-### 禁令的落地方式
-- **禁止标题上方的 eyebrow/kicker** → 机位编号搬到左侧竖排导轨 `.rail__no`（`writing-mode`）。
-- **禁止卡片上 >1px 的彩色左/右边框** → 整张卡的**底色**就是颜色（`data-ground`）。
-- **禁止无模糊的硬偏移阴影**（neobrutalism 之外）→ 所有阴影都带 offset + blur。
-- **等宽字体只给代码、数据、量测**，绝不给正文。
-- **一次只声明一种高度**：`.plate` 只有阴影，`.silk` 只有描边，`.well` 只有内阴影。
-
-### 手绘感不是滤镜
-参考站里的彩色虚线框是这套视觉唯一借用的元素。实现上**没有** `feTurbulence`，
-**没有** `doodle` / `loose-sketch` 这类类名。`src/lib/frame.ts` 用 mulberry32 播种
-+ Catmull-Rom 转贝塞尔，生成**确定性**的抖动路径，类名叫 `.annot__frame`。
-确定性很重要：同一个 key 每次刷新画出同一个框，截图可比对，SSR 和 hydration 不会打架。
-颗粒感全部来自 shader / halftone，不来自图片纹理。
+切换配色只需改 `<html data-palette="A">` 的字母，全站自动跟随。
 
 ---
 
-## 3. 机架窗口（chassis window）
+## 10. 审计与质量
 
-`.chassis` 是一个 3×3 CSS 网格：四块不透明的 `<i>` 面板围出中间的空洞，
-`.chassis__bezel` 落在 2/2/3/3，带丝印描边和四颗螺丝点。
-位置由 `--win-x / --win-y / --win-w / --win-h` 四个百分比驱动。
+`scripts/audit.mjs` 包含全站质量检查：
+- 8 个章节必须存在
+- 纸色交替验证
+- 深色面积 ≤ 12%
+- 每个案例页有 CodeMac 面板
+- 所有数字可被 GitHub API / 站点统计核实
 
-**百分比是相对整格的滚动高度**，不是视口。这带来一个必须记住的坑：
-
-> **格子越高，百分比窗口的落点越不可预测。**
-> CH.04（案例栈）在桌面是 1531px、手机 1915px，同一组百分比在两端会落在完全不同的内容上。
-> 所以 **CH.04 没有窗口**。CH.02 / CH.06 / CH.07 同理。九格里只有五格开窗。
-
-页面内容渲染在机架面板**之上**，所以窗口必须主动避开文字。五个窗口的落位：
-
-| 机位 | x / y / w / h | 丝印 | 图版 |
-|---|---|---|---|
-| CH.00 Hero | 70% 6% 26% 31% | `LENS · LIVE` | `ch-00` |
-| CH.01 Metrics | 62% 3% 34% 18% | `PARTICLE READOUT` | `ch-01` |
-| CH.03 Works | 64% 11% 32% 27% | — | `ch-03` |
-| CH.05 Garden | 4% 58% 24% 30% | `GARDEN FEED` | `ch-05` |
-| CH.08 Contact | 58% 8% 38% 34% | `SIGNAL OUT` | `ch-08` |
-
-手机端整组覆写成 `grid-template-columns: 6% 1fr 6%; grid-template-rows: 0% 34vh 1fr`，
-窗口统一变成 343×287 的横幅。
+`scripts/geom-audit.mjs` 专门检查星图标签碰撞。
 
 ---
 
-## 4. 降级：手机退到静态图版
+## 11. 代价与已知限制
 
-用户明确要求手机不跑 WebGL。实现不是"隐藏 canvas"，是**换一层真图**：
-
-`.plateshot > img` 直接写在预渲染的 HTML 里，首帧就有内容；
-`<html>` 拿到 `.gl-on` 之后（3D 点着了）才把它藏掉。
-桌面端因此**没有加载页**——第一帧是完整的静态机架，~420ms 后 3D 无缝接管。
-
-**图版必须和实时场景同源。** `scripts/plates.mjs` 起 dist、点火 WebGL、
-把每个开窗机位滚到位、把 `.chassis__bezel` 的框裁下来（2× DPR）、转 WebP。
-它们**就是**实时场景的截屏，不是另画的插图。五张合计 134 KB。
-
-同理，`video_vip` 没有自己的界面可截（它是一段油猴脚本），
-所以 `scripts/cover-vip.mjs` 把它"真正的界面"画出来——
-**18 路解析接口的名字逐字来自 `vv.user.js`**，不是编的。其余三张封面是真实站点截图。
+1. **Three.js 包体大**：~122 KB gz。但它是动态导入的，移动端不加载，首屏不受影响。
+2. **只有一版配色**：v11 锁定 Design System A。切换到 B-J 只需改 HTML 属性，但 v11 的 60/30/10 比例是为 A 组调的，其它 palette 可能需要重新平衡。
+3. **SSR 中 Three.js 不执行**：`entry-server.tsx` 不导入 WebGL 模块，预渲染输出只有 SVG。
+4. **横推卡轨在 ≤900px 降级为竖排**：这是有意的设计决策，不是 bug。
+5. **数据截止 2026-08-16**：`site.ts` 中的所有数字需要定期刷新，`npm run audit` 会比对。
 
 ---
 
-## 5. WebGL 场景
+## 12. 关键文件索引
 
-### 场景参数
-`BAYS=9, SCENE_H=22, BAY_GAP=2.75, BUS_X=1.92, LENS_X=2.02`。
-PerspectiveCamera fov 38 @ z=6.2；相机 y 向 `-progress * SCENE_H` 插值（`dt*7.5`），
-x 向 `s.px * 0.34` 插值（`dt*3.2`），`rotation.y → -s.px*0.045`、`rotation.x → s.py*0.03`。
-渲染器 `antialias:false, alpha:false`；HDR 优先 `EXT_color_buffer_float`，否则 HalfFloatType。
-
-每帧四趟：(A) 藏起透镜渲背景到 bgRT → (B) 全场景、透镜采样 bgRT → mainRT →
-(C) 1/4 分辨率亮部提取 + 两次模糊 → (D) 合成。
-
-### 合成 shader 为什么手写
-`src/webgl/post.ts` 用的是自己的全屏四边形 ShaderMaterial，**绕过了 three 的 `colorspace_fragment`**，
-所以 tone mapping 和 sRGB 必须手动做。顺序是固定的，换顺序就出错：
-
-```
-径向色差 (off = c * r2 * uAberration)
-→ + bloom * uBloomStrength
-→ 暗角 *= 1.0 - r2*0.14
-→ toSRGB(aces(col * uExposure))     ← 这一步之后才是显示空间
-→ halftone 网点 + hash 颗粒          ← 必须在显示空间做，否则被 tone map 吃掉
-→ clamp(0,1)
-```
-当前值：`uThreshold 0.86 · uBloomStrength 0.34 · uExposure 0.95 · uAberration 0.018 · uGrain 0.05`。
-色差从 0.03 降到 0.018：因为它是径向的，在 Hero 那个偏心的小窗口里 0.03 会产生约 2.7px 的彩边，
-看起来像没对焦，而不是像镜头。
-
-### 发现一：机架的颗粒度由**最小的那个窗口**决定，不由视口决定
-这是这一版最贵的一课。早期把机架按"整屏好看"来调，结果开窗之后每个窗口里只看得到一两行模块，
-读起来像色块墙。
-
-实测换算（相机 fov 38 @ z=6.2）：
-
-| 平面 | z | 每世界单位的像素 |
-|---|---|---|
-| 机架面板 | -0.5 | ≈ 195 px |
-| 走线槽背板 | -0.86 | ≈ 185 px |
-| 远景背景 | -3.6 | ≈ 133 px |
-| 透镜 | +1.25 | ≈ 264 px |
-
-最小的 CSS 窗口是 346×205 px ≈ **1.8 × 1.05 世界单位**。
-要在里面塞下"约 5 行 × 约 10 个模块"才读得出机架感，于是行距 `U` 从 0.86 压到 **0.30**。
-
-### 发现二：透过窗口看的东西会被**放大 1.46 倍**
-背景板原本在 z=-3.6，机架开口在 z=-0.5。从相机看过去，开口把背景放大了
-`(6.2+3.6) / (6.2+0.5) = 1.463×`。丝印跑马灯的高斯带中心在 `BUS_X=1.92`，
-但窗口实际取到的是背景 x ∈ [2.19, 3.42] —— **带子早就衰减完了，所以什么都看不见。**
-
-（排查过程值得记一笔：先怀疑纹理没加载，加了一次性 `console.log` 确认
-1024×608 的贴图确实在、`disposed=false`，才把矛头转向几何。**先证伪最便宜的假设。**）
-
-**规则：任何"要被透过缝隙看见"的东西，必须待在缝隙平面后方约 0.4 世界单位以内。**
-所以专门加了一块**走线槽背板**在 z=-0.86（`RACE_Z`），而不是复用远景背景。
-它自带 `RACE_PARALLAX = (6.2 - RACE_Z)/(6.2 + 0.5) = 1.0537` 的横向补偿。
-
-### 发现三：丝印跑马灯只有 5 个字符的预算
-走线槽在屏幕上大约 164px 宽，文字占其中 ~60%（≈99px 宽、≈33px 高）才不喧宾夺主。
-换算成等宽字，**每行最多 5 个字符**。所以标签是
-`88LIN / 4684 / 502 / V5 / RACK / 55 / BUS / 18`——全是站点真实数据的缩写，不是随机字符。
-
-**画布宽高比必须和 shader 的竖向平铺速率配平**：canvas 720:1600 ↔ `fract(vW.y * 0.5085 - t*0.052)`。
-改了其中任何一个而不改另一个，字就会被拉长或压扁。
-
-### 发现四：加性粒子的能量预算
-总能量 ≈ 粒子数 × 点面积 × alpha。三档设备粒子数不同，如果 alpha 固定，
-高配机就会糊成一片白雾。所以 **`uAlpha = k * (256/side)²`**，让密度对档位不变。
-当前 `k = 0.05`，`side` 高配 96 / 其余 64，`uSize = 26`。
-
-同样的道理用在 LED 上：**只有约 1/6 的 LED 是"点亮"的**，其余乘 0.26 压到 bloom 阈值 0.86 以下。
-几千个自发光点如果全亮，bloom 会把整面机架烧成一块白板。
-
-### 机架几何（`src/webgl/Rack.ts`）
-- `U = 0.3`，`ROWS = ceil((SCENE_H + 8) / U)`，`TOP_Y = 2.6`。
-- **左右边界 `EDGE_L = -5.4 / EDGE_R = 5.4`**：CSS 窗口可能落在 x=4% 到 x=96% 的任何地方，
-  所以机架必须**顶到底、通到边**地填满，不能只填中间。
-- 每行两条面板条（`[EDGE_L, RACE_L]` 和 `[RACE_R, EDGE_R]`），中间**留空**给走线槽。
-- `fillRow()` 每跨度放 1–4 个模块；14% 是盲板；15% 上强调色；
-  每个非盲板模块带 2–14 颗 0.036 的 LED 小方块。
-- 强调色 `ACCENT = [lemon, jade, amber, verm, jade, lemon]`——**没有 panel**（见 §1）。
-- 当前机位的活动设备：固定 `AW = 3.66`，白色外框 + 深色内胆 + 7 片芯片 + 20 颗 LED。
-- LED 走**第二个 InstancedMesh**，`MeshBasicMaterial({ toneMapped: false })`，
-  非等比缩放 `(s, s*0.62, s)`。不 toneMap 是因为它们要打穿 bloom 阈值。
-
-### 透镜
-`roundedSlab()` 从 1.58×1.66 缩到 **0.82×0.76**，圆角 0.36→0.2。
-原因很直接：旧透镜在屏幕上是 417×438px，**比 Hero 那个 374×279 的窗口还大**，
-所以玻璃的边缘永远在画外——观众看到的只是一块畸变，认不出那是一片镜片。
-缩小之后边缘进框，它才开始像一个物件。
-
----
-
-## 6. 数据总线（`src/lib/bus.ts`）
-
-**DOM 只广播语义值，3D 永远不查 DOM。** 这条边界是整套东西能维护的关键。
-
-信号契约：`channel`（当前机位）、`progress`、`velocity`、`pointer(px, py)`、
-以及 `aperture`。`aperture` 是当前机位窗口的 **NDC 矩形**
-（`x/y ∈ -1..1` 为中心点，`w/h ∈ 0..2`），没有窗口时为 `null`。
-
-`bootChannelTracking()` 在切换机位时读一次 `.chassis__bezel` 的 rect 并发布；
-3D 侧只消费数字。好处是：改 CSS 窗口位置不需要动任何 3D 代码。
-
----
-
-## 7. 动效：一个被排练过的瞬间
-
-全站只有**一个**被精心编排的动作，叫 **relay（继电）**：
-指示灯亮 → 3D 信号改道 → 批注展开。`relay *= pow(0.0015, dt)`，约 0.9 秒衰减完。
-
-除此之外，九个机位各有**各自的**入场方式（`data-reveal`，由 `--rv` 0→1 驱动）：
-`shutter`(00) · `digit`(01) · `wire-l/r/c`(02，`stroke-dashoffset` 跑 340) · `slide`(03) ·
-`seat`(04) · `cascade`(05) · `latch`(06) · `sweep`(07) · `flood`(08)。
-
-默认 `--rv: 1`；只有 `.js [data-reveal]:not(.is-in)` 才置 0——
-**没有 JS 的访客看到的是完整页面，不是空白页**。`prefers-reduced-motion` 直接把 `--rv` 复位为 1。
-
----
-
-## 8. 踩过的坑（会再踩一次的那种）
-
-### `img, svg, canvas { max-width: 100% }` 这条 reset 会静默吃掉覆盖层 SVG
-`.annot__frame`、`.annot__lead`、`.mark-circle > svg` 都是绝对定位的覆盖层，
-用 `width: calc(100% + Xem)` 故意外扩。那条 reset 把它们**悄悄夹回 100%**，
-框刚好贴着文字边缘，看起来像"设计得不够松"，而不像 bug。
-修法是给这三个类作用域内 `max-width: none`。
-
-另一半：**SVG 是替换元素**，只写 `inset` 会解析成固有尺寸，
-所以这三个类必须显式写 `left / top / width / height`。
-
-### 粘性案例栈的压暗层不能用 `filter` 也不能用 `opacity`
-`filter: brightness()` 把卡片压成接近黑色——**直接违反"禁止深色模式"**。
-改成 `.case-card::after { background: var(--chassis-lift); opacity: var(--sink, 0) }`，
-GSAP 补间 `'--sink': 0.62`。
-
-注意 `bootCaseStack()` 初始化时必须 `card.style.setProperty('--sink','0')`：
-**GSAP 读不到一个从未声明过的自定义属性**，不预置就补间不动。
-
-### 朱红底上的批注色
-`--jade / --amber / --chassis-lift` 在 `#e01234` 上都掉到 3:1 以下。
-所以 `[data-ground='verm'] .annot { --annot-color: var(--lemon) }`——四个信号色里只有柠檬活下来。
-
-### 水平轨道的无缝滚动不能用 flex `gap`
-`gap` 不参与轨道复制的宽度计算，接缝处会跳。必须用 `.track__item { margin-right }`。
-
-### 固定底栏会盖住页脚最后一行
-`.foot` 底部 padding 提到 `clamp(6.5rem, 11vh, 8.5rem)`。
-
----
-
-## 9. 字体
-
-总量 **154.7 KB / 200 KB 预算**，全部子集化，`scripts/subset-fonts.py` 超预算直接非零退出。
-
-| 文件 | 权重 | 字数 | 大小 |
-|---|---|---|---|
-| NotoSerifSC-Display.woff2 | 900 | 146 | 20.6 KB |
-| NotoSansSC-Regular.woff2 | 400 | 749 | 93.5 KB |
-| NotoSansSC-Semibold.woff2 | 650 | 253 | 30.6 KB |
-| JetBrainsMono-Regular.woff2 | 400 | 182 | 3.9 KB |
-| JetBrainsMono-Bold.woff2 | 800 | 182 | 3.8 KB |
-| Caveat.woff2 | 600 | 39 | 2.4 KB |
-
-字表由 `scripts/chars.mjs` 用 Playwright 跑 4 条路由 × 2 个视口，
-按 `fontFamily + weight` 分桶采集**真实渲染到的字符**。改文案就要重跑。
-
-变量字体用 `instancer.instantiateVariableFont` 钉死单一 wght，
-丢掉 DSIG/GSUB/GPOS/MATH/BASE/JSTF。
-
-`local()` 只给正文无衬线用，**显示体 / 等宽 / 手写体绝不用 `local()`**——
-本地同名字体的字重和度量对不上，会让排版在不同机器上漂移。
-CJK **故意不 preload**：它是首屏之后才需要的量级，preload 会和关键 CSS 抢带宽。
-
----
-
-## 10. 体积
-
-JS（gzip，全部按路由/惰性切分）：
-
-| chunk | gz |
-|---|---|
-| three | 123.25 KB |
-| react | 44.55 KB |
-| gsap | 44.41 KB |
-| index | 21.02 KB |
-| Rack | 10.55 KB |
-| lenis | 5.53 KB |
-| **合计** | **249.31 KB**（闸门 320 KB） |
-
-CSS 7.35 KB gz。字体 175 KB。图版 134 KB。封面 192 KB。
-首屏真正需要的只有 `index + react + css`≈ 73 KB gz；
-`three / gsap / Rack` 是点火时才拉的。
-
-预渲染 4 条路由合计 74.3 kB：`/` 49.0 · `/case/lofi/` 8.2 · `/case/repair/` 8.4 · `/case/video-vip/` 8.7。
-
----
-
-## 11. 已知的、知情的取舍
-
-1. **Hero 显示字号越过 craft floor 的 6rem 上限**（8.5rem）。理由见 §2。
-2. **全站行高下限 1.0**，中文大字号下标点会贴得很近。见 §2。
-3. **CH.01 的 `502` 卡片下方有约 90px 空白**。保留：页脚规则线共享基线，
-   而 `4,684` 作为主指标本来就该更大——把 502 撑到同高会削弱层级。
-4. **手机端 Hero 标题第一行压在机架图版上**，比压在纯色上略难读。
-   保留：图版顶部本来就是画面的主视觉，把标题推下去会让首屏失去冲击。
-5. **案例页缩略图里的微型文字不可读**。它是装饰性预览，不是信息载体。
-6. **透镜只在 CH.00 精确嵌进窗口，其余四扇窗只做到「掠过」。**
-   `bus.ts` 的 `aperture` 契约、`motion.ts` 的逐帧广播、`Rack.ts` 的
-   NDC→世界坐标反投影都已就位（见 §6），Hero 那一扇对得严丝合缝；
-   但 CH.01 / CH.05 / CH.08 的玻璃仍落在窗口外侧，说明这条链路上还有一处没查清。
-   已经排除的：纹理未加载、bus 模块被重复打包、只监听 scroll 导致读数过期。
-   现状是**知情缺陷**，不是没做——玻璃在机架上漂移本身仍然成立，
-   只是没有兑现「每扇窗都嵌着一片镜片」这个更强的承诺。下一轮从这里接着查。
+| 文件 | 职责 |
+|------|------|
+| `src/styles/palettes.css` | 配色 token（vendor from mydesign-system） |
+| `src/styles/index.css` | 全站样式（组件 + 响应式 + 动效） |
+| `src/content/site.ts` | 全站唯一数据源（数字、文案、章节定义） |
+| `src/lib/atlas.ts` | 星图数据结构与碰撞避免算法 |
+| `src/lib/bus.ts` | rAF 合帧指针总线 |
+| `src/lib/motion.ts` | 滚动揭示 + GSAP 场景管理 |
+| `src/lib/bp.ts` | 响应式断点常量 |
+| `src/components/Atlas.tsx` | 星图 SVG 渲染 |
+| `src/components/CodeMac.tsx` | macOS 代码面板 |
+| `src/components/Ink.tsx` | 手写批注、标尺等墨水零件 |
+| `src/sections/` | 八章组件 |
+| `src/pages/CasePage.tsx` | 案例页路由 |
+| `scripts/prerender.mjs` | 静态 HTML 预渲染 |
+| `scripts/audit.mjs` | 全站质量审计 |

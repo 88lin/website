@@ -1,7 +1,7 @@
 /**
  * 全站唯一数据源。
  *
- * 所有数字都能被第三方核验，核实时间 2026-08-10：
+ * 所有数字都能被第三方核验，核实时间 2026-08-16：
  *  - GitHub REST API  /users/88lin 与 /users/88lin/repos?per_page=100（star / fork / 仓库数 / followers）
  *  - blog.88lin.eu.org 首页统计条与标签云（文章数 / 建站天数 / 标签计数）
  *  - video_vip.user.js v3.1.10（解析接口数 / 站点适配器数 / @include 条数，逐行数出来的）
@@ -11,7 +11,7 @@
  * 对不上就红。刷新方式见 README「数据刷新」。
  */
 
-export const AS_OF = '2026.08.10'
+export const AS_OF = '2026.08.16'
 
 /* ---------------------------------------------------------------- 章节 */
 
@@ -35,30 +35,25 @@ export type Tone = 'paper' | 'alt'
 /** 卡片色相。只染卡的边、条与投影，卡面永远是纸，字永远是墨。 */
 export type Tint = 'blue' | 'yellow' | 'coral'
 
-export type ChapterId = 'hero' | 'craft' | 'work' | 'cases' | 'notes' | 'contact'
+export type ChapterId = 'hero' | 'metrics' | 'craft' | 'work' | 'cases' | 'garden' | 'notes' | 'contact'
 
-export type Chapter = { id: ChapterId; label: string; tone: Tone }
+export type Chapter = { id: ChapterId; label: string; tone: Tone; no: string }
 
 /**
- * 六章。v6 是八章一个模子，差异只有列数；v7 砍到六章，并且强制每章换一种构图：
- * 分屏海报 / 无卡片对角线 / 横向图廊 / 粘性堆叠 / 分组横滚 / 满幅色块。
- * 章间的构图特征向量在 audit G16 里逐对比距离，撞型即红。
- *
- * v9 把顺序从「先亮仓库」改成「先说能做什么」：第二章不再是作品通道，
- * 而是两条主线与三类可承接的服务。仓库相关内容压缩到第 3、4 两章，
- * 且 star / fork 这类仓库统计数字全站只在作品卡上出现一次。
- *
- * v10 地面色节奏改成两档严格交替：纸 → 深纸 → 纸 → 深纸 → 纸 → 深纸。
- * 章界不再靠色相跳变来分，靠地面明度差 1.5% 加章头编号 —— 这是那三个参考站
- * 的做法，也是 v9「一整屏 #EFCE9A」翻车之后唯一还站得住的分章方式。
+ * v11「实验志」：八章 = 志里的八条编号实验。章序沿用 v9 的判断——
+ * 先说能做什么（craft 章含三条可承接的服务），仓库与数字退到读数与作品章当证据。
+ * EXP 编号承载信息：它是这本志的登记序号，也是导航锚点与深链接的一部分。
+ * 地面色仍是两档纸色严格交替（v9 判词之后的定论，不再动摇）。
  */
 export const chapters: Chapter[] = [
-  { id: 'hero', label: '开场', tone: 'paper' },
-  { id: 'craft', label: '能做什么', tone: 'alt' },
-  { id: 'work', label: '做过什么', tone: 'paper' },
-  { id: 'cases', label: '怎么做的', tone: 'alt' },
-  { id: 'notes', label: '在写在跑', tone: 'paper' },
-  { id: 'contact', label: '联系', tone: 'alt' },
+  { id: 'hero', label: '开场', tone: 'paper', no: '00' },
+  { id: 'metrics', label: '读数', tone: 'alt', no: '01' },
+  { id: 'craft', label: '主线', tone: 'paper', no: '02' },
+  { id: 'work', label: '作品', tone: 'alt', no: '03' },
+  { id: 'cases', label: '案例', tone: 'paper', no: '04' },
+  { id: 'garden', label: '标本馆', tone: 'alt', no: '05' },
+  { id: 'notes', label: '写作', tone: 'paper', no: '06' },
+  { id: 'contact', label: '联系', tone: 'alt', no: '07' },
 ]
 
 /* ---------------------------------------------------------------- 身份 */
@@ -108,13 +103,13 @@ export const metricsIntro = {
 
 export const metrics: Metric[] = [
   {
-    value: '4,684',
+    value: '4,745',
     label: '累计 Star',
     sub: '22 个原创仓库合计',
     source: 'GET /users/88lin/repos → Σ stargazers_count (fork=false)',
   },
   {
-    value: '502',
+    value: '508',
     label: '被 Fork',
     sub: '有人真的拿去改了',
     source: 'GET /users/88lin/repos → Σ forks_count (fork=false)',
@@ -122,11 +117,11 @@ export const metrics: Metric[] = [
   {
     value: '22',
     label: '原创仓库',
-    sub: '另有 81 个 fork，共 103 个公开仓库',
+    sub: '另有 82 个 fork，共 104 个公开仓库',
     source: 'GET /users/88lin/repos → count(fork=false)',
   },
   {
-    value: '144',
+    value: '145',
     label: '关注者',
     sub: '没有互关任务，只有 7 个 following',
     source: 'GET /users/88lin → followers',
@@ -285,8 +280,8 @@ export const projects: Project[] = [
     blurb:
       '2023 年写的油猴脚本，现在是我 star 最多的仓库。18 路解析接口可以随时切换，22 个站点各有独立的播放器容器与遮罩清理规则。它教会我的是：接口一定会挂，可切换才是功能。',
     stack: ['JavaScript', '油猴脚本', '多端适配'],
-    stars: 4581,
-    forks: 471,
+    stars: 4642,
+    forks: 474,
     state: 'maintained',
     live: 'https://88lin.github.io/vip/',
     repo: 'https://github.com/88lin/video_vip',
@@ -459,6 +454,47 @@ export const gardenIntro = {
   total: garden.length,
 }
 
+/* ---------------------------------------------------------------- 星图 */
+
+/**
+ * v11 星图数据：@88lin 的全部 22 个原创仓库，star 数取自
+ * GET /users/88lin/repos?per_page=100（2026-08-16）。首屏那幅「作品星座」
+ * 上每一个点都对应一个真实仓库，点节点就是打开它的 GitHub 页。
+ * 主力仓库（projects 里的六个）在图上是带标签的大节点，其余是可悬停的小节点。
+ */
+export type AtlasRepo = { name: string; stars: number }
+
+export const atlasHub = { name: 'video_vip', stars: 4642 }
+
+export const atlasRepos: AtlasRepo[] = [
+  { name: 'lofi-radio-web', stars: 88 },
+  { name: 'computer-repair-skill', stars: 7 },
+  { name: 'my-skills', stars: 2 },
+  { name: 'wesum-wechat-monitor', stars: 2 },
+  { name: '88lin', stars: 1 },
+  { name: '88lin.github.io', stars: 1 },
+  { name: 'devenv-chat-backup-skill', stars: 1 },
+  { name: 'diataxis-docs-skill', stars: 1 },
+  { name: '301', stars: 0 },
+  { name: 'facetmark', stars: 0 },
+  { name: 'gzh-design-skill', stars: 0 },
+  { name: 'mydesign-system', stars: 0 },
+  { name: 'noomo-storytelling', stars: 0 },
+  { name: 'PicList', stars: 0 },
+  { name: 'PicX', stars: 0 },
+  { name: 'picx-images-hosting', stars: 0 },
+  { name: 'Site-Release', stars: 0 },
+  { name: 'swu-checkin', stars: 0 },
+  { name: 'Tampermonkey', stars: 0 },
+  { name: 'TextCard-Studio', stars: 0 },
+  { name: 'website', stars: 0 },
+]
+
+/** 四条花园轨道的组名。轨道顺序与 garden 的四个组一一对应。 */
+export const atlasOrbits = ['特效', '工具', '内容', '组件'] as const
+
+export const atlasRepoHref = (name: string) => `https://github.com/88lin/${name}`
+
 /* ---------------------------------------------------------------- 装备 */
 
 export const stack = {
@@ -522,7 +558,7 @@ export const writing = {
   hrefLabel: 'blog.88lin.eu.org',
   posts: 55,
   days: 1784,
-  /** blog.88lin.eu.org 首页标签云，2026-08-10 抓取 */
+  /** blog.88lin.eu.org 首页标签云，2026-08-16 抓取 */
   tags: [
     { name: '工具', count: 29 },
     { name: '教程', count: 24 },

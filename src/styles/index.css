@@ -1,28 +1,25 @@
 /* ============================================================================
-   茉灵智库 v10「Daylight」· 全站视觉系统
+   茉灵智库 v11「实验志 Field Notes」· 全站视觉系统
    ----------------------------------------------------------------------------
-   这一版不是微调，是把地基换掉。
+   THESIS: 整站是一本被精心保有的研究实验志。八章 = 八条编号实验（EXP.00–07），
+   数字 = 带出处的测量值，手绘虚线框与朱红印章是批注层。首页封面钉着图版 01
+   「作品星座」—— 22 个仓库与 40 个在线小站的实时 3D 星图（three.js），
+   同布局 SVG 降级。拒绝：居中 Hero + 项目卡网格的模板页。
 
-   v9 之前我一直在自造骨架，结果是一套没人见过、也没人验证过的版式。v10 直接
-   采用 88lin 自己那套设计系统的版式与组件语言（components-preview /
-   demo-readme-tutorial / repair.88lin.eu.org 三站同源），只把写死的色值换成
-   语义令牌。理由很简单：那套系统已经在三个线上站点跑通了，比我现编的可靠。
+   OWN-WORLD: 奶油坐标纸地面（两档纸色交替 + 极淡测量网格）；墨蓝是唯一的
+   结构色；柠檬黄只做荧光笔与高亮；珊瑚红做印章与点缀；深色只做锚点组件
+   （代码面板 / 短带，≤12% 面积）。Fraunces 拉丁展示 + 系统黑体中文混排，
+   JetBrains Mono 只给测量与数据，Caveat 只给旁批。
 
-   四条硬规则，每条都有对应的自动断言：
-
+   继承的纪律（v5–v10 的定论，全部继续生效）：
    1) 颜色只有两个来源：palettes.css 的语义令牌，或 rgba(var(--*-rgb), a)。
-      本文件出现裸十六进制即违规（audit G24），白名单只有三组：
-        · --rule / --rule-soft   上游 A 组没有对应的分隔线令牌
-        · Tokyo Night 语法色      代码面板的配色方案，换成品牌色就不是代码了
-        · macOS 三色圆点          #5A 组件的标识性图形，改色就读不出是窗口
-   2) 白字色块只能落在 --brand-surface / --brand-deep / --pop-surface / --ink 上；
-      奶油底上的彩色文字只能用 --brand-deep / --danger-strong / --warning
-      （统一收在 --accent-text / --tint-text 两个令牌里）。--brand / --pop 的原色只许出现在圆点、1–2px 描边、图标
-      和 rgba() 淡底里。理由是实测：白字压 --pop 只有 3.77:1，压 --pop-surface
-      是 4.65:1。（audit G25 逐节点复核）
-   3) 60 / 30 / 10。奶油底 ≥60%，蓝是唯一的主色，黄 ≤8%，红 ≤6%，深色 ≤12%。
-      深色只出现在代码面板、表头和 notes 章尾那一条短带里，不做整章。（audit G23）
-   4) 禁止 color-mix()：部分 Android WebView 上整块失效退成透明。
+      裸十六进制白名单只有三组：分隔线、Tokyo Night 语法色、macOS 三色圆点。
+   2) 白字色块只落 --brand-surface / --brand-deep / --pop-surface / --ink；
+      奶油底上的彩色文字只走 -deep 档（--accent-text / --tint-text）。
+   3) 60 / 30 / 10：奶油底 ≥60%，蓝主色，黄 ≤8%，红 ≤6%，深色 ≤12%。
+   4) 禁止 color-mix()（Android WebView 整块失效）。
+   5) v9 判词：整章刷饱和底没有任何排版能救。地面只有两档纸色。
+   6) 手绘层不压字：Frame 框在内容外，Annot 走布局流，Circle 穿透命中测试。
    ========================================================================== */
 
 @import './palettes.css';
@@ -144,9 +141,10 @@
 }
 
 /* ---------------------------------------------------------------- 色调档
-   v9 有五档地面色（纸 / 砂 / 蓝 / 黄 / 珊瑚），整章刷饱和底就是「屎黄色」和
-   「太丑」的直接来源 —— 一整屏 #EFCE9A 没有任何东西能救。
-   v10 只剩两档纸色交替，深色降级为组件（代码面板、表头、一条短带）。 */
+   地面是「实验志的坐标纸」：两档纸色交替 + 一层极淡的测量网格。
+   网格是这个世界自己的纸（测量工具就在纸上），不是装饰纹理：
+   细线 28px 一格 rgba(ink, 3.5%)，每 140px 一根主线 5.5%。
+   打印在这个不透明度上刚刚能被察觉，再深一分就抢正文。 */
 
 [data-tone='paper'] {
   --ground: var(--cream);
@@ -155,6 +153,8 @@
   --fg-faint: var(--ink-faint);
   --accent: var(--brand-text);
   --notch: var(--cream);
+  --grid: rgba(26, 26, 46, 0.038);
+  --grid-major: rgba(26, 26, 46, 0.055);
 }
 
 [data-tone='alt'] {
@@ -164,6 +164,8 @@
   --fg-faint: var(--ink-faint);
   --accent: var(--brand-text);
   --notch: var(--cream-dark);
+  --grid: rgba(26, 26, 46, 0.045);
+  --grid-major: rgba(26, 26, 46, 0.065);
 }
 
 /* ---------------------------------------------------------------- 卡片色相
@@ -287,7 +289,12 @@ button {
 
 .ch {
   position: relative;
-  background: var(--ground);
+  background:
+    linear-gradient(to right, var(--grid-major) 1px, transparent 1px) 0 0 / 140px 140px,
+    linear-gradient(to bottom, var(--grid-major) 1px, transparent 1px) 0 0 / 140px 140px,
+    linear-gradient(to right, var(--grid) 1px, transparent 1px) 0 0 / 28px 28px,
+    linear-gradient(to bottom, var(--grid) 1px, transparent 1px) 0 0 / 28px 28px,
+    var(--ground);
   color: var(--fg);
   padding-block: var(--s-section);
 }
@@ -302,38 +309,6 @@ button {
 /* 章头三件套。参考站的写法：小号大写字距标签 → 中文标题 → 灰度引导句。
    v9 的 .eyebrow 是一枚有底色的胶囊，落在饱和底上就是用户点名的
    「SKILL RULES 背景色太丑」。v10 一律去掉底色，只留字距。 */
-
-.label-caps {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 500;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--fg-faint);
-}
-
-a.label-caps {
-  text-decoration: none;
-  transition: color 0.2s var(--ease);
-}
-
-a.label-caps:hover {
-  color: var(--accent-text);
-}
-
-/* Fraunces 大编号。**不用斜体**：真斜体是另一个字幅（再花 11 KB，预算不够），
-   合成斜体是把字形整体切变，衬线字的水平衬线会被拉成菱形，2rem 上一眼看得出。
-   参考站的 .big-num 本身也是正体，这里对齐它。 */
-.section-number {
-  display: block;
-  font-family: var(--font-display);
-  font-weight: 900;
-  font-size: clamp(1.5rem, 3vw, 2.1rem);
-  line-height: 1;
-  color: var(--brand);
-  opacity: 0.32;
-  margin-bottom: 0.3rem;
-}
 
 .ch-title {
   font-family: var(--font-display);
@@ -356,8 +331,65 @@ a.label-caps:hover {
   color: var(--fg-dim);
 }
 
+/* ------------------------------------------------------ 实验登记条（章头）
+   EXP 编号不是装饰性 eyebrow：它是这本志的登记序号，携带导航与深链接信息。
+   编号与标题同基线并排（大号 Fraunces + 细分隔线），不落在标题上方。 */
+
 .ch-head {
   margin-bottom: var(--s-block);
+}
+
+.ch-no {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  color: var(--accent-text);
+  white-space: nowrap;
+  padding-right: 1.1rem;
+  margin-right: 1.1rem;
+  border-right: 1px solid var(--rule);
+  align-self: center;
+  text-transform: uppercase;
+}
+
+.ch-head__txt {
+  min-width: 0;
+  flex: 1;
+}
+
+.ch-head {
+  display: flex;
+  align-items: flex-start;
+}
+
+.ch-no--center {
+  border-right: 0;
+  padding-right: 0;
+  margin-right: 0;
+  justify-self: center;
+}
+
+/* 横推章的章头嵌在钉住的视口里，跟版心同宽对齐 */
+.ch-head--inline {
+  align-items: baseline;
+}
+
+.ch-head--inline .ch-no {
+  align-self: baseline;
+  font-size: 0.82rem;
+}
+
+/* 主线章的章头挂在右栏顶部，跟左栏巨号遥相呼应 */
+.ch-head--side {
+  margin-bottom: clamp(20px, 3vh, 30px);
+}
+
+/* 章头的核实章：只盖在「读数」与「案例」这类有出处声明的章 */
+.ch-head__stamp {
+  margin-left: auto;
+  flex: none;
+  align-self: flex-start;
 }
 
 /* ------------------------------------------------------- 荧光笔家族 (#50)
@@ -370,36 +402,13 @@ a.label-caps:hover {
   border-radius: var(--r-xs);
 }
 
-.hl-wave {
-  text-decoration: underline wavy var(--brand);
-  text-decoration-thickness: 1.5px;
-  text-underline-offset: 5px;
-}
-
-.hl-box {
-  border: 2px solid var(--brand);
-  border-radius: var(--r-xs);
-  padding: 0 0.22em;
-  display: inline-block;
-}
-
-/* 手绘圈注。不规则圆角 + 极慢的呼吸，一页只用一次。 */
+/* 手绘圈注。不规则圆角模拟一笔圈出来的椭圆。不做无限呼吸动画
+   （设计系统禁令：无限循环动画）。 */
 .hl-circle {
   border: 2.5px solid var(--pop);
   border-radius: 52% 45% 55% 40% / 50% 45% 55% 42%;
   padding: 0.02em 0.24em;
   display: inline-block;
-  animation: wiggle 6s ease-in-out infinite;
-}
-
-@keyframes wiggle {
-  0%,
-  100% {
-    transform: rotate(-0.6deg);
-  }
-  50% {
-    transform: rotate(0.6deg);
-  }
 }
 
 /* ------------------------------------------------------------------ 顶栏
@@ -696,7 +705,7 @@ a.label-caps:hover {
 
 /* ------------------------------------------------------------------ 卡片
    全站唯一一套卡面：白纸 + 16px 圆角 + 一层染墨的浅投影，没有第二种画法。
-   各章的卡（.svc-card / .hscroll-card / .case / .logic-step / .scene-card）
+   各章的卡（.hscroll-card / .case / .logic-step / .svc）
    都只在这套基底上加自己的编号、色相与边，不另起炉灶。 */
 
 .slab {
@@ -920,235 +929,10 @@ a.label-caps:hover {
   background: var(--pop-surface);
 }
 
-/* ------------------------------------------------------ 表格（dst）
-   craft 章承载两条主线。深墨表头是全站第二处深色，占地一行。 */
-
-.wtable {
-  border-radius: var(--r-card);
-  overflow: hidden;
-  box-shadow: var(--card-shadow-soft);
-}
-
-.wt-header {
-  display: grid;
-  grid-template-columns: 64px 1fr 1.35fr;
-  background: var(--ink);
-  padding: 13px 20px;
-  gap: 14px;
-}
-
-.wt-header span {
-  font-family: var(--font-mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--on-dark-dim);
-}
-
-.wt-row {
-  display: grid;
-  grid-template-columns: 64px 1fr 1.35fr;
-  gap: 14px;
-  padding: 15px 20px;
-  background: var(--card-bg);
-  border-bottom: 1px solid var(--hairline);
-  align-items: baseline;
-}
-
-.wt-row:last-child {
-  border-bottom: 0;
-}
-
-.wt-k {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  color: var(--accent-text);
-}
-
-.wt-t {
-  font-weight: 600;
-  font-size: 0.95rem;
-  color: var(--ink);
-}
-
-.wt-b {
-  font-size: 0.9rem;
-  line-height: 1.7;
-  color: var(--ink-light);
-}
-
-/* -------------------------------------------------- 虚线场景卡（dst）
-   标签用与地面同色的底抠在边框缺口上，所以它必须知道所在章的地面色：
-   var(--notch) 由 [data-tone] 提供。 */
-
-/* 三列。上游 dst 是四列，但这里要放的是导航站六选一的六张卡 ——
-   四列排六张会剩两个空格子，三列刚好两行满。 */
-.scene-grid {
-  display: grid;
-  grid-template-columns: 1.12fr 0.97fr 0.91fr;
-  gap: clamp(16px, 2vw, 24px);
-}
-
-.scene-card {
-  position: relative;
-  border: 2px dashed rgba(var(--tint-rgb, var(--brand-rgb)), 0.42);
-  border-radius: var(--r-lg);
-  padding: 26px 20px 22px;
-  background: var(--card-bg);
-}
-
-.scene-card__label {
-  position: absolute;
-  top: -11px;
-  left: 16px;
-  font-family: var(--font-hand);
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--tint-text, var(--accent-text));
-  background: var(--notch, var(--cream));
-  padding: 0 8px;
-}
-
 /* ----------------------------------------------- 横推卡轨 (#26)
    宽屏由 GSAP 把纵向滚动换算成横向推进（lib/motion.ts 的 worksPan）；
    窄屏退成原生 scroll-snap 横滑 —— 不建 pin 就不可能再出现 v8 那种
    「横屏转竖屏留下一屏死白」的事故。 */
-
-.hscroll-track {
-  display: flex;
-  gap: 20px;
-  padding: 16px 0 20px;
-}
-
-.hscroll-card {
-  position: relative;
-  flex: none;
-  width: var(--w, 20rem);
-  background: var(--card-bg);
-  border-radius: var(--r-lg);
-  /* 上内距要给右上角那枚手写编号让出一整行，否则它压在状态灯那一行上。 */
-  padding: 46px 24px 24px;
-  box-shadow: 0 4px 18px rgba(26, 26, 46, 0.06);
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
-  transition:
-    transform 0.28s var(--ease),
-    box-shadow 0.28s var(--ease);
-}
-
-.hscroll-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--card-shadow-h);
-}
-
-.hscroll-card__n {
-  position: absolute;
-  top: 12px;
-  right: 22px;
-  font-family: var(--font-hand);
-  font-size: 1.9rem;
-  font-weight: 700;
-  color: var(--tint, var(--brand));
-  opacity: 0.32;
-  line-height: 1;
-}
-
-/* --------------------------------------------- 引述与批注 (#3 / #6)
-   两种写法刻意分开：实线黄框是「结论」，虚线蓝框是「旁批」。 */
-
-.pullquote {
-  position: relative;
-  padding: 28px 32px 26px;
-  background: var(--cream);
-  border-radius: var(--r-lg);
-  border: 2px solid var(--highlight);
-}
-
-.pullquote::before {
-  content: '“';
-  position: absolute;
-  top: -6px;
-  left: 14px;
-  font-family: var(--font-display);
-  font-weight: 900;
-  font-size: 4rem;
-  line-height: 1;
-  color: var(--highlight);
-}
-
-.pullquote p {
-  font-size: 1.02rem;
-  line-height: 1.8;
-  color: var(--ink);
-  padding-left: 1.6rem;
-}
-
-.key-note {
-  position: relative;
-  padding: 22px 26px;
-  background: var(--card-bg);
-  border-radius: var(--r-sm);
-  border: 1.5px dashed rgba(var(--brand-rgb), 0.32);
-}
-
-.key-note__t {
-  position: absolute;
-  top: -11px;
-  left: 18px;
-  font-family: var(--font-hand);
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--accent-text);
-  background: var(--notch, var(--cream));
-  padding: 0 7px;
-}
-
-.key-note p {
-  font-size: 0.96rem;
-  line-height: 1.8;
-  color: var(--ink-light);
-}
-
-/* --------------------------------------------------- 编号网格 (#34) */
-
-.numgrid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
-}
-
-.numgrid-card {
-  position: relative;
-  overflow: hidden;
-  background: var(--card-bg);
-  border-radius: var(--r-card);
-  padding: 24px 22px 22px;
-  box-shadow: var(--card-shadow-soft);
-  text-decoration: none;
-  display: block;
-  transition:
-    transform 0.28s var(--ease),
-    box-shadow 0.28s var(--ease);
-}
-
-.numgrid-card::before {
-  content: attr(data-num);
-  position: absolute;
-  top: -6px;
-  right: 12px;
-  font-family: var(--font-hand);
-  font-size: 2.8rem;
-  font-weight: 700;
-  color: var(--brand);
-  opacity: 0.16;
-  line-height: 1;
-}
-
-.numgrid-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--card-shadow-h);
-}
 
 /* -------------------------------------------------------- 分屏（dst） */
 
@@ -1326,9 +1110,52 @@ a.label-caps:hover {
   margin: 0 auto;
   padding-inline: var(--gutter);
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 0.84fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.06fr);
   gap: clamp(30px, 4vw, 66px);
   align-items: center;
+}
+
+/* 刊头：志名 + 卷号 + 拉丁副题，一行三段，基线对齐 */
+.mast {
+  display: flex;
+  align-items: baseline;
+  gap: 0.9rem;
+  width: 100%;
+  flex-wrap: wrap;
+  padding-bottom: 0.9rem;
+  border-bottom: 2px solid var(--ink);
+  margin-bottom: 0.35rem;
+}
+
+.mast__name {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 1.18rem;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  -webkit-text-stroke: 0.008em currentColor;
+  font-synthesis-weight: none;
+}
+
+.mast__sub {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  color: var(--on-brand);
+  background: var(--brand-surface);
+  padding: 0.22rem 0.6rem;
+  border-radius: var(--r-xs);
+  text-decoration: none;
+}
+
+.mast__lat {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.14em;
+  color: var(--ink-faint);
+  text-transform: uppercase;
 }
 
 .hero-copy {
@@ -1421,62 +1248,432 @@ a.label-caps:hover {
   color: var(--ink-faint);
 }
 
-.hero-visual {
+/* 图版 01：作品星座。星图本体是矢量 + 实时渲染，装进手绘虚线框里，
+   框外一枚 Caveat 旁批、框角一枚核实章 —— 一幅被认真登记过的图。 */
+.hero-plate {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 6px;
 }
 
-.hero-visual__cap {
+.hero-plate__frame {
+  position: relative;
+  padding: clamp(14px, 1.6vw, 22px);
+}
+
+.hero-plate__stamp {
+  position: absolute;
+  top: -26px;
+  right: -8px;
+  z-index: 3;
+}
+
+.hero-plate__annot {
+  margin-top: 2px;
+  max-width: 30em;
+}
+
+/* ------------------------------------------------------------ 星图图版
+   两层同源：SVG 静态层常驻 DOM（无 JS / 手机 / reduced-motion 全靠它），
+   点火后 canvas 淡入、SVG 淡出。host 上 touch-action: pan-y ——
+   星图不拦竖向滚动手势，拖拽只在桌面指针下发生。 */
+
+.plate {
+  position: relative;
+  margin: 0;
+  aspect-ratio: 1 / 0.92;
+}
+
+.plate__svg,
+.plate__host {
+  position: absolute;
+  inset: 0;
+}
+
+.plate__host canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.plate__svg {
+  transition: opacity 0.7s var(--ease);
+}
+
+.plate[data-gl='1'] .plate__svg {
+  opacity: 0;
+}
+
+.plate__host {
+  opacity: 0;
+  transition: opacity 0.7s var(--ease);
+  pointer-events: none;
+}
+
+.plate[data-gl='1'] .plate__host {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* 点火后的 HTML 标签层：fixed 定位钉在场景投影位（视口坐标直写 transform） */
+.plate__labels {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.pl {
+  position: fixed;
+  top: 0;
+  left: 0;
+  transform: translate(-200px, -200px);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-light);
+  background: rgba(254, 252, 246, 0.82);
+  padding: 1px 6px;
+  border-radius: var(--r-xs);
+  white-space: nowrap;
+  transition: opacity 0.4s var(--ease);
+  will-change: transform;
+}
+
+.pl--hub {
+  font-weight: 700;
+  color: var(--danger-strong);
+}
+
+.pl--orbit {
+  color: var(--ink-faint);
+  letter-spacing: 0.12em;
+}
+
+.plate__tip {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 6;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s var(--ease);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  color: var(--on-dark);
+  background: var(--ink);
+  padding: 6px 10px;
+  border-radius: var(--r-sm);
+  box-shadow: var(--card-shadow);
+  white-space: nowrap;
+}
+
+.plate__cap {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
+  gap: 0.9rem;
+  flex-wrap: wrap;
   font-family: var(--font-mono);
-  font-size: 0.66rem;
+  font-size: 0.64rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-faint);
+  padding-top: 10px;
+  border-top: 1px solid var(--rule);
 }
 
-/* ================================================ 02 能做什么 · 粘性侧栏 */
+.plate__cap b {
+  color: var(--ink-light);
+  font-weight: 500;
+}
 
-.workflow-layout {
+/* 静态星图的矢量样式。黄色轨道用深金（--warning 8A6A00 太文字，取 --d9a92e
+   系的深金做线），三根信号色线在奶油纸上都 ≥2:1（线是非文字元素 3:1 目标里
+   的装饰线，节点本体全部 ≥3:1）。 */
+.at__ring {
+  fill: none;
+  stroke-width: 0.016;
+  stroke-dasharray: 0.05 0.04;
+  opacity: 0.75;
+}
+.at__ring--blue { stroke: var(--brand); }
+.at__ring--coral { stroke: var(--pop); }
+.at__ring--yellow { stroke: #b98a1d; }
+.at__ring--ink { stroke: var(--ink-light); }
+
+.at__link {
+  stroke: var(--ink);
+  stroke-width: 0.008;
+  opacity: 0.34;
+}
+
+.at__halo {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 0.01;
+  stroke-dasharray: 0.032 0.026;
+  opacity: 0.55;
+}
+
+.at__minor {
+  fill: var(--ink-light);
+  opacity: 0.8;
+}
+
+.at__star {
+  fill: var(--brand);
+  stroke: var(--cream);
+  stroke-width: 0.018;
+}
+.at__star--deep { fill: var(--brand-deep); }
+
+.at__hub {
+  fill: var(--pop);
+  stroke: var(--cream);
+  stroke-width: 0.02;
+}
+
+.at__tick {
+  stroke: var(--ink-light);
+  stroke-width: 0.008;
+  opacity: 0.7;
+}
+.at__tick--hub { stroke: var(--danger-strong); }
+
+/* SVG text 的字号必须带 px 后缀：在 SVG 里 CSS 的 1px = 1 个用户单位，
+   无单位的数字是非法声明，会被整条丢掉然后继承 16px——字会放大成
+   九百像素盖住整张图。0.24px ≈ 桌面 13.6px / 手机 8px。 */
+.at__name {
+  font-family: var(--font-mono);
+  font-size: 0.24px;
+  fill: var(--ink-light);
+  /* text-anchor 不在这里定死：径向标注按方位逐元素切 start/end/middle，
+     CSS 会覆盖 presentation attribute，定死就全皱成 middle */
+  letter-spacing: 0.02em;
+}
+.at__name--hub {
+  fill: var(--danger-strong);
+  font-weight: 700;
+}
+.at__name--sub {
+  fill: var(--ink-faint);
+  font-size: 0.19px;
+}
+.at__orbit {
+  font-family: var(--font-mono);
+  font-size: 0.2px;
+  letter-spacing: 0.12em;
+  fill: var(--ink-faint);
+}
+.at__orbit--blue { fill: var(--brand-deep); }
+.at__orbit--coral { fill: var(--danger-strong); }
+.at__orbit--yellow { fill: #8a6a00; }
+.at__orbit--ink { fill: var(--ink-light); }
+
+/* ---------------------------------------------------------------- 印章
+   朱红油墨、手绘双圈、等宽字。入场「盖章」：1.7 倍缩下来并定住角度。 */
+.stamp {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  width: 92px;
+  height: 92px;
+  flex: none;
+  color: var(--pop-deep);
+  transform: rotate(var(--tilt, -3deg));
+  pointer-events: none;
+}
+
+.stamp__ring {
+  position: absolute;
+  inset: -7px;
+  width: calc(100% + 14px);
+  height: calc(100% + 14px);
+}
+
+.stamp__ring path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  vector-effect: non-scaling-stroke;
+  opacity: 0.85;
+}
+
+.stamp b {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+
+.stamp s {
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  opacity: 0.85;
+}
+
+/* 盖章动效：默认就是盖好的状态（无 JS / reduced-motion 直接可见） */
+.stamp {
+  opacity: 0.92;
+}
+
+.js .stamp:not(.is-in) {
+  opacity: 0;
+  transform: rotate(var(--tilt, -3deg)) scale(1.7);
+}
+
+.js .stamp.is-in {
+  transition:
+    opacity 0.28s var(--ease),
+    transform 0.34s var(--ease-snap);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .js .stamp:not(.is-in) {
+    opacity: 0.92;
+    transform: none;
+  }
+}
+
+/* ============================================== EXP.01 读数 · 测量记录 */
+
+.ruler {
+  display: flex;
+  justify-content: space-between;
+  gap: 1px;
+  height: 14px;
+  margin-bottom: clamp(28px, 4vh, 44px);
+}
+
+.ruler i {
+  flex: 1;
+  background: linear-gradient(to bottom, var(--rule) 0 6px, transparent 6px);
+}
+
+.ruler i[data-major='1'] {
+  background: linear-gradient(to bottom, var(--ink-light) 0 11px, transparent 11px);
+}
+
+.met-grid {
   display: grid;
-  grid-template-columns: 0.35fr 1fr;
-  gap: clamp(36px, 5vw, 90px);
+  grid-template-columns: repeat(12, 1fr);
+  gap: 14px;
+}
+
+.met {
+  grid-column: span var(--span, 4);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--card-bg);
+  border: 1px solid var(--rule-soft);
+  border-radius: var(--r-card);
+  padding: clamp(18px, 2vw, 26px);
+  box-shadow: var(--card-shadow-soft);
+}
+
+.met__v {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(2rem, 3.6vw, 2.9rem);
+  line-height: 1.04;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.met__label {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.met__sub {
+  font-size: 0.86rem;
+  line-height: 1.6;
+  color: var(--ink-light);
+}
+
+/* 出处行：等宽 + 虚线引出线（测量记录的写法），文字是接口路径 */
+.met__src {
+  margin-top: auto;
+  padding-top: 10px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.02em;
+  color: var(--ink-faint);
+  overflow-wrap: anywhere;
+}
+
+.met__src i {
+  flex: 1;
+  border-bottom: 1px dotted var(--rule);
+  transform: translateY(-3px);
+  min-width: 12px;
+}
+
+/* ================================================ EXP.02 主线 · 交汇与清单 */
+
+/* 主线章的版心：跟 .wrap 同规格，但要在同一个 grid 元素上（侧栏 + 主栏） */
+.wrap-craft {
+  width: 100%;
+  max-width: var(--wrap);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.craft-grid {
+  display: grid;
+  grid-template-columns: 0.3fr 1fr;
+  gap: clamp(30px, 4vw, 72px);
   align-items: start;
 }
 
-.workflow-side {
+/* 章侧栏：巨号 Fraunces 章序贴着版心左侧，是纹理不是内容（不承载阅读） */
+.ch-side {
   position: sticky;
   top: calc(62px + 34px);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.big-num {
-  display: block;
+.ch-side__no {
   font-family: var(--font-display);
   font-weight: 900;
-  font-size: clamp(3.6rem, 9vw, 6.4rem);
+  font-size: clamp(3.4rem, 8vw, 5.8rem);
   line-height: 0.85;
+  letter-spacing: -0.03em;
   color: var(--brand);
-  opacity: 0.14;
-  margin-bottom: 0.4rem;
+  opacity: 0.16;
+  text-decoration: none;
 }
 
-.workflow-main {
+.ch-side__lab {
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.22em;
+  color: var(--ink-faint);
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.craft-main {
   display: flex;
   flex-direction: column;
-  gap: var(--s-gap);
+  gap: var(--s-block);
   min-width: 0;
-}
-
-/* 右栏里的一个内容组：标题 + 若干件东西，组内 14px，组间由 .workflow-main 的
-   --s-gap 拉开。两层间距差三倍以上，读者才能看出「这几件是一组」。 */
-.craft-blk {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
 }
 
 /* 章头下面那一行动作。按钮与说明胶囊并排，永远不撑破版心。 */
@@ -1488,143 +1685,360 @@ a.label-caps:hover {
   margin-top: 1.1rem;
 }
 
-.craft-h3 {
+/* ------------------------------------------------------ 交汇图（图 02）
+   两条实体色带从版心两端收进中间一枚墨色节点。收敛即论点。 */
+.junc {
+  position: relative;
+  margin: 0;
+}
+
+.junc__svg {
+  width: 100%;
+  height: auto;
+}
+
+.junc__band--a {
+  fill: var(--brand-deep);
+}
+
+.junc__band--b {
+  fill: var(--pop-deep);
+}
+
+.junc__dash {
+  stroke: var(--cream);
+  stroke-width: 2;
+  stroke-dasharray: 3 7;
+  stroke-linecap: round;
+  opacity: 0.85;
+}
+
+.junc__track {
+  font-family: var(--font-mono);
+  font-size: 12px; /* SVG 用户单位：viewBox 1000 宽，按 1:1.1 渲染 ≈ 13px */
+  letter-spacing: 0.22em;
+  fill: var(--ink-faint);
+}
+
+.junc__cap {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 600;
+  fill: #fffdf4;
+}
+
+.junc__cap--a { fill: var(--on-brand); }
+.junc__cap--b { fill: var(--on-pop); }
+
+.junc__node {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 13px 18px;
+  background: var(--ink);
+  border-radius: var(--r-sm);
+  color: var(--on-dark);
+  box-shadow: 0 6px 22px rgba(26, 26, 46, 0.22);
+  transition: transform 0.3s var(--ease);
+}
+
+.junc:hover .junc__node {
+  transform: translate(-50%, -50%) translateY(-3px);
+}
+
+.junc__node b {
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.junc__node s {
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+  letter-spacing: 0.24em;
+  text-decoration: none;
+  color: var(--on-dark-dim);
+}
+
+.junc__note {
+  margin-top: 10px;
+  max-width: 34em;
+}
+
+.junc__cap-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* 窄屏的 structural 替代：SVG 整个藏掉，两条叠放的色带卡接住同样的信息 */
+.junc__m {
+  display: none;
+}
+
+.junc__m-band {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px 20px;
+  border-radius: var(--r-card);
+  margin-bottom: 12px;
+}
+
+.junc__m-band--a {
+  background: var(--brand-deep);
+}
+
+.junc__m-band--b {
+  background: var(--pop-deep);
+}
+
+.junc__m-band s {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  color: rgba(255, 253, 244, 0.72);
+  text-decoration: none;
+}
+
+.junc__m-band b {
+  color: var(--on-dark);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+/* -------------------------------------------------------- 两条主线清单 */
+.tracks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(20px, 3vw, 40px);
+  align-items: start;
+}
+
+.track {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.track h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 1.22rem;
+  color: var(--ink);
+  font-synthesis-weight: none;
+  -webkit-text-stroke: 0.008em currentColor;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--ink);
+}
+
+.track h3 i {
+  font-family: var(--font-mono);
+  font-style: normal;
+  font-weight: 700;
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  color: var(--on-brand);
+  background: var(--brand-surface);
+  padding: 3px 8px;
+  border-radius: var(--r-xs);
+}
+
+.track--b h3 i {
+  background: var(--pop-surface);
+}
+
+.track__item {
+  padding: 14px 16px 16px;
+  background: var(--card-bg);
+  border: 1px solid var(--rule-soft);
+  border-radius: var(--r-card);
+  box-shadow: var(--card-shadow-soft);
+}
+
+.track__item b {
+  display: block;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.track__item p {
+  font-size: 0.88rem;
+  line-height: 1.72;
+  color: var(--ink-light);
+}
+
+/* -------------------------------------------------------- 可承接的三件事 */
+.sub-head {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 22px;
+}
+
+.sub-head h3 {
   font-family: var(--font-display);
   font-weight: 900;
   font-size: clamp(1.25rem, 2.4vw, 1.7rem);
-  line-height: 1.35;
   color: var(--ink);
   font-synthesis-weight: none;
 }
 
-.craft-lede {
-  margin-top: 0.5rem;
-  font-size: 0.98rem;
-  line-height: 1.78;
+.sub-head p {
+  font-size: 0.96rem;
+  line-height: 1.72;
   color: var(--ink-light);
+  max-width: 44em;
 }
 
-/* 三张服务卡。编号用 Fraunces 大字压在右上角（#1B 编号主导卡）。 */
-/* 三张服务卡按 1.14 / 0.98 / 0.88 递减排。等宽三列是模板味最重的构图，
-   递减一档之后读起来是「有先后的三件事」，不是三个复制品。 */
+/* 缺口标签卡：2px 虚线边框 + 抠在缺口上的标签（设计系统最好认的零件） */
 .svc-grid {
   display: grid;
   grid-template-columns: 1.14fr 0.98fr 0.88fr;
   gap: 18px;
 }
 
-.svc-card {
+.svc {
   position: relative;
-  overflow: hidden;
-  background: var(--card-bg);
-  border-radius: var(--r-card);
-  padding: 26px 22px 22px;
-  box-shadow: var(--card-shadow-soft);
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 10px;
+  background: var(--card-bg);
+  border: 2px dashed var(--tint, var(--brand));
+  border-radius: var(--r-card);
+  padding: 26px 22px 20px;
   transition:
     transform 0.28s var(--ease),
     box-shadow 0.28s var(--ease);
 }
 
-.svc-card:hover {
+.svc:hover {
   transform: translateY(-4px);
   box-shadow: var(--card-shadow-h);
 }
 
-.svc-card__no {
+.notch {
   position: absolute;
-  top: -8px;
-  right: 10px;
-  font-family: var(--font-display);
-  font-weight: 900;
-  font-size: 4.4rem;
+  top: -11px;
+  left: 18px;
+  font-family: var(--font-hand);
+  font-size: 1.05rem;
   line-height: 1;
-  color: var(--tint, var(--brand));
-  opacity: 0.14;
+  color: var(--tint-text, var(--brand-deep));
+  background: var(--notch);
+  padding: 0 8px;
+  text-decoration: none;
 }
 
-.svc-card h4 {
-  position: relative;
-  font-size: 1.06rem;
+.svc h4 {
+  font-size: 1.08rem;
   font-weight: 700;
   color: var(--ink);
 }
 
-.svc-card p {
-  font-size: 0.92rem;
-  line-height: 1.78;
+.svc > p {
+  font-size: 0.9rem;
+  line-height: 1.74;
   color: var(--ink-light);
 }
 
-.svc-card ul {
+.svc__del {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
 
-.svc-card__fit {
+.svc__del li {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.03em;
+  color: var(--tint-text, var(--brand-deep));
+  border: 1px solid var(--tint, var(--brand));
+  border-radius: var(--r-pill);
+  padding: 3px 10px;
+  list-style: none;
+}
+
+.svc__fit {
   margin-top: auto;
-  padding-top: 0.7rem;
+  padding-top: 10px;
   border-top: 1px solid var(--hairline);
-  font-size: 0.84rem;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.82rem;
   color: var(--ink-faint);
 }
 
-/* 装备跑马灯。压成单行，靠 translate3d(-50%) 循环。 */
-.belt {
-  position: relative;
-  overflow: hidden;
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+.svc__fit i {
+  flex: 1;
+  border-bottom: 1px dotted var(--rule);
+  transform: translateY(-3px);
+  min-width: 10px;
 }
 
-.belt ul {
-  display: flex;
-  gap: 8px;
-  width: max-content;
-  animation: belt 64s linear infinite;
+/* -------------------------------------------------------------- 器材清单 */
+.stack {
+  border-top: 1px solid var(--rule);
+  padding-top: clamp(22px, 3vh, 34px);
 }
 
-.belt:hover ul {
-  animation-play-state: paused;
+.stack h3 {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 1.2rem;
+  color: var(--ink);
+  font-synthesis-weight: none;
 }
 
-@keyframes belt {
-  to {
-    transform: translate3d(-50%, 0, 0);
-  }
-}
-
-/* 色板证据条 */
-.ds-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 14px 18px;
-  padding: 18px 20px;
-  background: var(--card-bg);
-  border: 1px solid var(--rule-soft);
-  border-radius: var(--r-card);
-}
-
-.ds-row__sw {
-  width: 260px;
-  height: 34px;
-  flex: none;
-}
-
-.ds-row p {
-  flex: 1 1 16rem;
-  font-size: 0.9rem;
+.stack__body {
+  margin-top: 6px;
+  font-size: 0.92rem;
   line-height: 1.7;
   color: var(--ink-light);
+  max-width: 46em;
 }
 
-.ds-row p b {
-  display: block;
-  color: var(--ink);
+.stack__grid {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.stack__c dt {
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--brand-deep);
+  margin-bottom: 6px;
+}
+
+.stack__c dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.9;
+  color: var(--ink-light);
 }
 
 /* ==================================================== 03 做过什么 · 横推 */
@@ -1741,43 +2155,6 @@ a.label-caps:hover {
 /* 数字花园：四张虚线场景卡 */
 .work-garden {
   margin-top: var(--s-block);
-}
-
-.scene-card h4 {
-  font-size: 0.98rem;
-  font-weight: 700;
-  color: var(--ink);
-  margin-bottom: 0.35rem;
-}
-
-.scene-card p {
-  font-size: 0.86rem;
-  line-height: 1.72;
-  color: var(--ink-light);
-}
-
-.scene-card__go {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35em;
-  margin-top: 0.6rem;
-  font-family: var(--font-mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.08em;
-  color: var(--tint-text, var(--accent-text));
-  text-decoration: none;
-}
-
-a.scene-card {
-  text-decoration: none;
-  transition:
-    transform 0.28s var(--ease),
-    box-shadow 0.28s var(--ease);
-}
-
-a.scene-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--card-shadow);
 }
 
 /* ================================================= 04 怎么做的 · 粘性堆叠
@@ -2344,7 +2721,267 @@ a.scene-card:hover {
   color: var(--on-dark-dim);
 }
 
-/* 案例内页顶部的深色规格板：复用代码面板的底色，但不做窗口栏。 */
+/* --------------------------------------------- v11 · 案例页实验记录扩展 */
+
+/* 三步协议链：编号圆徽 + 竖轨，「怎么解」那步套手绘虚线框（在 Frame 里） */
+.cpage__flow {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(20px, 3vh, 30px);
+}
+
+.cpage__step {
+  position: relative;
+  padding-left: 58px;
+}
+
+.cpage__stepdot {
+  position: absolute;
+  left: 0;
+  top: 2px;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  background: var(--brand-surface);
+  color: var(--on-brand);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.cpage__stepdot--fix {
+  background: var(--pop-surface);
+}
+
+.cpage__step h2 {
+  margin-bottom: 0.4rem;
+}
+
+.cpage__fix {
+  margin-left: -20px;
+}
+
+/* 「放弃了什么」：页边注的语气，两栏 */
+.cpage__offs {
+  margin-top: clamp(8px, 2vh, 18px);
+  padding-top: clamp(20px, 3vh, 30px);
+  border-top: 1px solid var(--rule);
+  display: grid;
+  grid-template-columns: 0.7fr 1fr;
+  gap: 16px clamp(20px, 3vw, 36px);
+}
+
+.cpage__offs-h {
+  grid-column: 1 / -1;
+  font-family: var(--font-hand) !important;
+  font-size: 1.6rem !important;
+  color: var(--danger-strong) !important;
+  font-weight: 600;
+  transform: rotate(-1.2deg);
+}
+
+.cpage__off h3 {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.cpage__off p {
+  font-size: 0.9rem !important;
+}
+
+.cpage__reswrap {
+  position: relative;
+  margin-top: var(--s-gap);
+}
+
+.cpage__reswrap h2 {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 1.15rem;
+  color: var(--ink);
+  margin-bottom: 0.8rem;
+  font-synthesis-weight: none;
+}
+
+.cpage__stamp {
+  position: absolute;
+  right: 0;
+  top: -14px;
+  width: 84px;
+  height: 84px;
+}
+
+.cpage__stamp b {
+  font-size: 0.52rem;
+}
+
+.cpage__stamp s {
+  font-size: 0.5rem;
+}
+
+/* ============================================== EXP.05 标本馆 · 彩色底卡
+   全站唯一一章卡面带彩底：soft 档同色淡底 + 2px 同色实线边（dashed 用在
+   服务卡上了，标本卡用实线区分「收藏品」与「可下单」）。颜色绑类不绑下标。 */
+
+.spec-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 16px;
+}
+
+.spec {
+  grid-column: span var(--span, 4);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-radius: var(--r-card);
+  border: 2px solid var(--tint, var(--brand));
+  background: var(--tint-soft, var(--info-soft));
+  padding: 24px 22px 18px;
+  text-decoration: none;
+  color: var(--ink);
+  transition:
+    transform 0.26s var(--ease),
+    box-shadow 0.26s var(--ease);
+}
+
+.spec:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--card-shadow-h);
+}
+
+.spec__no {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  color: var(--ink-faint);
+  text-decoration: none;
+}
+
+.spec__group {
+  align-self: flex-start;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  color: var(--tint-text, var(--brand-deep));
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.spec h3 {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 1.3rem;
+  line-height: 1.3;
+  color: var(--ink);
+  font-synthesis-weight: none;
+  -webkit-text-stroke: 0.008em currentColor;
+}
+
+.spec p {
+  font-size: 0.88rem;
+  line-height: 1.7;
+  color: var(--ink-light);
+}
+
+.spec__go {
+  margin-top: auto;
+  padding-top: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  color: var(--tint-text, var(--brand-deep));
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.spec__go svg {
+  transition: transform 0.25s var(--ease);
+}
+
+.spec:hover .spec__go svg {
+  transform: translate(2px, -2px);
+}
+
+/* 墨色标本柜：全站的深色锚点之一，收 40 个小站的总账 */
+.spec-hub {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px 26px;
+  flex-wrap: wrap;
+  padding: 22px 26px;
+  background: var(--ink);
+  border-radius: var(--r-card);
+  color: var(--on-dark);
+  text-decoration: none;
+  box-shadow: 0 10px 34px rgba(26, 26, 46, 0.18);
+  transition: transform 0.26s var(--ease);
+}
+
+.spec-hub:hover {
+  transform: translateY(-3px);
+}
+
+.spec-hub b {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 1.2rem;
+  font-synthesis-weight: none;
+  -webkit-text-stroke: 0.008em currentColor;
+}
+
+.spec-hub span:not(.spec-hub__go) {
+  flex: 1 1 20rem;
+  font-size: 0.86rem;
+  line-height: 1.6;
+  color: var(--on-dark-dim);
+}
+
+.spec-hub__go {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  color: var(--on-dark);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 联系章的手写旁批：贴在磁吸按钮右上 */
+.contact-free {
+  transform: rotate(-2deg);
+  margin: 0;
+}
+
+/* 案例内页顶部的深色规格板：v11 起升级为 macOS 代码窗口（CodeMac），
+   每个案例的结构约定读起来就是它仓库里的一个真实配置文件。 */
+.cpage__console {
+  margin-top: var(--s-block);
+}
+
+.cpage__console .code-mac {
+  max-width: 720px;
+}
+
+.cpage__tokens-wrap {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* 旧深色规格板（保留类名以防外链锚点，v11 起不再使用） */
 .cpage__slab {
   background: var(--tn-bg);
   border-radius: var(--r-md);
@@ -2387,31 +3024,23 @@ a.scene-card:hover {
 
   .hero-in {
     grid-template-columns: minmax(0, 1fr);
-    gap: 18px;
+    gap: 26px;
   }
 
   .hero-copy {
     gap: 0.78rem;
   }
 
-  .hero-visual {
-    order: -1;
-    gap: 8px;
+  /* 星图在手机上排在文案之后（先读论点再看图版），静态 SVG 同布局直接命中 */
+  .hero-plate__stamp {
+    top: -20px;
+    right: 2px;
+    width: 74px;
+    height: 74px;
   }
 
-  .hero-visual__cap {
-    display: none;
-  }
-
-  .code-mac__bd {
-    padding: 14px 16px;
-  }
-
-  .hero-visual .code-mac pre {
-    font-size: 0.68rem;
-  }
-
-  .hero-visual .code-mac__bd code > span:nth-child(n + 7) {
+  .plate__labels,
+  .plate__tip {
     display: none;
   }
 
@@ -2419,22 +3048,88 @@ a.scene-card:hover {
     line-height: 1.1;
   }
 
-  .workflow-layout {
+  .craft-grid {
     grid-template-columns: minmax(0, 1fr);
-    gap: 26px;
+    gap: 22px;
   }
 
-  .workflow-side {
+  .ch-side {
     position: static;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 12px;
   }
 
-  .svc-grid,
-  .numgrid {
+  .ch-side__no {
+    font-size: 2.2rem;
+  }
+
+  /* 交汇图在窄屏换 structural 替代，SVG 与 HTML 节点一起藏掉 */
+  .junc__svg,
+  .junc__node,
+  .junc__note,
+  .junc__cap-row {
+    display: none;
+  }
+
+  .junc__m {
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  .tracks {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .scene-grid {
+  .svc-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .stack__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .met {
+    grid-column: span 6;
+  }
+
+  .ruler {
+    height: 10px;
+  }
+
+  .ruler i {
+    background: linear-gradient(to bottom, var(--rule) 0 4px, transparent 4px);
+  }
+
+  .ruler i[data-major='1'] {
+    background: linear-gradient(to bottom, var(--ink-light) 0 8px, transparent 8px);
+  }
+
+  .spec {
+    grid-column: span 6;
+  }
+
+  .spec-hub {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .cpage__offs {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cpage__step {
+    padding-left: 50px;
+  }
+
+  .cpage__stepdot {
+    width: 34px;
+    height: 34px;
+    font-size: 0.66rem;
+  }
+
+  .cpage__fix {
+    margin-left: -12px;
   }
 
   .brand-split {
@@ -2600,10 +3295,6 @@ a.scene-card:hover {
   .js .rise:not(.is-in) {
     opacity: 1;
     transform: none;
-  }
-
-  .belt ul {
-    animation: none;
   }
 
   .hl-circle {

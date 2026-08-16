@@ -1,22 +1,16 @@
 /**
- * 05 在写 · 分屏 + 深色短带。
+ * EXP.06 写作 · 分屏 + 深色短带。
  *
- * v8 这一章铺了 40 块彩色底卡，数量本身当过论据，但四十块挤在一屏谁也看不清。
- * v9 挑六个出来，v10 干脆把这六个挪去 03 章的章尾（那里本来就在讲「跑着的东西」），
- * 这一章只剩写作，构图跟着换成参考站 dst 的 .brand-split：左 0.45fr 讲立场，
- * 右 1fr 是六条可点的文章。左右共用一个圆角与一层投影，读作一块而不是两张卡。
- *
- * 章尾一条深色短带。它是全站第三处也是最后一处深色，只是一条带不是一屏 ——
- * 深色像素总配额由 audit G23 卡在 12%。
- *
- * v8 的博客六篇只有标题和日期，点不开，数据源里当时根本没存链接。
- * v9 起每篇都带永久链接，整块条目是 <a>，不是标题旁边挂个小箭头。
+ * brand-split：左 0.45fr 讲立场，右 1fr 是六条可点的文章，
+ * 左右共用一个圆角与一层投影，读作一块而不是两张卡。
+ * 章尾深色短带是全站第三处深色，配额 12% 的一部分。
+ * 每篇文章都带永久链接，整条是 <a>。
  */
 
 import { ArrowOut } from '../components/Icons'
 import { Annot } from '../components/Ink'
 import { Reveal } from '../components/Reveal'
-import { contact, writing } from '../content/site'
+import { chapters, contact, writing } from '../content/site'
 
 const num = (n: number) => n.toLocaleString('en-US')
 
@@ -28,18 +22,21 @@ const TOP2 = writing.tags.slice(0, 2)
 const TOP2_SUM = TOP2.reduce((s, t) => s + t.count, 0)
 
 export function Notes() {
+  const ch = chapters.find((c) => c.id === 'notes')!
+
   return (
-    <section id="notes" className="ch" data-tone="paper" aria-labelledby="notes-h">
+    <section id="notes" className="ch ch--notes" data-tone="paper" aria-labelledby="notes-h">
       <div className="wrap notes-grid">
         <div className="ch-head">
-          <span className="section-number" aria-hidden="true">
-            05
-          </span>
-          <p className="label-caps">WRITING SINCE 2021</p>
-          <h2 className="ch-title" id="notes-h">
-            {writing.headline}
-          </h2>
-          <p className="ch-lede">{writing.body}</p>
+          <s className="ch-no" aria-hidden="true">
+            EXP.{ch.no}
+          </s>
+          <div className="ch-head__txt">
+            <h2 className="ch-title" id="notes-h">
+              {writing.headline}
+            </h2>
+            <p className="ch-lede">{writing.body}</p>
+          </div>
         </div>
 
         <Reveal className="brand-split">

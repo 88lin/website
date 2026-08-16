@@ -1,38 +1,22 @@
 /**
- * 03 做过什么 · 横推卡轨 + 虚线场景卡。
+ * EXP.03 作品 · 横推卡轨。
  *
- * 一条钉住的跑道，纵向滚动被换算成横向推进。为什么值得为它花一个 pin：
- * 六个项目的分量差三个数量级，竖着排会被读成一张清单，横着排 + 卡宽按对数分配，
- * 第一眼就看得出谁是主力。
+ * 一条钉住的跑道，纵向滚动换算成横向推进。为什么值得为它花一个 pin：
+ * 六个项目的分量差三个数量级，竖排会被读成清单，横排 + 卡宽按对数分配，
+ * 第一眼就看得出主力。v10 的骨架保留，章头换成实验志的登记条。
  *
- * v10 只换外壳不换骨架：卡片改成参考站 #26 的 .hscroll-card（白纸 + 细投影 +
- * 手写体角标），色相只染角标、状态灯、标签与量级条，卡面永远是白的。
- * 「打开站点 / 源码」两枚按钮留在卡片内部 —— v8 把它们贴在卡的裁切边上，
- * 横滑时正好被切掉，用户反馈「看不到」是准确的。
- *
- * 零位图：原来放截图的那一格是数据面板，仓库路径 + 两条对数标度的 star / fork 条。
- * 条长是算出来的，不是画上去的。全站的仓库统计数字只在这里出现这一次。
- *
- * 章尾接导航站六张虚线场景卡（dst 的 .scene-card），标签用与地面同色的底
- * 抠在边框缺口上 —— 那是设计系统里最好认的一个零件。
+ * 零位图：截图位是数据面板（仓库路径 + 对数标度的 star / fork 条）。
+ * 条长是算出来的。全站仓库统计数字只出现这一次。
+ * 标本馆（小站们）拆去 EXP.05，这章只讲六个主力。
  */
 
 import { useCallback, useRef } from 'react'
 import { ArrowOut } from '../components/Icons'
-import { Reveal } from '../components/Reveal'
 import { WIDE_MQ } from '../lib/bp'
-import {
-  gardenFeatured,
-  gardenIntro,
-  projects,
-  worksIntro,
-  type GardenGroup,
-  type Project,
-  type Tint,
-} from '../content/site'
+import { chapters, projects, worksIntro, type Project } from '../content/site'
 import { useLazyScene, useMediaQuery, worksPan, type SceneApi } from '../lib/motion'
 
-const TOP = Math.log(1 + 4581)
+const TOP = Math.log(1 + 4642)
 /** 卡宽 = 24rem 起，按 star 的对数最多再加 12rem。差距看得见，又不至于失控。 */
 const widthOf = (stars: number) => (24 + (12 * Math.log(1 + stars)) / TOP).toFixed(1)
 
@@ -45,22 +29,11 @@ const STATE: Record<Project['state'], string> = {
   archived: '已归档',
 }
 
-/**
- * 场景卡的色相按「类」定，不按下标轮换 —— 下标轮换会让两张都写着「工具」的卡
- * 一黄一红，看起来像随机上色。绑到类上，颜色就成了可读的信息。
- */
-const GROUP_TINT: Record<GardenGroup, Tint> = {
-  特效: 'coral',
-  工具: 'blue',
-  内容: 'yellow',
-  组件: 'coral',
-}
-
 const num = (n: number) => n.toLocaleString('en-US')
 const repoOf = (url: string) => url.replace('https://github.com/', '')
 const no2 = (i: number) => String(i + 1).padStart(2, '0')
 
-/** 两条量级条。没有文字进 SVG：中文字形不进子集，等宽数字交给 HTML 那一行。 */
+/** 两条量级条。没有文字进 SVG：中文不进字体子集，数字交给 HTML 行。 */
 function Bars({ stars, forks, name }: { stars: number; forks: number; name: string }) {
   return (
     <svg
@@ -149,7 +122,7 @@ export function Work() {
   /**
    * 严格互补于 CSS 的 `max-width: 900px`。两边都写 900 会在正好 900px 时
    * 同时成立，pin 出来的 spacer 落在一个已经拆成竖排的容器里 —— 那就是
-   * 用户在移动端看到的整屏空白。区间只许有一个来源：lib/bp.ts。
+   * 移动端整屏空白的来源。区间只许有一个来源：lib/bp.ts。
    */
   const wide = useMediaQuery(WIDE_MQ)
 
@@ -157,26 +130,28 @@ export function Work() {
     if (!rail.current || !track.current) return
     const t = track.current
     t.classList.add('is-pan')
-    // 返回值是卸载钩子，交给 gsap.context 在 revert 时调用：
-    // 它负责把手写的内联高度和 is-pan 还原，context 自己不管这些。
+    // 返回值是卸载钩子：还原手写的内联高度与 is-pan，gsap.context 不管这些。
     return worksPan(gsap, rail.current, t)
   }, [])
 
   useLazyScene(rail, build, wide)
 
+  const ch = chapters.find((c) => c.id === 'work')!
+
   return (
-    <section id="work" className="ch" data-tone="paper" aria-labelledby="work-h">
+    <section id="work" className="ch ch--work" data-tone="alt" aria-labelledby="work-h">
       <div className="work-rail" ref={rail}>
         <div className="work-vp">
           <div className="wrap work-head">
-            <span className="section-number" aria-hidden="true">
-              03
-            </span>
-            <p className="label-caps">SHIPPED &amp; RUNNING</p>
-            <h2 className="ch-title" id="work-h">
-              {worksIntro.headline}
-            </h2>
-            <p className="ch-lede">{worksIntro.body}</p>
+            <header className="ch-head ch-head--inline">
+              <s className="ch-no" aria-hidden="true">
+                EXP.{ch.no}
+              </s>
+              <div className="ch-head__txt">
+                <h2 id="work-h">{worksIntro.headline}</h2>
+                <p>{worksIntro.body}</p>
+              </div>
+            </header>
           </div>
 
           <div className="work-track" ref={track}>
@@ -186,48 +161,6 @@ export function Work() {
             <span className="work-end" aria-hidden="true" />
           </div>
         </div>
-      </div>
-
-      {/* 导航站。每类挑一个，附一句「为什么是它」，剩下 34 个交给导航站本身 —— */}
-      {/* v8 在这里铺过 40 块彩色底卡，等于把用户自己的导航站抄了一遍还抄丑了。 */}
-      <div className="wrap work-garden">
-        <div className="ch-head">
-          <p className="label-caps">SIDE GARDEN</p>
-          <h3 className="ch-title">{gardenIntro.headline}</h3>
-          <p className="ch-lede">{gardenIntro.body}</p>
-          <div className="act-row">
-            <a
-              className="cta-btn cta-btn--ghost cta-btn--sm"
-              href={gardenIntro.hub}
-              target="_blank"
-              rel="noreferrer noopener"
-            >
-              {gardenIntro.hubLabel} · 全部 {gardenIntro.total} 个 <ArrowOut />
-            </a>
-            <span className="pill pill--mono">另有 {gardenIntro.rest} 个未在此列出</span>
-          </div>
-        </div>
-
-        <Reveal className="scene-grid">
-          {gardenFeatured.map((it) => (
-            <a
-              className="scene-card"
-              data-card=""
-              data-tint={GROUP_TINT[it.group]}
-              key={it.name}
-              href={it.href}
-              target="_blank"
-              rel="noreferrer noopener"
-            >
-              <span className="scene-card__label">{it.group}</span>
-              <h4>{it.name}</h4>
-              <p>{it.why}</p>
-              <span className="scene-card__go">
-                打开 <ArrowOut />
-              </span>
-            </a>
-          ))}
-        </Reveal>
       </div>
     </section>
   )

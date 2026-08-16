@@ -9,9 +9,11 @@
  */
 import { readFile, writeFile, mkdir, rm } from 'node:fs/promises'
 import path from 'node:path'
-import { pathToFileURL } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
-const ROOT = new URL('../', import.meta.url).pathname
+/* Windows 上 URL.pathname 会给 /C:/... 开头斜杠，join 之后读文件就变成
+   C:\C:\...。必须走 fileURLToPath。 */
+const ROOT = fileURLToPath(new URL('../', import.meta.url))
 const DIST = path.join(ROOT, 'dist')
 const shell = await readFile(path.join(DIST, 'index.html'), 'utf8')
 const ssrEntry = path.join(ROOT, 'dist-ssr/entry-server.js')
@@ -33,7 +35,7 @@ const META = {
     desc: '案例拆解：把「电脑修不好」这类模糊求助，变成一套 Agent 可以按步骤执行、可复核的诊断技能。',
   },
   '/case/video-vip/': {
-    title: 'video_vip ｜ 4,581★ 的解析脚本怎么活过接口更替 · 茉灵智库',
+    title: 'video_vip ｜ 4,642★ 的解析脚本怎么活过接口更替 · 茉灵智库',
     desc: '案例拆解：18 路解析接口、22 个站点适配、35 条注入规则。接口会挂，所以整套东西按「可切换」来设计。',
   },
 }

@@ -1,200 +1,170 @@
 /**
- * 02 能做什么 · 粘性侧栏 + 深墨表头。
+ * EXP.02 主线 · 能做什么。
  *
- * 骨架来自 demo-readme-tutorial.html 的 .workflow-layout：左栏 0.35fr 粘住，
- * 放一个 Fraunces 巨号章序（opacity .14，是纹理不是内容）与章头；右栏 1fr 走内容。
- * 这样读者滚整整一章，章名一直在视线里，不需要回头找「现在读的是哪一节」。
- *
- * 内容顺序是从抽象到可下单：两条主线（表格）→ 三件能接的活（卡）→ 手上的装备
- * （跑马灯）→ 两件实物证据（色板与导航站）。第一屏说立场，最后一行给证据。
- *
- * 这一章不出现 star / fork：那是第 03 章作品卡的事，全站只出现一次。
+ * 章内三段，构图各异：交汇图（把论点画出来——两条实体色带收进一枚墨色节点）、
+ * 两条主线的清单（对角排布，不是均分卡片）、可承接的三件事（缺口标签卡）。
+ * 交汇图桌面用 SVG，窄屏换两张叠放的色带卡（结构性替代，不是缩小）。
+ * 器材清单压在章尾：等宽四行，回答「手上有什么」，不做徽章墙。
+ * 这一章不出现 star / fork：那是作品章的事。
  */
 
-import { ArrowOut } from '../components/Icons'
-import { Reveal } from '../components/Reveal'
-import {
-  craftEvidence,
-  garden,
-  servicesIntro,
-  services,
-  stack,
-  trackA,
-  trackB,
-  tracksIntro,
-  type Track,
-} from '../content/site'
+import { chapters, services, servicesIntro, stack, trackA, trackB, tracksIntro } from '../content/site'
+import { useReveal, useStagger } from '../lib/motion'
+import { Annot } from '../components/Ink'
 
-type TrackGroup = { id: string; title: string; items: Track[] }
-
-/** 色板证据条：A 组里真正在用的七个色阶，按主 → 辅 → 强调排。 */
-const SWATCH = ['brand-deep', 'brand', 'brand-tint', 'highlight', 'pop', 'pop-deep', 'ink']
-
-/** 导航站证据条：四类小站的实际条目数，比例由数组现算，不写死。 */
-const GROUPS = ['特效', '工具', '内容', '组件'] as const
-const COUNTS = GROUPS.map((g) => garden.filter((x) => x.group === g).length)
-const BAR_FILL = ['brand-deep', 'brand', 'brand-tint', 'highlight']
-
-/** 装备清单压平成一条。跑马灯要跑满一圈，所以渲染两份。 */
-const GEAR = stack.clusters.flatMap((c) => c.items)
-
-function TrackTable({ t }: { t: TrackGroup }) {
+function Junction() {
   return (
-    <div className="wtable">
-      <div className="wt-header">
-        <span>{t.id}</span>
-        <span>{t.title}</span>
-        <span>WHAT IT MEANS</span>
+    <figure className="junc" aria-label="两条主线向一枚节点收敛：把不确定的能力，接进确定的工程约束里">
+      <svg className="junc__svg" viewBox="0 0 1000 400" role="img" aria-hidden="true">
+        {/* 左带：AI Agent 工程 */}
+        <path
+          className="junc__band junc__band--a"
+          d="M 0 46 C 260 46 320 120 452 158 L 452 242 C 320 280 260 354 0 354 Z"
+        />
+        {/* 右带：创意前端 */}
+        <path
+          className="junc__band junc__band--b"
+          d="M 1000 46 C 740 46 680 120 548 158 L 548 242 C 680 280 740 354 1000 354 Z"
+        />
+        <line className="junc__dash" x1="452" y1="200" x2="548" y2="200" />
+
+        <text className="junc__track" x="18" y="30">
+          TRACK A — AI AGENT 工程
+        </text>
+        <text className="junc__track" x="982" y="30" textAnchor="end">
+          TRACK B — 创意前端
+        </text>
+
+        {trackA.items.map((it, i) => (
+          <text key={it.id} className="junc__cap junc__cap--a" x={40 + i * 14} y={130 + i * 74}>
+            {it.title}
+          </text>
+        ))}
+        {trackB.items.map((it, i) => (
+          <text
+            key={it.id}
+            className="junc__cap junc__cap--b"
+            x={960 - i * 14}
+            y={130 + i * 74}
+            textAnchor="end"
+          >
+            {it.title}
+          </text>
+        ))}
+      </svg>
+
+      {/* 节点单独用 HTML：它要投影、要 hover 微抬 */}
+      <div className="junc__node">
+        <b>可交付的产品</b>
+        <s>THE JOIN</s>
       </div>
-      {t.items.map((it, i) => (
-        <div className="wt-row" key={it.id}>
-          <span className="wt-k">
-            {t.id}
-            {i + 1}
-          </span>
-          <span className="wt-t">{it.title}</span>
-          <span className="wt-b">{it.body}</span>
+
+      <Annot seed="junc-note" className="junc__note">
+        交点只有一件事：把不确定的能力，接进确定的工程约束
+      </Annot>
+
+      <figcaption className="junc__cap-row">
+        <span>图 02 · 两条主线与交点</span>
+        <span>左带管「真的能改到线上」，右带管「愿意看、看得懂」</span>
+      </figcaption>
+
+      {/* 窄屏的 structural 替代：SVG 藏掉，这里接住 */}
+      <div className="junc__m" aria-hidden="true">
+        <div className="junc__m-band junc__m-band--a">
+          <s>TRACK A — AI AGENT 工程</s>
+          {trackA.items.map((it) => (
+            <b key={it.id}>{it.title}</b>
+          ))}
         </div>
-      ))}
-    </div>
+        <div className="junc__m-band junc__m-band--b">
+          <s>TRACK B — 创意前端</s>
+          {trackB.items.map((it) => (
+            <b key={it.id}>{it.title}</b>
+          ))}
+        </div>
+      </div>
+    </figure>
   )
 }
 
 export function Craft() {
+  const head = useReveal<HTMLDivElement>()
+  const svcGrid = useStagger<HTMLDivElement>(90)
+  const ch = chapters.find((c) => c.id === 'craft')!
+
   return (
-    <section id="craft" className="ch" data-tone="alt" aria-labelledby="craft-h">
-      <div className="wrap">
-        <div className="workflow-layout">
-          <div className="workflow-side">
-            <span className="big-num" aria-hidden="true">
-              02
-            </span>
-            <p className="label-caps">WHAT I CAN DO</p>
-            <h2 className="ch-title" id="craft-h">
-              {servicesIntro.headline}
-            </h2>
-            <p className="ch-lede">{servicesIntro.body}</p>
+    <section id="craft" className="ch ch--craft" data-tone="paper" aria-labelledby="craft-h">
+      <div className="craft-grid wrap-craft">
+        <aside className="ch-side" aria-hidden="true">
+          <s className="ch-side__no">EXP.{ch.no}</s>
+          <s className="ch-side__lab">{ch.label}</s>
+        </aside>
+
+        <div className="craft-main">
+          <header className="ch-head ch-head--side" ref={head}>
+            <div className="ch-head__txt">
+              <h2 id="craft-h">{tracksIntro.headline}</h2>
+              <p>{tracksIntro.body}</p>
+            </div>
+          </header>
+
+          <Junction />
+
+          <div className="tracks">
+            {[trackA, trackB].map((t) => (
+              <div className={`track track--${t.id.toLowerCase()}`} key={t.id}>
+                <h3>
+                  <i>{t.id}</i>
+                  {t.title}
+                </h3>
+                {t.items.map((it) => (
+                  <div className="track__item" key={it.id}>
+                    <b>{it.title}</b>
+                    <p>{it.body}</p>
+                  </div>
+                ))}
+              </div>
+            ))}
           </div>
 
-          <div className="workflow-main">
-            <Reveal className="craft-blk">
-              <div>
-                <h3 className="craft-h3">{tracksIntro.headline}</h3>
-                <p className="craft-lede">{tracksIntro.body}</p>
-              </div>
-              <TrackTable t={trackA} />
-              <TrackTable t={trackB} />
-            </Reveal>
-
-            <Reveal className="svc-grid">
+          <div className="svc-wrap">
+            <header className="sub-head">
+              <h3>{servicesIntro.headline}</h3>
+              <p>{servicesIntro.body}</p>
+            </header>
+            <div className="svc-grid" ref={svcGrid}>
               {services.map((s) => (
-                <article className="svc-card" data-card="" data-tint={s.tint} key={s.id}>
-                  <span className="svc-card__no" aria-hidden="true">
-                    {s.no}
+                <article className="svc" data-tint={s.tint} key={s.id} data-stagger="">
+                  <span className="notch" aria-hidden="true">
+                    SVC.{s.no}
                   </span>
                   <h4>{s.title}</h4>
                   <p>{s.body}</p>
-                  <ul>
+                  <ul className="svc__del">
                     {s.deliverables.map((d) => (
-                      <li className="pill pill--tint" key={d}>
-                        {d}
-                      </li>
+                      <li key={d}>{d}</li>
                     ))}
                   </ul>
-                  <p className="svc-card__fit">{s.fit}</p>
+                  <p className="svc__fit">
+                    <i aria-hidden="true" />
+                    {s.fit}
+                  </p>
                 </article>
               ))}
-            </Reveal>
+            </div>
+          </div>
 
-            <Reveal className="craft-blk">
-              <div>
-                <h3 className="craft-h3">{stack.headline}</h3>
-                <p className="craft-lede">{stack.body}</p>
-              </div>
-              {/* 第一份是真内容，第二份只为把带子接成一个环，对读屏隐藏 */}
-              <div className="belt">
-                <ul>
-                  {GEAR.map((g) => (
-                    <li className="chip" key={g}>
-                      {g}
-                    </li>
-                  ))}
-                  {GEAR.map((g) => (
-                    <li className="chip" key={`dup-${g}`} aria-hidden="true">
-                      {g}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </Reveal>
-
-            <Reveal className="craft-blk">
-              <div className="ds-row">
-                <svg
-                  className="ds-row__sw"
-                  viewBox="0 0 260 34"
-                  role="img"
-                  aria-label="A 组色板：蓝三阶、柠檬黄、珊瑚红两阶与墨蓝"
-                >
-                  {SWATCH.map((c, i) => (
-                    <rect key={c} x={i * 37.5} y="0" width="35" height="34" rx="4" fill={`var(--${c})`} />
-                  ))}
-                </svg>
-                <p>
-                  <b>{craftEvidence[0].title}</b>
-                  {craftEvidence[0].caption}
-                </p>
-                <a
-                  className="cta-btn cta-btn--ghost cta-btn--sm"
-                  href={craftEvidence[0].href}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                >
-                  {craftEvidence[0].linkLabel} <ArrowOut />
-                </a>
-              </div>
-
-              <div className="ds-row">
-                <svg
-                  className="ds-row__sw"
-                  viewBox="0 0 260 34"
-                  role="img"
-                  aria-label={GROUPS.map((g, i) => `${g} ${COUNTS[i]} 个`).join('，')}
-                >
-                  {COUNTS.reduce<{ x: number; out: React.ReactElement[] }>(
-                    (acc, n, i) => {
-                      const w = ((260 - 9) * n) / garden.length
-                      acc.out.push(
-                        <rect
-                          key={GROUPS[i]}
-                          x={acc.x}
-                          y="0"
-                          width={w}
-                          height="34"
-                          rx="4"
-                          fill={`var(--${BAR_FILL[i]})`}
-                        />,
-                      )
-                      acc.x += w + 3
-                      return acc
-                    },
-                    { x: 0, out: [] },
-                  ).out}
-                </svg>
-                <p>
-                  <b>{craftEvidence[1].title}</b>
-                  {craftEvidence[1].caption}
-                </p>
-                <a
-                  className="cta-btn cta-btn--ghost cta-btn--sm"
-                  href={craftEvidence[1].href}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                >
-                  {craftEvidence[1].linkLabel} <ArrowOut />
-                </a>
-              </div>
-            </Reveal>
+          <div className="stack">
+            <h3>{stack.headline}</h3>
+            <p className="stack__body">{stack.body}</p>
+            <dl className="stack__grid">
+              {stack.clusters.map((c) => (
+                <div className="stack__c" key={c.id}>
+                  <dt>{c.title}</dt>
+                  <dd>{c.items.join(' · ')}</dd>
+                </div>
+              ))}
+            </dl>
           </div>
         </div>
       </div>

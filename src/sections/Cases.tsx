@@ -1,25 +1,16 @@
 /**
- * 04 怎么做的 · 粘性堆叠。
+ * EXP.04 案例 · 粘性堆叠。
  *
  * 三张卡依次钉在同一个位置，后一张推上来时前一张缩小并沉回底色里。
- * 这是顺序叙事：你不能同时读三个案例，所以版面也不让你同时看见三个。
- *
- * 写法沿用「背景 / 卡在哪 / 怎么解」三段，这是这套内容里最值钱的部分。
- * v10 把这三段挂上参考站 dst 的编号步骤器：44px 圆徽 + 一条黄色虚线竖轨，
- * 读者不用读小标题也知道这是一条有先后的链。「怎么解」那一步换成虚线框
- * 加珊瑚红圆徽 —— 一章只圈这一处，圈多了就成花边。
- *
- * v8 起零位图。侧栏三块图形面板各自画的是这个项目里真实存在的结构：
- * 21 个电台格子、四条路由规则、18 路可切换解析清单。三块面板刻意不共用
- * 一个模子，否则三张卡又会被读成同一张。
- *
- * v10 改掉一处用户点名的东西：02 的面板标题原来叫 SKILL RULES，
- * 那是实现细节冒充标签。现在叫 PLAYBOOK ROUTER，说的是它真正在做的事。
+ * 顺序叙事：你不能同时读三个案例，版面也不让你同时看见三个。
+ * 「背景 / 卡在哪 / 怎么解」三段是最值钱的内容，编号步骤器保留。
+ * 侧栏三块图形面板画的是项目里真实存在的结构，刻意不共用模子。
  */
 
 import { useCallback, useRef } from 'react'
 import { ArrowOut } from '../components/Icons'
 import { cases, casesIntro, vipInterfaces, type CaseStudy } from '../content/cases'
+import { chapters } from '../content/site'
 import { WIDE_MQ } from '../lib/bp'
 import { caseStack, useLazyScene, useMediaQuery, type SceneApi } from '../lib/motion'
 import { Link } from '../router'
@@ -153,6 +144,7 @@ function Case({ c }: { c: CaseStudy }) {
 export function Cases() {
   const root = useRef<HTMLDivElement | null>(null)
   const wide = useMediaQuery(WIDE_MQ)
+  const ch = chapters.find((c) => c.id === 'cases')!
 
   const build = useCallback(({ ScrollTrigger, root: el }: SceneApi) => {
     caseStack(ScrollTrigger, el, Array.from(el.querySelectorAll<HTMLElement>('.case')))
@@ -161,16 +153,17 @@ export function Cases() {
   useLazyScene(root, build, wide)
 
   return (
-    <section id="cases" className="ch" data-tone="alt" aria-labelledby="cases-h">
+    <section id="cases" className="ch ch--cases" data-tone="paper" aria-labelledby="cases-h">
       <div className="wrap ch-head">
-        <span className="section-number" aria-hidden="true">
-          04
-        </span>
-        <p className="label-caps">THREE CASE STUDIES</p>
-        <h2 className="ch-title" id="cases-h">
-          {casesIntro.headline}
-        </h2>
-        <p className="ch-lede">{casesIntro.body}</p>
+        <s className="ch-no" aria-hidden="true">
+          EXP.{ch.no}
+        </s>
+        <div className="ch-head__txt">
+          <h2 className="ch-title" id="cases-h">
+            {casesIntro.headline}
+          </h2>
+          <p className="ch-lede">{casesIntro.body}</p>
+        </div>
       </div>
 
       <div className="wrap cases-stack" ref={root}>

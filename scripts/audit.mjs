@@ -38,9 +38,11 @@ const want = (id) => !only || only.has(String(id))
 /** 六章。顺序、id、色调都跟 content/site.ts 对齐，错一个就说明内容层被改过。 */
 const CHAPTERS = [
   { id: 'hero', tone: 'paper' },
-  { id: 'craft', tone: 'alt' },
-  { id: 'work', tone: 'paper' },
-  { id: 'cases', tone: 'alt' },
+  { id: 'metrics', tone: 'alt' },
+  { id: 'craft', tone: 'paper' },
+  { id: 'work', tone: 'alt' },
+  { id: 'cases', tone: 'paper' },
+  { id: 'garden', tone: 'alt' },
   { id: 'notes', tone: 'paper' },
   { id: 'contact', tone: 'alt' },
 ]

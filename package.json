@@ -18,11 +18,13 @@
     "gsap": "^3.13.0",
     "lenis": "^1.1.20",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "three": "^0.171.0"
   },
   "devDependencies": {
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
+    "@types/three": "^0.171.0",
     "@vitejs/plugin-react": "^4.3.4",
     "lighthouse": "^12.8.2",
     "playwright": "^1.50.1",

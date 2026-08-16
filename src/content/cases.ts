@@ -84,7 +84,7 @@ export const cases: CaseStudy[] = [
       { value: '0', label: '注册步骤' },
     ],
     provenance: [
-      { value: '88 Star / 23 Fork', from: 'GitHub API：GET /repos/88lin/lofi-radio-web，2026-08-10' },
+      { value: '88 Star / 23 Fork', from: 'GitHub API：GET /repos/88lin/lofi-radio-web，2026-08-16' },
       { value: '21 精选电台', from: '仓库内电台配置清单条目数' },
       { value: '0 注册步骤', from: 'lofi.88lin.eu.org 无账号体系，打开即播' },
     ],
@@ -138,7 +138,7 @@ export const cases: CaseStudy[] = [
       { value: '62 专项 Playbook', from: '仓库 playbooks 目录文件数与路由索引条目数' },
       { value: '3 覆盖操作系统', from: 'README 声明的 Windows / macOS / Linux 三条排查路径' },
       { value: 'CI 结构校验', from: '仓库 GitHub Actions 工作流：路由表与 Playbook 结构校验' },
-      { value: '7 Star / 1 Fork', from: 'GitHub API：GET /repos/88lin/computer-repair-skill，2026-08-10' },
+      { value: '7 Star / 1 Fork', from: 'GitHub API：GET /repos/88lin/computer-repair-skill，2026-08-16' },
     ],
     link: 'https://repair.88lin.eu.org',
     linkLabel: '官方网站',
@@ -155,11 +155,11 @@ export const cases: CaseStudy[] = [
     role: '独立开发与长期维护',
     stackLine: 'JavaScript · 油猴脚本 · 22 站点适配',
     summary:
-      '2023 年写的脚本，现在 4,581 star。它能活三年不是因为写得多好，是因为一开始就假设「用到的东西都会坏」：18 路解析接口随时可换，22 个站点各自独立适配，任何一处失效都不影响其余。',
+      '2023 年写的脚本，现在 4,642 star。它能活三年不是因为写得多好，是因为一开始就假设「用到的东西都会坏」：18 路解析接口随时可换，22 个站点各自独立适配，任何一处失效都不影响其余。',
     sections: [
       {
         label: '背景',
-        body: '2023 年写的一个油猴脚本，解决的是一件很朴素的事：在会员视频页面上，把播放地址交给第三方解析服务，换一个能播的播放器回来。它现在是我 star 最多的仓库，4,581 star、471 fork，也是我维护时间最长的一个。',
+        body: '2023 年写的一个油猴脚本，解决的是一件很朴素的事：在会员视频页面上，把播放地址交给第三方解析服务，换一个能播的播放器回来。它现在是我 star 最多的仓库，4,642 star、474 fork，也是我维护时间最长的一个。',
       },
       {
         label: '卡在哪',
@@ -181,13 +181,13 @@ export const cases: CaseStudy[] = [
       },
     ],
     results: [
-      { value: '4,581', label: 'GitHub Star' },
-      { value: '471', label: 'Fork' },
+      { value: '4,642', label: 'GitHub Star' },
+      { value: '474', label: 'Fork' },
       { value: '18', label: '路解析接口' },
       { value: '22', label: '个站点适配器' },
     ],
     provenance: [
-      { value: '4,581 Star / 471 Fork', from: 'GitHub API：GET /repos/88lin/video_vip，2026-08-10' },
+      { value: '4,642 Star / 474 Fork', from: 'GitHub API：GET /repos/88lin/video_vip，2026-08-16' },
       { value: '18 路解析接口', from: 'video_vip.user.js v3.1.10 解析清单，另有 1 路（默认B）已注释停用' },
       { value: '22 个站点适配器', from: 'video_vip.user.js v3.1.10 站点配置表，逐个域名各一份' },
       { value: '35 条 @include', from: 'video_vip.user.js v3.1.10 脚本头，覆盖 PC 与移动端入口' },

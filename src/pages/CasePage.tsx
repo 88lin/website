@@ -1,18 +1,17 @@
 /**
- * 案例子页。
+ * 案例子页 · 实验记录。
  *
- * 首页那三张卡是「一眼看懂」，这里是「愿意读完」——所以子页反过来做：
- * 米白纸底、单栏长文、没有横推、没有堆叠。读长文的人不需要被表演。
- *
- * v8 起这一页也零位图。顶部原本那张界面截图换成一块深色控制台：
- * 写的是这个项目真实的结构约定（收拢的播放器 / 两条硬规则 / 18 路接口与
- * 22 个适配器），比一张糊掉的缩略图更能说明它到底是个什么东西。
- * 页面上出现的每个数字都能在「数字出处」里找到它是从哪个接口、哪个文件数出来的。
+ * 首页那三张卡是「一眼看懂」，这里是「愿意读完」——单栏长文、没有横推、
+ * 没有堆叠。读长文的人不需要被表演。三段正文挂编号步骤器（背景→卡在哪→怎么解），
+ * 「怎么解」套手绘虚线框：它是每条记录里被验证的那一步。
+ * 页面上每个数字都能在「数字出处」里找到出处，结果表盖一枚核实章。
  */
 
 import { ArrowBack, ArrowOut } from '../components/Icons'
+import { CodeMac, type Tok } from '../components/CodeMac'
+import { Frame, Stamp } from '../components/Ink'
 import { caseBySlug, vipHosts, vipInterfaces } from '../content/cases'
-import { footer } from '../content/site'
+import { AS_OF, footer } from '../content/site'
 import { Link } from '../router'
 
 type Line = { k: string; v: string; note?: string }
@@ -41,17 +40,29 @@ const SPEC: Record<string, Line[]> = {
   ],
 }
 
+/** 结构约定的文件名：读起来就是它自己仓库里的一个真实配置文件 */
+const SPEC_FILE: Record<string, string> = {
+  lofi: 'player.constraints.yml',
+  repair: 'playbook-router.yaml',
+  'video-vip': 'fallback.strategy.yml',
+}
+
+/** 行数组 → 词法记号数组（k 关键字、v 字符串、note 注释）。 */
+function toTok(lines: Line[]): Tok[][] {
+  return lines.map((l) => {
+    const row: Tok[] = [{ t: l.k, c: 'kw' }, { t: ': ' }, { t: l.v, c: 'str' }]
+    if (l.note) row.push({ t: `  # ${l.note}`, c: 'cmt' })
+    return row
+  })
+}
+
 function Console({ slug }: { slug: string }) {
   const lines = SPEC[slug] || []
   return (
-    <div className="slab cpage__slab">
-      {lines.map((l) => (
-        <div key={l.k}>
-          <b>{l.k}</b> {l.v} {l.note ? <em># {l.note}</em> : null}
-        </div>
-      ))}
+    <div className="cpage__console">
+      <CodeMac file={SPEC_FILE[slug] || 'spec.yml'} code={toTok(lines)} />
       {slug === 'video-vip' ? (
-        <>
+        <div className="cpage__tokens-wrap">
           <ul className="cpage__tokens">
             {vipInterfaces.map((n) => (
               <li key={n}>{n}</li>
@@ -62,7 +73,7 @@ function Console({ slug }: { slug: string }) {
               <li key={h}>{h}</li>
             ))}
           </ul>
-        </>
+        </div>
       ) : null}
     </div>
   )
@@ -95,7 +106,7 @@ export function CasePage({ slug }: { slug: string }) {
 
         <div className="cpage__hd">
           <p className="cpage__no">
-            CASE {c.no} <span aria-hidden="true">/</span> {c.year}
+            RECORD {c.no} <span aria-hidden="true">/</span> {c.year}
           </p>
           <h1 className="cpage__h">{c.name}</h1>
           <p className="cpage__claim">{c.claim}</p>
@@ -112,28 +123,52 @@ export function CasePage({ slug }: { slug: string }) {
             <h2>{c.cn}</h2>
             <p>{c.summary}</p>
           </section>
-          {c.sections.map((s) => (
-            <section key={s.label}>
-              <h2>{s.label}</h2>
-              <p>{s.body}</p>
-            </section>
-          ))}
-          {c.tradeoffs.map((t) => (
-            <section key={t.title}>
-              <h2>{t.title}</h2>
-              <p>{t.body}</p>
-            </section>
-          ))}
+          <div className="cpage__flow">
+            {c.sections.map((s, i) =>
+              i === 2 ? (
+                <Frame seed={'case-fix-' + c.slug} className="cpage__fix" key={s.label}>
+                  <section className="cpage__step">
+                    <span className="cpage__stepdot cpage__stepdot--fix" aria-hidden="true">
+                      {`0${i + 1}`}
+                    </span>
+                    <h2>{s.label}</h2>
+                    <p>{s.body}</p>
+                  </section>
+                </Frame>
+              ) : (
+                <section className="cpage__step" key={s.label}>
+                  <span className="cpage__stepdot" aria-hidden="true">
+                    {`0${i + 1}`}
+                  </span>
+                  <h2>{s.label}</h2>
+                  <p>{s.body}</p>
+                </section>
+              ),
+            )}
+          </div>
+          <div className="cpage__offs">
+            <h2 className="cpage__offs-h">放弃了什么</h2>
+            {c.tradeoffs.map((t) => (
+              <section className="cpage__off" key={t.title}>
+                <h3>{t.title}</h3>
+                <p>{t.body}</p>
+              </section>
+            ))}
+          </div>
         </div>
 
-        <dl className="cpage__res">
-          {c.results.map((r) => (
-            <div className="slab" key={r.label}>
-              <dt>{r.label}</dt>
-              <dd>{r.value}</dd>
-            </div>
-          ))}
-        </dl>
+        <div className="cpage__reswrap">
+          <h2>测量结果</h2>
+          <dl className="cpage__res">
+            {c.results.map((r) => (
+              <div className="slab" key={r.label}>
+                <dt>{r.label}</dt>
+                <dd>{r.value}</dd>
+              </div>
+            ))}
+          </dl>
+          <Stamp seed={'case-stamp-' + c.slug} date={AS_OF} className="cpage__stamp" />
+        </div>
 
         <div className="cpage__prov">
           <h2>数字出处</h2>

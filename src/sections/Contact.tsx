@@ -1,17 +1,15 @@
 /**
- * 06 联系 · 居中收口。
+ * EXP.07 联系 · 收口。
  *
- * v9 这一屏是一整块珊瑚红满幅色块。放大了唯一重要的动作，代价是整屏 #A8452F ——
- * 用户点名不喜欢的颜色，一次性铺满最后一屏。v10 换成参考站的收口写法：
- * 还是纸底，靠居中、字号与留白把 CTA 顶上去，颜色只留在那一枚按钮上。
- *
- * CTA 有磁吸：指针靠近时按钮往指针方向偏一点。全站只有这一个控件这么做 ——
- * 它是整页唯一真正想让人点的东西，反馈该给在这里。
+ * 纸底，靠字号与留白把 CTA 顶上去，颜色只留在按钮上（v9 满幅珊瑚红的教训）。
+ * CTA 磁吸：全站只有这一个控件这么做。Caveat 旁批把「不收咨询费」
+ * 写在按钮边上——这句是承诺，用手写体比用正文体可信。
  */
 
 import { useEffect, useRef } from 'react'
 import { ArrowOut } from '../components/Icons'
-import { CTA_LABEL, contact, footer, profile } from '../content/site'
+import { Annot } from '../components/Ink'
+import { CTA_LABEL, chapters, contact, footer, profile } from '../content/site'
 import { prefersReducedMotion } from '../lib/caps'
 
 function useMagnet<T extends HTMLElement>() {
@@ -36,15 +34,15 @@ function useMagnet<T extends HTMLElement>() {
 
 export function Contact() {
   const magnet = useMagnet<HTMLAnchorElement>()
+  const ch = chapters.find((c) => c.id === 'contact')!
 
   return (
     <section id="contact" className="ch ch--contact" data-tone="alt" aria-labelledby="contact-h">
       <div className="wrap">
         <div className="contact-in">
-          <span className="section-number" aria-hidden="true">
-            06
-          </span>
-          <p className="label-caps">LET US BUILD SOMETHING</p>
+          <s className="ch-no ch-no--center" aria-hidden="true">
+            EXP.{ch.no}
+          </s>
           <h2 className="contact-h" id="contact-h">
             {contact.headline}
           </h2>
@@ -58,7 +56,9 @@ export function Contact() {
             >
               {CTA_LABEL}
             </a>
-            <span className="contact-mail">{contact.primary.value}</span>
+            <Annot seed="contact-free" className="contact-free">
+              不收咨询费，会回一份可执行的判断
+            </Annot>
           </div>
 
           <div className="contact-ch">
