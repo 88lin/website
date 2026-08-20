@@ -128,4 +128,4 @@ export function Link({
 }
 
 /** 预渲染时用得到：站点所有路由。 */
-export const ROUTES: RoutePath[] = ['/', '/case/lofi/', '/case/repair/', '/case/video-vip/']
+export const ROUTES: RoutePath[] = ['/', '/case/lofi/', '/case/repair/', '/case/facetmark/', '/case/video-vip/']

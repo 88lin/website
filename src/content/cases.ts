@@ -1,5 +1,5 @@
 /**
- * 三个深度案例。首页 04 通道用 `summary` + `results`，案例子页用全部字段。
+ * 四个深度案例。首页 04 通道用 `summary` + `results`，案例子页用全部字段。
  *
  * 写法规矩：每个案例只讲清楚一件事，按「背景 / 卡在哪 / 怎么解」三段走，
  * 结果只放能被第三方核到的数字，并在 `provenance` 里逐条写明出处。
@@ -37,7 +37,7 @@ export type CaseStudy = {
 
 export const casesIntro = {
   headline: '怎么做的',
-  body: '三个项目，各写清楚一件事：背景、卡在哪、最后怎么解。数字都是仓库里能查到的。',
+  body: '四个项目，各写清楚一件事：背景、卡在哪、最后怎么解。数字都是仓库里能查到的。',
 }
 
 export const cases: CaseStudy[] = [
@@ -78,13 +78,13 @@ export const cases: CaseStudy[] = [
       },
     ],
     results: [
-      { value: '88', label: 'GitHub Star' },
+      { value: '89', label: 'GitHub Star' },
       { value: '23', label: 'Fork' },
       { value: '21', label: '精选电台' },
       { value: '0', label: '注册步骤' },
     ],
     provenance: [
-      { value: '88 Star / 23 Fork', from: 'GitHub API：GET /repos/88lin/lofi-radio-web，2026-08-16' },
+      { value: '89 Star / 23 Fork', from: 'GitHub API：GET /repos/88lin/lofi-radio-web，2026-08-20' },
       { value: '21 精选电台', from: '仓库内电台配置清单条目数' },
       { value: '0 注册步骤', from: 'lofi.88lin.eu.org 无账号体系，打开即播' },
     ],
@@ -138,15 +138,67 @@ export const cases: CaseStudy[] = [
       { value: '62 专项 Playbook', from: '仓库 playbooks 目录文件数与路由索引条目数' },
       { value: '3 覆盖操作系统', from: 'README 声明的 Windows / macOS / Linux 三条排查路径' },
       { value: 'CI 结构校验', from: '仓库 GitHub Actions 工作流：路由表与 Playbook 结构校验' },
-      { value: '7 Star / 1 Fork', from: 'GitHub API：GET /repos/88lin/computer-repair-skill，2026-08-16' },
+      { value: '8 Star / 1 Fork', from: 'GitHub API：GET /repos/88lin/computer-repair-skill，2026-08-20' },
     ],
     link: 'https://repair.88lin.eu.org',
     linkLabel: '官方网站',
     repo: 'https://github.com/88lin/computer-repair-skill',
   },
   {
-    slug: 'video-vip',
+    slug: 'facetmark',
     no: '03',
+    name: 'facetmark',
+    cn: '本地书签检索引擎',
+    claim: '四条索引逐维实测，赢的留、输的关',
+    tint: 'coral',
+    year: '2026',
+    role: '独立设计与开发',
+    stackLine: 'Python · SQLite FTS5 · RRF · Local-first',
+    summary:
+      '书签搜索只匹配标题，但你记得的是「为什么存」。我给每条书签建四条索引——字面、内容、意图、上下文——用 RRF 融合，然后逐维跑对照实验：融合组输给了最简配置 5.4 个百分点，于是输掉的维度默认关闭，负面结果写进 README。',
+    sections: [
+      {
+        label: '背景',
+        body: '八个月前存过一个页面。你记得为什么存——「帖子里有人讲 Postgres 索引类型的那个」——也记得大概什么时候存的。唯独不记得标题，而浏览器书签搜索只匹配标题。',
+      },
+      {
+        label: '卡在哪',
+        body: '直觉的解法是「索引越多越好」：字面匹配、语义向量、LLM 生成的意图查询、收藏时的上下文，四路召回用 RRF 一融合，听上去就是答案。但每多一路索引，构建成本、存储、查询延迟都在涨，而「多一定比少好」从来没有人真量过。',
+      },
+      {
+        label: '怎么解',
+        body: '把每条索引当成一个可证伪的假设：四套索引全部建出来，配 RRF 融合，再写一个 eval 命令对 20 余种配置逐个跑同一组查询集。结果发表在 README 里——融合组输给了最简的内容向量配置 5.4 个百分点，加字面索引再掉 5.4pp。于是出厂默认只开赢的那一路，输掉的保留开关但默认关闭。检索之外的一切刻意从简：单文件 SQLite、本地优先、对浏览器书签库永远只读。',
+      },
+    ],
+    tradeoffs: [
+      {
+        title: '放弃了「融合一定更强」的卖点',
+        body: '多路融合在 demo 里更好看，但实测更差。把负面结果写进 README 会让项目显得「没那么强」，但这就是测量的意义：数字约束项目能宣称什么。',
+      },
+      {
+        title: '放弃了云端同步与账号体系',
+        body: '本地单文件意味着换机器要自己搬数据。但书签是隐私数据，「什么都不上传」这条承诺比同步便利性更值钱。',
+      },
+    ],
+    results: [
+      { value: '4', label: '条索引假设' },
+      { value: '1,524', label: '测试用例' },
+      { value: '5.4pp', label: '融合组实测负增益' },
+      { value: '1', label: '个 SQLite 文件' },
+    ],
+    provenance: [
+      { value: '1,524 测试用例', from: 'facetmark README Tests 徽章与 tests/ 目录，2026-08-20' },
+      { value: '融合 -5.4pp', from: 'README「What Is Actually Measured」：配置 B 对配置 A 的 W1 查询集实测' },
+      { value: '4 条索引 / RRF 融合', from: 'README「How It Works」：lex_tri / lex_seg / content / intent + context' },
+      { value: '0 Star / 1 Fork', from: 'GitHub API：GET /repos/88lin/facetmark，2026-08-20' },
+    ],
+    link: 'https://88lin.github.io/facetmark/',
+    linkLabel: '项目主页',
+    repo: 'https://github.com/88lin/facetmark',
+  },
+  {
+    slug: 'video-vip',
+    no: '04',
     name: 'video_vip',
     cn: '多平台视频解析脚本',
     claim: '接口一定会挂，所以整件事按「可切换」来设计',
@@ -155,11 +207,11 @@ export const cases: CaseStudy[] = [
     role: '独立开发与长期维护',
     stackLine: 'JavaScript · 油猴脚本 · 22 站点适配',
     summary:
-      '2023 年写的脚本，现在 4,642 star。它能活三年不是因为写得多好，是因为一开始就假设「用到的东西都会坏」：18 路解析接口随时可换，22 个站点各自独立适配，任何一处失效都不影响其余。',
+      '2023 年写的脚本，现在 4,658 star。它能活三年不是因为写得多好，是因为一开始就假设「用到的东西都会坏」：18 路解析接口随时可换，22 个站点各自独立适配，任何一处失效都不影响其余。',
     sections: [
       {
         label: '背景',
-        body: '2023 年写的一个油猴脚本，解决的是一件很朴素的事：在会员视频页面上，把播放地址交给第三方解析服务，换一个能播的播放器回来。它现在是我 star 最多的仓库，4,642 star、474 fork，也是我维护时间最长的一个。',
+        body: '2023 年写的一个油猴脚本，解决的是一件很朴素的事：在会员视频页面上，把播放地址交给第三方解析服务，换一个能播的播放器回来。它现在是我 star 最多的仓库，4,658 star、476 fork，也是我维护时间最长的一个。',
       },
       {
         label: '卡在哪',
@@ -181,13 +233,13 @@ export const cases: CaseStudy[] = [
       },
     ],
     results: [
-      { value: '4,642', label: 'GitHub Star' },
-      { value: '474', label: 'Fork' },
+      { value: '4,658', label: 'GitHub Star' },
+      { value: '476', label: 'Fork' },
       { value: '18', label: '路解析接口' },
       { value: '22', label: '个站点适配器' },
     ],
     provenance: [
-      { value: '4,642 Star / 474 Fork', from: 'GitHub API：GET /repos/88lin/video_vip，2026-08-16' },
+      { value: '4,658 Star / 476 Fork', from: 'GitHub API：GET /repos/88lin/video_vip，2026-08-20' },
       { value: '18 路解析接口', from: 'video_vip.user.js v3.1.10 解析清单，另有 1 路（默认B）已注释停用' },
       { value: '22 个站点适配器', from: 'video_vip.user.js v3.1.10 站点配置表，逐个域名各一份' },
       { value: '35 条 @include', from: 'video_vip.user.js v3.1.10 脚本头，覆盖 PC 与移动端入口' },

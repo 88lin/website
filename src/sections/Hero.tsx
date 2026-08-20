@@ -1,16 +1,20 @@
 /**
- * EXP.00 开场 · 实验志的封面。
+ * EXP.00 开场 · 活字付印。
  *
- * 构图：左侧是志的刊头与论点（巨字、荧光笔、手绘圈），右侧钉着图版 01
- * 「作品星座」—— 一幅可以拖的 3D 星图，降级时是同一布局的静态 SVG。
- * 视线落点是偏的：先撞左上三行字，再被右边的星座带走。不做居中 Hero。
+ * v12：封面图版从星图换成铸字盘。首屏论点「把前沿 AI 变成可交付、可维护
+ * 的工程结果」的 18 个字铸成活字，排在右侧 6×3 字盘里——荧光笔扫过的
+ * 「交付」上黄面，朱笔圈住的「维护」上朱面，拉丁字母上墨面。字盘不是
+ * 插图，是标题的排印底稿：左边那句话就是用右边这盘字排的。
  *
- * 三条纪律沿用 v10：star / fork 不进这一章；读数全部由数组长度派生；
- * 零位图（星图是矢量与实时渲染，不是截图）。
+ * 构图不变：左刊头与论点（巨字、荧光笔、手绘圈），右图版（手绘虚线框 +
+ * 核实章 + Caveat 旁批）。视线落点偏左，不做居中 Hero。
+ *
+ * 三条纪律沿用：star / fork 不进这一章；读数全部由数组长度派生；零位图
+ * （字盘是矢量与实时渲染，不是截图）。
  */
 
 import { useEffect, useRef, useState } from 'react'
-import { Atlas } from '../components/Atlas'
+import { TypeCase } from '../components/TypeCase'
 import { Circle, Frame, Stamp } from '../components/Ink'
 import { Annot } from '../components/Ink'
 import { AS_OF, CONTACT_EMAIL, CONTACT_HREF, garden, hero, profile, projects, writing } from '../content/site'
@@ -46,7 +50,7 @@ export function Hero() {
         <div className="hero-copy">
           <p className="mast">
             <span className="mast__name">茉灵智库</span>
-            <span className="mast__sub">FIELD NOTES · 实验志</span>
+            <span className="mast__sub">TYPECAST · 活字付印</span>
             <span className="mast__lat">{hero.latin}</span>
           </p>
 
@@ -103,12 +107,12 @@ export function Hero() {
 
         <div className="hero-plate">
           <Frame seed="plate-01" className="hero-plate__frame">
-            <Atlas />
+            <TypeCase />
           </Frame>
           <Annot seed="plate-hub" className="hero-plate__annot">
-            核心那颗是 video_vip——4,642 颗星，靠「接口一定会挂」活过三年
+            荧光笔与朱圈标过的两个词，字面也换成了对应的颜色——字盘是标题的底稿
           </Annot>
-          <Stamp seed="plate-stamp" date={AS_OF} label="数据可核 VERIFIED" className="hero-plate__stamp" />
+          <Stamp seed="plate-stamp" date={AS_OF} label="活字付印 TYPECAST" className="hero-plate__stamp" />
         </div>
       </div>
     </section>

@@ -46,7 +46,7 @@ const CHAPTERS = [
   { id: 'notes', tone: 'paper' },
   { id: 'contact', tone: 'alt' },
 ]
-const ROUTES = ['', 'case/lofi/', 'case/repair/', 'case/video-vip/']
+const ROUTES = ['', 'case/lofi/', 'case/repair/', 'case/facetmark/', 'case/video-vip/']
 
 /** 当前色板的全部色值。v8 这里是写死的 palette A 常量，换到 E 组之后它就成了
     一份必然过期的副本；v9 改成运行时从 :root 读，色板换组不用再改审计脚本。

@@ -28,14 +28,18 @@ const META = {
   '/': null, // 用 index.html 里已经写好的那套
   '/case/lofi/': {
     title: 'lofi-radio-web ｜ 把「电台」做成一个不用维护的静态页 · 茉灵智库',
-    desc: '案例拆解：88★ 的 lofi-radio-web 如何用纯静态前端 + 可切换音源，做成一个上线后基本不用维护的电台页面。',
+    desc: '案例拆解：89★ 的 lofi-radio-web 如何用纯静态前端 + 可切换音源，做成一个上线后基本不用维护的电台页面。',
   },
   '/case/repair/': {
     title: 'computer-repair-skill ｜ 把排障经验写成 Agent 能执行的技能 · 茉灵智库',
     desc: '案例拆解：把「电脑修不好」这类模糊求助，变成一套 Agent 可以按步骤执行、可复核的诊断技能。',
   },
+  '/case/facetmark/': {
+    title: 'facetmark ｜ 四条索引逐维实测，赢的留、输的关 · 茉灵智库',
+    desc: '案例拆解：给书签建四条索引再用 RRF 融合，然后逐维跑对照实验——融合输给最简配置 5.4pp，输掉的维度默认关闭，负面结果写进 README。',
+  },
   '/case/video-vip/': {
-    title: 'video_vip ｜ 4,642★ 的解析脚本怎么活过接口更替 · 茉灵智库',
+    title: 'video_vip ｜ 4,658★ 的解析脚本怎么活过接口更替 · 茉灵智库',
     desc: '案例拆解：18 路解析接口、22 个站点适配、35 条注入规则。接口会挂，所以整套东西按「可切换」来设计。',
   },
 }

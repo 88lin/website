@@ -1,7 +1,7 @@
 /**
  * 全站唯一数据源。
  *
- * 所有数字都能被第三方核验，核实时间 2026-08-16：
+ * 所有数字都能被第三方核验，核实时间 2026-08-20：
  *  - GitHub REST API  /users/88lin 与 /users/88lin/repos?per_page=100（star / fork / 仓库数 / followers）
  *  - blog.88lin.eu.org 首页统计条与标签云（文章数 / 建站天数 / 标签计数）
  *  - video_vip.user.js v3.1.10（解析接口数 / 站点适配器数 / @include 条数，逐行数出来的）
@@ -11,7 +11,7 @@
  * 对不上就红。刷新方式见 README「数据刷新」。
  */
 
-export const AS_OF = '2026.08.16'
+export const AS_OF = '2026.08.20'
 
 /* ---------------------------------------------------------------- 章节 */
 
@@ -78,7 +78,7 @@ export const hero = {
   sub: '接口会挂，平台会变，需求会改。我做的东西按「可切换」设计，所以到今天还活着。',
   latin: '88LIN · WORK THAT SHIPPED',
   primaryCta: '聊聊合作',
-  secondaryCta: '看三个案例',
+  secondaryCta: '看四个案例',
 }
 
 export const CTA_LABEL = '聊聊合作'
@@ -103,39 +103,39 @@ export const metricsIntro = {
 
 export const metrics: Metric[] = [
   {
-    value: '4,745',
+    value: '4,764',
     label: '累计 Star',
-    sub: '22 个原创仓库合计',
+    sub: '24 个原创仓库合计',
     source: 'GET /users/88lin/repos → Σ stargazers_count (fork=false)',
   },
   {
-    value: '508',
+    value: '509',
     label: '被 Fork',
     sub: '有人真的拿去改了',
     source: 'GET /users/88lin/repos → Σ forks_count (fork=false)',
   },
   {
-    value: '22',
+    value: '24',
     label: '原创仓库',
-    sub: '另有 82 个 fork，共 104 个公开仓库',
+    sub: '另有 82 个 fork，共 106 个公开仓库',
     source: 'GET /users/88lin/repos → count(fork=false)',
   },
   {
-    value: '145',
+    value: '147',
     label: '关注者',
     sub: '没有互关任务，只有 7 个 following',
     source: 'GET /users/88lin → followers',
   },
   {
-    value: '55',
+    value: '56',
     label: '博客文章',
     sub: '工具、教程、资源，写完就能抄走用',
     source: 'blog.88lin.eu.org 首页统计条',
   },
   {
-    value: '1,784',
+    value: '1,794',
     label: '建站天数',
-    sub: '2022 年 8 月 13 日至今，没断过',
+    sub: '2021 年 9 月至今，没断过',
     source: 'blog.88lin.eu.org 首页统计条',
   },
 ]
@@ -267,7 +267,7 @@ export type Project = {
 
 export const worksIntro = {
   headline: '做过的东西',
-  body: '六个还在线上跑着的东西，横着滑。每张卡写清它解决什么、用什么做的、现在什么状态，点卡里的按钮可以直接打开或看源码。',
+  body: '七个还在线上跑着的东西，横着滑。每张卡写清它解决什么、用什么做的、现在什么状态，点卡里的按钮可以直接打开或看源码。',
 }
 
 export const projects: Project[] = [
@@ -280,8 +280,8 @@ export const projects: Project[] = [
     blurb:
       '2023 年写的油猴脚本，现在是我 star 最多的仓库。18 路解析接口可以随时切换，22 个站点各有独立的播放器容器与遮罩清理规则。它教会我的是：接口一定会挂，可切换才是功能。',
     stack: ['JavaScript', '油猴脚本', '多端适配'],
-    stars: 4642,
-    forks: 474,
+    stars: 4658,
+    forks: 476,
     state: 'maintained',
     live: 'https://88lin.github.io/vip/',
     repo: 'https://github.com/88lin/video_vip',
@@ -296,7 +296,7 @@ export const projects: Project[] = [
     blurb:
       'macOS 灵动岛式播放器，21 个精选电台，打开即听，不用注册也不用下载。支持 PWA 安装、睡眠定时与专注时钟。',
     stack: ['Next.js 16', 'React', 'TypeScript', 'PWA'],
-    stars: 88,
+    stars: 89,
     forks: 23,
     state: 'live',
     live: 'https://lofi.88lin.eu.org',
@@ -312,12 +312,28 @@ export const projects: Project[] = [
     blurb:
       '让 Agent 像一名谨慎的维修工程师：62 个按需加载的 Playbook，覆盖 Windows / macOS / Linux 的诊断、清理、性能、网络与安全维护。先取证，再计划，确认后修改。',
     stack: ['Agent Skill', 'Python', 'Markdown', 'AGPL-3.0'],
-    stars: 7,
+    stars: 8,
     forks: 1,
     state: 'live',
     live: 'https://repair.88lin.eu.org',
     repo: 'https://github.com/88lin/computer-repair-skill',
     tint: 'yellow',
+  },
+  {
+    slug: 'facetmark',
+    name: 'facetmark',
+    cn: '本地书签检索引擎',
+    year: '2026',
+    kind: '检索工程',
+    blurb:
+      '给书签建四条索引——字面、内容、意图、上下文——RRF 融合之后逐维实测，赢的留、输的关。负面结果写进 README，不藏。本地单文件 SQLite，1524 个测试。',
+    stack: ['Python', 'SQLite FTS5', 'RRF', 'Local-first'],
+    stars: 0,
+    forks: 1,
+    state: 'live',
+    live: 'https://88lin.github.io/facetmark/',
+    repo: 'https://github.com/88lin/facetmark',
+    tint: 'coral',
   },
   {
     slug: 'gzh-design-skill',
@@ -454,52 +470,11 @@ export const gardenIntro = {
   total: garden.length,
 }
 
-/* ---------------------------------------------------------------- 星图 */
-
-/**
- * v11 星图数据：@88lin 的全部 22 个原创仓库，star 数取自
- * GET /users/88lin/repos?per_page=100（2026-08-16）。首屏那幅「作品星座」
- * 上每一个点都对应一个真实仓库，点节点就是打开它的 GitHub 页。
- * 主力仓库（projects 里的六个）在图上是带标签的大节点，其余是可悬停的小节点。
- */
-export type AtlasRepo = { name: string; stars: number }
-
-export const atlasHub = { name: 'video_vip', stars: 4642 }
-
-export const atlasRepos: AtlasRepo[] = [
-  { name: 'lofi-radio-web', stars: 88 },
-  { name: 'computer-repair-skill', stars: 7 },
-  { name: 'my-skills', stars: 2 },
-  { name: 'wesum-wechat-monitor', stars: 2 },
-  { name: '88lin', stars: 1 },
-  { name: '88lin.github.io', stars: 1 },
-  { name: 'devenv-chat-backup-skill', stars: 1 },
-  { name: 'diataxis-docs-skill', stars: 1 },
-  { name: '301', stars: 0 },
-  { name: 'facetmark', stars: 0 },
-  { name: 'gzh-design-skill', stars: 0 },
-  { name: 'mydesign-system', stars: 0 },
-  { name: 'noomo-storytelling', stars: 0 },
-  { name: 'PicList', stars: 0 },
-  { name: 'PicX', stars: 0 },
-  { name: 'picx-images-hosting', stars: 0 },
-  { name: 'Site-Release', stars: 0 },
-  { name: 'swu-checkin', stars: 0 },
-  { name: 'Tampermonkey', stars: 0 },
-  { name: 'TextCard-Studio', stars: 0 },
-  { name: 'website', stars: 0 },
-]
-
-/** 四条花园轨道的组名。轨道顺序与 garden 的四个组一一对应。 */
-export const atlasOrbits = ['特效', '工具', '内容', '组件'] as const
-
-export const atlasRepoHref = (name: string) => `https://github.com/88lin/${name}`
-
 /* ---------------------------------------------------------------- 装备 */
 
 export const stack = {
   headline: '手上有什么',
-  body: '不是徽章墙，是这两年交付项目时真正反复用到的那一批。划了底线的那些，出现在下面六个仓库的技术栈里。',
+  body: '不是徽章墙，是这两年交付项目时真正反复用到的那一批。划了底线的那些，出现在下面七个仓库的技术栈里。',
   clusters: [
     {
       id: 'ai',
@@ -556,8 +531,8 @@ export const writing = {
   body: '博客写的是能直接抄走用的东西：软件资源、AI 工具、效率方法、学习资料。不追热点，追可复用。下面是标签计数，一篇文章可以挂多个标签，所以合计比文章数大。',
   href: 'https://blog.88lin.eu.org',
   hrefLabel: 'blog.88lin.eu.org',
-  posts: 55,
-  days: 1784,
+  posts: 56,
+  days: 1794,
   /** blog.88lin.eu.org 首页标签云，2026-08-16 抓取 */
   tags: [
     { name: '工具', count: 29 },
@@ -580,12 +555,12 @@ export const writing = {
    * 这是实打实的缺陷。链接从 blog.88lin.eu.org/archive 逐条核对，标题一字不差对上。
    */
   latest: [
+    { title: '李笑来作品集：6 本书浓缩成一份可执行的人生操作系统', date: '2026-08-10', href: 'https://blog.88lin.eu.org/article/20' },
     { title: 'Adobe 全家桶不限速下载指南', date: '2026-08-08', href: 'https://blog.88lin.eu.org/article/18' },
     { title: '全网 VIP 视频免费看教程', date: '2026-08-06', href: 'https://blog.88lin.eu.org/article/46' },
     { title: '实用生活指南', date: '2026-07-31', href: 'https://blog.88lin.eu.org/article/50' },
     { title: '一键屏蔽流氓软件', date: '2026-07-31', href: 'https://blog.88lin.eu.org/article/12' },
     { title: 'Windows 系统问题排查与修复', date: '2026-07-31', href: 'https://blog.88lin.eu.org/article/44' },
-    { title: '电脑蓝屏终极解决办法', date: '2026-07-31', href: 'https://blog.88lin.eu.org/article/5' },
   ],
 }
 

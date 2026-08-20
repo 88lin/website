@@ -1,10 +1,10 @@
 /**
  * EXP.04 案例 · 粘性堆叠。
  *
- * 三张卡依次钉在同一个位置，后一张推上来时前一张缩小并沉回底色里。
- * 顺序叙事：你不能同时读三个案例，版面也不让你同时看见三个。
+ * 四张卡依次钉在同一个位置，后一张推上来时前一张缩小并沉回底色里。
+ * 顺序叙事：你不能同时读四个案例，版面也不让你同时看见四个。
  * 「背景 / 卡在哪 / 怎么解」三段是最值钱的内容，编号步骤器保留。
- * 侧栏三块图形面板画的是项目里真实存在的结构，刻意不共用模子。
+ * 侧栏四块图形面板画的是项目里真实存在的结构，刻意不共用模子。
  */
 
 import { useCallback, useRef } from 'react'
@@ -23,6 +23,14 @@ const REPAIR: Line[] = [
   { k: 'rule 2', t: '只读优先', c: '# 写操作先给回滚与验证' },
   { k: 'route', t: '62 个 Playbook 按需加载', c: '# 无关内容不进上下文' },
   { k: 'ci', t: '路由表结构校验', c: '# 62 个文件永远对得上' },
+]
+
+/** 03 的面板是四条索引的实测裁决表：赢的留，输的关。负面结果也上榜。 */
+const FACETS: Line[] = [
+  { k: 'content', t: '内容向量', c: '# 唯一默认开启 · W1 集赢家' },
+  { k: 'lexical', t: '字面 FTS5 双索引', c: '# 实测 -5.4pp，默认关闭' },
+  { k: 'intent', t: 'LLM 意图查询', c: '# 未赢，默认关闭' },
+  { k: 'context', t: '收藏会话聚类', c: '# 未赢，默认关闭' },
 ]
 
 function Panel({ c }: { c: CaseStudy }) {
@@ -57,6 +65,29 @@ function Panel({ c }: { c: CaseStudy }) {
             <b>{l.k}</b> {l.t} <em>{l.c}</em>
           </p>
         ))}
+      </div>
+    )
+  }
+
+  if (c.slug === 'facetmark') {
+    return (
+      <div className="case__panel">
+        <p className="case__ptop">
+          <span>FACET EVAL</span>
+          <b>4 BUILT / 1 ON</b>
+        </p>
+        {FACETS.map((l) => (
+          <p className="case__line" key={l.k}>
+            <b>{l.k}</b> {l.t} <em>{l.c}</em>
+          </p>
+        ))}
+        <div className="case__ifs">
+          {['FTS5', 'vec', 'RRF', 'eval', 'SQLite', 'local-first'].map((n) => (
+            <span className="case__if" key={n}>
+              {n}
+            </span>
+          ))}
+        </div>
       </div>
     )
   }

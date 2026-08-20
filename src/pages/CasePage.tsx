@@ -32,6 +32,13 @@ const SPEC: Record<string, Line[]> = {
     { k: 'os', v: 'windows / macos / linux', note: '三条独立排查路径' },
     { k: 'ci', v: 'route table check', note: '校验 62 个文件的路由表' },
   ],
+  facetmark: [
+    { k: 'facets', v: '4 indexed', note: '字面 / 内容 / 意图 / 上下文' },
+    { k: 'fusion', v: 'rrf measured', note: '实测 -5.4pp，输给最简配置' },
+    { k: 'default', v: 'content only', note: '赢的留，输的关' },
+    { k: 'store', v: '1 sqlite file', note: '本地优先，书签库只读' },
+    { k: 'tests', v: '1524', note: 'CI 全绿，负面结果进 README' },
+  ],
   'video-vip': [
     { k: 'parsers', v: '18 switchable', note: '悬浮面板一秒换一路' },
     { k: 'adapters', v: '22 per host', note: '改一个站不牵动其余 21 个' },
@@ -44,6 +51,7 @@ const SPEC: Record<string, Line[]> = {
 const SPEC_FILE: Record<string, string> = {
   lofi: 'player.constraints.yml',
   repair: 'playbook-router.yaml',
+  facetmark: 'facet.eval.yml',
   'video-vip': 'fallback.strategy.yml',
 }
 

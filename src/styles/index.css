@@ -1,10 +1,12 @@
 /* ============================================================================
-   茉灵智库 v11「实验志 Field Notes」· 全站视觉系统
+   茉灵智库 v12「活字付印 Typecast」· 全站视觉系统
    ----------------------------------------------------------------------------
-   THESIS: 整站是一本被精心保有的研究实验志。八章 = 八条编号实验（EXP.00–07），
-   数字 = 带出处的测量值，手绘虚线框与朱红印章是批注层。首页封面钉着图版 01
-   「作品星座」—— 22 个仓库与 40 个在线小站的实时 3D 星图（three.js），
-   同布局 SVG 降级。拒绝：居中 Hero + 项目卡网格的模板页。
+   THESIS: 整站是一本被精心保有、并最终付印的研究实验志。八章 = 八条编号实验
+   （EXP.00–07），数字 = 带出处的测量值，手绘虚线框与朱红印章是批注层。
+   首页封面钉着图版 01「铸字盘」—— 首屏论点 18 个字的活字，排在 6×3 字盘
+   里（three.js 实时渲染 + 同布局 SVG 降级）：荧光笔扫过的「交付」上黄面，
+   朱笔圈住的「维护」上朱面。字盘不是插图，是标题的排印底稿。
+   拒绝：居中 Hero + 项目卡网格的模板页。
 
    OWN-WORLD: 奶油坐标纸地面（两档纸色交替 + 极淡测量网格）；墨蓝是唯一的
    结构色；柠檬黄只做荧光笔与高亮；珊瑚红做印章与点缀；深色只做锚点组件
@@ -1388,88 +1390,18 @@ button {
   font-weight: 500;
 }
 
-/* 静态星图的矢量样式。黄色轨道用深金（--warning 8A6A00 太文字，取 --d9a92e
-   系的深金做线），三根信号色线在奶油纸上都 ≥2:1（线是非文字元素 3:1 目标里
-   的装饰线，节点本体全部 ≥3:1）。 */
-.at__ring {
-  fill: none;
-  stroke-width: 0.016;
-  stroke-dasharray: 0.05 0.04;
-  opacity: 0.75;
-}
-.at__ring--blue { stroke: var(--brand); }
-.at__ring--coral { stroke: var(--pop); }
-.at__ring--yellow { stroke: #b98a1d; }
-.at__ring--ink { stroke: var(--ink-light); }
-
-.at__link {
-  stroke: var(--ink);
-  stroke-width: 0.008;
-  opacity: 0.34;
+/* 静态字盘的矢量样式。字盘是「首屏论点的排印底稿」：墨线盘框 + 18 枚
+   活字，字面四色（纸/荧光笔/朱笔/墨）与标题批注一一对应。活字必须衬线：
+   中文取系统宋体/明体，拉丁取 Fraunces —— 这是活字的形制，不是风格偏好。 */
+.plate--typecase {
+  aspect-ratio: 668 / 368;
 }
 
-.at__halo {
-  fill: none;
-  stroke: var(--ink);
-  stroke-width: 0.01;
-  stroke-dasharray: 0.032 0.026;
-  opacity: 0.55;
-}
-
-.at__minor {
-  fill: var(--ink-light);
-  opacity: 0.8;
-}
-
-.at__star {
-  fill: var(--brand);
-  stroke: var(--cream);
-  stroke-width: 0.018;
-}
-.at__star--deep { fill: var(--brand-deep); }
-
-.at__hub {
-  fill: var(--pop);
-  stroke: var(--cream);
-  stroke-width: 0.02;
-}
-
-.at__tick {
-  stroke: var(--ink-light);
-  stroke-width: 0.008;
-  opacity: 0.7;
-}
-.at__tick--hub { stroke: var(--danger-strong); }
-
-/* SVG text 的字号必须带 px 后缀：在 SVG 里 CSS 的 1px = 1 个用户单位，
-   无单位的数字是非法声明，会被整条丢掉然后继承 16px——字会放大成
-   九百像素盖住整张图。0.24px ≈ 桌面 13.6px / 手机 8px。 */
-.at__name {
-  font-family: var(--font-mono);
-  font-size: 0.24px;
-  fill: var(--ink-light);
-  /* text-anchor 不在这里定死：径向标注按方位逐元素切 start/end/middle，
-     CSS 会覆盖 presentation attribute，定死就全皱成 middle */
-  letter-spacing: 0.02em;
-}
-.at__name--hub {
-  fill: var(--danger-strong);
+.tc__ch {
+  font-family: 'Fraunces Web', 'Songti SC', 'STSong', 'SimSun', 'Noto Serif CJK SC', serif;
   font-weight: 700;
+  font-size: 46px;
 }
-.at__name--sub {
-  fill: var(--ink-faint);
-  font-size: 0.19px;
-}
-.at__orbit {
-  font-family: var(--font-mono);
-  font-size: 0.2px;
-  letter-spacing: 0.12em;
-  fill: var(--ink-faint);
-}
-.at__orbit--blue { fill: var(--brand-deep); }
-.at__orbit--coral { fill: var(--danger-strong); }
-.at__orbit--yellow { fill: #8a6a00; }
-.at__orbit--ink { fill: var(--ink-light); }
 
 /* ---------------------------------------------------------------- 印章
    朱红油墨、手绘双圈、等宽字。入场「盖章」：1.7 倍缩下来并定住角度。 */
