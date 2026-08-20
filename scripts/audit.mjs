@@ -23,10 +23,13 @@ import { chromium, webkit } from 'playwright'
 import { readFile, readdir, writeFile, stat } from 'node:fs/promises'
 import path from 'node:path'
 import { execFileSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
 import { serveDist } from './lib/serve.mjs'
 import { findOverflow } from './lib/overflow.mjs'
 
-const ROOT = new URL('../', import.meta.url).pathname
+/* Windows 上 URL.pathname 会给 /C:/... 开头斜杠，join 之后变 C:\C:\...。
+   必须走 fileURLToPath（prerender.mjs 已踩过）。 */
+const ROOT = fileURLToPath(new URL('../', import.meta.url))
 const DIST = path.join(ROOT, 'dist')
 const SKIP_LH = process.argv.includes('--skip-lh')
 const SKIP_LINKS = process.argv.includes('--skip-links')
@@ -438,7 +441,9 @@ if (want(4)) {
     if (path.basename(f) === 'palettes.css') continue // 原样搬自设计系统，不改一个字
     const txt = await readFile(f, 'utf8')
     inBlock = false
-    txt.split('\n').forEach((line, i) => {
+    /* CRLF 陷阱：. 不匹配 \r，`//.*$` 在 \r 前锚不到行尾，整条注释剥离失败，
+       注释里的破折号被误报。先把 \r 归一掉。 */
+    txt.replace(/\r/g, '').split('\n').forEach((line, i) => {
       let code = line
       if (inBlock) {
         const end = code.indexOf('*/')

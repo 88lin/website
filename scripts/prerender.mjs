@@ -88,5 +88,10 @@ for (const route of ROUTES) {
   console.log(`prerender: ${route.padEnd(18)} → ${(Buffer.byteLength(html) / 1024).toFixed(1)} kB`)
 }
 
-await rm(path.join(ROOT, 'dist-ssr'), { recursive: true, force: true })
+try {
+  await rm(path.join(ROOT, 'dist-ssr'), { recursive: true, force: true })
+} catch {
+  // 某些沙箱环境会拦截递归删除（safe-delete）；dist-ssr 只是中间产物，留着无害。
+  console.log('prerender: dist-ssr 清理被环境拦截，忽略')
+}
 console.log(`prerender: ${ROUTES.length} 条路由，合计 ${(total / 1024).toFixed(1)} kB`)

@@ -1264,7 +1264,9 @@ button {
   padding: clamp(14px, 1.6vw, 22px);
 }
 
-.hero-plate__stamp {
+/* 提高一级优先级：.stamp 的 position:relative 写在后面（印章一节），
+   同权重后写覆盖，v11 的印章因此被压回流内、落在旁批文字上。 */
+.hero-plate > .hero-plate__stamp {
   position: absolute;
   top: -26px;
   right: -8px;
@@ -1952,7 +1954,8 @@ button {
 .stack__grid {
   margin-top: 16px;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  /* 器材四列不等宽：四等分是模板网格味（audit G5），错开后仍是同一张表 */
+  grid-template-columns: 1.15fr 0.95fr 1.05fr 0.85fr;
   gap: 14px;
 }
 
@@ -2963,12 +2966,22 @@ button {
     gap: 0.78rem;
   }
 
-  /* 星图在手机上排在文案之后（先读论点再看图版），静态 SVG 同布局直接命中 */
-  .hero-plate__stamp {
-    top: -20px;
-    right: 2px;
-    width: 74px;
-    height: 74px;
+  /* 字盘在手机上排在文案之后（先读论点再看图版），静态 SVG 同布局直接命中。
+     印章收小并缩字号：nowrap 的长标签在 74px 的章里会被右缘裁掉 */
+  .hero-plate > .hero-plate__stamp {
+    top: -16px;
+    right: 6px;
+    width: 66px;
+    height: 66px;
+  }
+
+  .hero-plate > .hero-plate__stamp b {
+    font-size: 0.44rem;
+    letter-spacing: 0.04em;
+  }
+
+  .hero-plate > .hero-plate__stamp s {
+    font-size: 0.44rem;
   }
 
   .plate__labels,

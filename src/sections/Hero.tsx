@@ -110,7 +110,7 @@ export function Hero() {
             <TypeCase />
           </Frame>
           <Annot seed="plate-hub" className="hero-plate__annot">
-            荧光笔与朱圈标过的两个词，字面也换成了对应的颜色——字盘是标题的底稿
+            荧光笔与朱圈标过的两个词，字面也换成了对应的颜色。字盘是标题的底稿
           </Annot>
           <Stamp seed="plate-stamp" date={AS_OF} label="活字付印 TYPECAST" className="hero-plate__stamp" />
         </div>

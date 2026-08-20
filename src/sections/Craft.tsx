@@ -29,10 +29,10 @@ function Junction() {
         <line className="junc__dash" x1="452" y1="200" x2="548" y2="200" />
 
         <text className="junc__track" x="18" y="30">
-          TRACK A — AI AGENT 工程
+          TRACK A · AI AGENT 工程
         </text>
         <text className="junc__track" x="982" y="30" textAnchor="end">
-          TRACK B — 创意前端
+          TRACK B · 创意前端
         </text>
 
         {trackA.items.map((it, i) => (
@@ -71,13 +71,13 @@ function Junction() {
       {/* 窄屏的 structural 替代：SVG 藏掉，这里接住 */}
       <div className="junc__m" aria-hidden="true">
         <div className="junc__m-band junc__m-band--a">
-          <s>TRACK A — AI AGENT 工程</s>
+          <s>TRACK A · AI AGENT 工程</s>
           {trackA.items.map((it) => (
             <b key={it.id}>{it.title}</b>
           ))}
         </div>
         <div className="junc__m-band junc__m-band--b">
-          <s>TRACK B — 创意前端</s>
+          <s>TRACK B · 创意前端</s>
           {trackB.items.map((it) => (
             <b key={it.id}>{it.title}</b>
           ))}

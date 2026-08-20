@@ -21,7 +21,7 @@ const GROUP_TINT: Record<GardenGroup, 'coral' | 'blue' | 'yellow' | 'ink'> = {
 
 const countOf = (g: GardenGroup) => garden.filter((x) => x.group === g).length
 
-const SPANS = [4, 4, 4, 5, 3, 4]
+const SPANS = [5, 4, 3, 4, 3, 5]
 
 export function Garden() {
   const grid = useStagger<HTMLDivElement>(80)
@@ -75,7 +75,7 @@ export function Garden() {
             {gardenIntro.hubLabel} · 全部 {gardenIntro.total} 个小站
           </b>
           <span>
-            另有 {gardenIntro.rest} 个未在此列出 —— 特效 {countOf('特效')} / 工具 {countOf('工具')} / 内容{' '}
+            另有 {gardenIntro.rest} 个未在此列出：特效 {countOf('特效')} / 工具 {countOf('工具')} / 内容{' '}
             {countOf('内容')} / 组件 {countOf('组件')}，四类都在跑
           </span>
           <span className="spec-hub__go">

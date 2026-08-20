@@ -326,7 +326,7 @@ export const projects: Project[] = [
     year: '2026',
     kind: '检索工程',
     blurb:
-      '给书签建四条索引——字面、内容、意图、上下文——RRF 融合之后逐维实测，赢的留、输的关。负面结果写进 README，不藏。本地单文件 SQLite，1524 个测试。',
+      '给书签建四条索引（字面、内容、意图、上下文），RRF 融合之后逐维实测，赢的留、输的关。负面结果写进 README，不藏。本地单文件 SQLite，1524 个测试。',
     stack: ['Python', 'SQLite FTS5', 'RRF', 'Local-first'],
     stars: 0,
     forks: 1,

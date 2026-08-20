@@ -1,6 +1,6 @@
 # 茉灵智库 · 官网与作品集
 
-**v5「接口机架」** — 把整个站做成一面竖着的设备机架，九个机位，五扇窗，窗后跑着实时 WebGL。
+**v12「活字付印 Typecast」** — 整站是一本付印的实验志：八章编号实验（EXP.00~07），首屏封面钉着图版 01「铸字盘」——首屏论点 18 个字铸成活字排在 6×3 字盘里，three.js 实时渲染加同布局 SVG 降级。
 
 线上：https://88lin.github.io/website/
 设计决策与踩坑记录：[DESIGN.md](./DESIGN.md)
@@ -24,38 +24,36 @@ Node ≥ 20（开发在 v22.14.0 上）。
 
 ```
 src/
-  main.tsx            浏览器入口：注水 + 能力探测 + 点火
+  main.tsx            浏览器入口：注水 + 平滑滚动与指针总线
   entry-server.tsx    SSR 入口，导出 ROUTES 供预渲染遍历
   router.tsx          极简路由（/ 与 /case/:slug）
   pages/              Home.tsx · CasePage.tsx
-  sections/           九个机位：Hero Metrics Tracks Works Cases
-                      Garden Stack Writing Contact
+  sections/           八章：Hero Metrics Craft Work Cases
+                      Garden Notes Contact
   components/
-    Bay.tsx           机位外壳：底色、编号导轨、窗口、入场变体
-    Stage.tsx         WebGL 挂载点与降级图版
-    Annot.tsx         手绘批注（确定性抖动框 + 引线）
-    Strip.tsx Foot.tsx Reveal.tsx Icons.tsx
+    TypeCase.tsx      图版 01 铸字盘：SVG 静态层 + 延迟点火 WebGL
+    CodeMac.tsx       macOS 代码面板（Tokyo Night，全站唯一深色锚点）
+    Ink.tsx           手绘层：Frame 虚线框 / Annot 旁批 / Circle 圈注 / Stamp 印章
+    Nav.tsx Reveal.tsx Icons.tsx
   content/
     site.ts           身份、渠道、指标、文案 —— 唯一的事实源
-    cases.ts          三个案例的正文、结论、数字，含 18 路接口 / 22 个适配器
+    cases.ts          四个案例的正文、结论、数字，含 18 路接口 / 22 个适配器
   lib/
-    bus.ts            语义信号总线（channel/progress/pointer/aperture）
-    motion.ts         滚动编排、机位追踪、案例栈、继电动作
-    caps.ts           设备分档（是否点火、粒子密度）
+    typecase.ts       铸字盘确定性布局（SVG 与 WebGL 共用同一份）
+    motion.ts         滚动编排、案例叠层、横推跑道、懒建场景
+    caps.ts           设备分档（是否点火 WebGL）
     frame.ts          mulberry32 + Catmull-Rom → 确定性手绘路径
-    asset.ts          子路径资源前缀（GitHub Pages 部署在 /website/ 下）
+    bus.ts            rAF 合帧指针总线
+    bp.ts css.ts      唯一断点（900px）· CSS 工具
   webgl/
-    Rack.ts           场景装配、机架几何、透镜、每帧循环
-    particles.ts      GPU 粒子总线
-    post.ts           手写合成 shader（色差/bloom/暗角/ACES/网点/颗粒）
-    textures.ts       程序化贴图（丝印跑马灯、粒子种子）
-  styles/index.css    全部样式，手写，自带 reset
+    typecase.ts       活字场景：手写方角铅字几何 + canvas 字面图集 + InstancedMesh
+  styles/
+    index.css         全部样式，手写，自带 reset
+    palettes.css      配色令牌（vendor from mydesign-system，A~J 十组）
 scripts/              见下
 public/
-  fonts/              6 个子集化 woff2 + OFL 许可证
-  plates/             五张静态图版（手机端与首帧用）
-  covers/             四张案例封面
-  og.png favicon.svg robots.txt sitemap.xml 404.html
+  fonts/              4 个子集化 woff2 + OFL 许可证
+  og.png favicon 全套 site.webmanifest robots.txt sitemap.xml 404.html
 ```
 
 ---
@@ -83,10 +81,8 @@ public/
 |---|---|
 | `node scripts/chars.mjs` | Playwright 跑 4 路由 × 2 视口，按 `fontFamily+weight` 采集真实渲染字符，写进 `scripts/chars/*.txt` |
 | `python3 scripts/subset-fonts.py` | 6 个子集任务，钉死变量字重、转 woff2、丢无用表、拷 OFL。**总量超过 200 KB 直接非零退出** |
-| `node scripts/plates.mjs` | 烘焙静态图版：起 dist、点火 3D、逐窗裁 `.chassis__bezel`（2× DPR）→ `public/plates/*.webp` |
-| `node scripts/covers.mjs` | 抓三个仍在线的项目站真实截图做封面 |
-| `node scripts/cover-vip.mjs` | 生成 `video_vip` 封面（脚本类项目没有界面可截，用真实接口清单画） |
-| `node scripts/static.mjs` | 程序化生成 favicon / OG / robots / sitemap(4 条) / 404 |
+| `node scripts/shot12.mjs` | v12 走查取景器：首屏字盘 SVG/GL 双层、各章、案例页、移动端 |
+| `node scripts/static.mjs` | 程序化生成 favicon / OG / robots / sitemap(5 条) / 404 |
 | `node scripts/shots.mjs` | 开发期取景器，见下 |
 | `node scripts/audit.mjs` | 验收闸门 |
 
@@ -113,8 +109,8 @@ node scripts/shots.mjs --full               # 追加一张整页长图
 
 1. **GitHub**：`api.github.com/users/88lin` 取 followers / public_repos / created_at；
    翻 `users/88lin/repos?per_page=100`，**滤掉 fork**，对自有仓库求 star 与 fork 之和。
-   当前：followers 144 · 公开仓库 103（自有 22 / fork 81）· Σstar 4,684 · Σfork 502。
-2. **博客**：`blog.88lin.eu.org` 取文章数与建站天数。当前 55 篇 / 1784 天。
+   当前：followers 147 · 公开仓库 106（自有 24 / fork 82）· Σstar 4,764 · Σfork 509。
+2. **博客**：`blog.88lin.eu.org` 取文章数与建站天数。当前 56 篇 / 1794 天。
    首页那 27 个词是**标签**不是分类，文案里必须写「标签」。
 3. **video_vip**：数字直接数 `vv.user.js` 源码 —— 714 行、`@version 3.1.10`、
    35 条 `@include`、**18 路启用的解析接口**（源码里还有第 19 条被注释掉了，不算）、22 个站点适配器。
@@ -138,17 +134,11 @@ node scripts/shots.mjs --full               # 追加一张整页长图
 
 ---
 
-## WebGL 场景参数
+## WebGL 场景（铸字盘）
 
-`BAYS=9 · SCENE_H=22 · BAY_GAP=2.75 · BUS_X=1.92 · LENS_X=2.02`。
-PerspectiveCamera fov 38 @ z=6.2。机架行距 `U=0.30`，左右填到 ±5.4。
-走线槽背板在 z=-0.86（**不是**远景背景 z=-3.6，原因见 DESIGN.md §5「1.46 倍放大」）。
-
-合成参数：`uThreshold 0.86 · uBloomStrength 0.34 · uExposure 0.95 · uAberration 0.018 · uGrain 0.05`。
-粒子：`uAlpha = 0.05 * (256/side)²`，`side` 高配 96 / 其余 64，`uSize 26`。
-
-改这些之前先读 DESIGN.md §5，那里记着四条一改就翻车的耦合关系
-（窗口决定颗粒度、开口放大率、丝印画布与 shader 配平、加性能量预算）。
+18 枚活字一个 InstancedMesh、两次 draw call（字面 / 字身双材质）。字面是
+canvas 图集：中文系统衬线、拉丁 Fraunces，字肩倒角手写几何（平法线硬高光）。
+指针视差微倾字盘，悬停 raycast 抬字。无循环动画，全部缓动有明确目标值。
 
 ---
 
@@ -182,4 +172,4 @@ PerspectiveCamera fov 38 @ z=6.2。机架行距 `U=0.30`，左右填到 ±5.4。
 
 ## 分支
 
-`main` 是线上。历史版本各留一支：`v1-original` · `v2-visual` · `v3-redesign` · `v4-current` · `v5-rack`。
+`main` 是线上。历史版本各留一支：`v1-original` ~ `v11-journal`，当前工作分支 `v12`。

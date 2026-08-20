@@ -173,12 +173,13 @@ export function mountTypeCase(host: HTMLElement, opts: TypeCaseOpts = {}): TypeC
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75))
   renderer.shadowMap.enabled = true
   renderer.shadowMap.type = THREE.PCFSoftShadowMap
+  host.appendChild(renderer.domElement)
 
   const scene = new THREE.Scene()
   const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 60)
-  const CAM_BASE = new THREE.Vector3(0, 4.6, 4.6)
+  const CAM_BASE = new THREE.Vector3(0, 5.4, 3.4)
   camera.position.copy(CAM_BASE)
-  camera.lookAt(0, -0.1, 0)
+  camera.lookAt(0, 0, 0)
 
   scene.add(new THREE.HemisphereLight(0xfffdf4, 0xd9d4c6, 1.35))
   const sun = new THREE.DirectionalLight(0xffffff, 1.5)
@@ -208,7 +209,7 @@ export function mountTypeCase(host: HTMLElement, opts: TypeCaseOpts = {}): TypeC
   board.add(tray)
 
   const rimMat = new THREE.MeshStandardMaterial({ color: C.ink, roughness: 0.6, metalness: 0.1 })
-  const rimT = 0.045
+  const rimT = 0.03
   const rimY = tray.position.y + 0.05
   const rims: [number, number, number, number][] = [
     [0, trayH / 2 - rimT / 2, trayW, rimT],
@@ -217,7 +218,7 @@ export function mountTypeCase(host: HTMLElement, opts: TypeCaseOpts = {}): TypeC
     [-trayW / 2 + rimT / 2, 0, rimT, trayH - rimT * 2],
   ]
   for (const [x, z, w, d] of rims) {
-    const rim = new THREE.Mesh(new THREE.BoxGeometry(w, 0.1, d), rimMat)
+    const rim = new THREE.Mesh(new THREE.BoxGeometry(w, 0.06, d), rimMat)
     rim.position.set(x, rimY, z)
     board.add(rim)
   }
@@ -275,7 +276,9 @@ export function mountTypeCase(host: HTMLElement, opts: TypeCaseOpts = {}): TypeC
       lifts[i],
       (s.row - (CASE_ROWS - 1) / 2) * CELL + s.dy,
     )
-    dummy.rotation.set(0, 0, s.rot)
+    // 字面原本朝 +Z；绕 X 转 -90° 让它朝天（+Y），字顶朝远（-Z），
+    // 站在盘前俯视时阅读方向正确。z 上的 s.rot 保留手排抖动。
+    dummy.rotation.set(-Math.PI / 2, 0, s.rot)
     dummy.updateMatrix()
     mesh.setMatrixAt(i, dummy.matrix)
   }
@@ -377,7 +380,7 @@ export function mountTypeCase(host: HTMLElement, opts: TypeCaseOpts = {}): TypeC
 
     camera.position.z = CAM_BASE.z + scrollP * 0.9
     camera.position.y = CAM_BASE.y + scrollP * 0.6
-    camera.lookAt(0, -0.1, 0)
+    camera.lookAt(0, 0, 0)
 
     renderer.render(scene, camera)
   }
