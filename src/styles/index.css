@@ -1,65 +1,94 @@
 /* ============================================================================
-   茉灵智库 v13「光学体 Optic」· 全站视觉系统
+   茉灵智库 v13 · 全站视觉系统
    ----------------------------------------------------------------------------
-   THESIS: 满幅的光学体就是整幅画面 —— 十一片薄玻璃扫过视口、从四边出血，
-   真折射、真色散、薄膜干涉，单个片元着色器实时算出来，零资产。
-   字压在它上面，巨号、极简、深墨。整站没有「图放在栏里」这件事。
+   这一版的审美基准不是我挑的，是从用户点名「能看上」的四个页面里量出来的：
+   repair.88lin.eu.org、blog.88lin.eu.org/book、mydesign-system 的
+   components-preview 与 demo-readme-tutorial。四个页共有的语言：
 
-   这一版推翻的东西（v9–v12 的纸面编辑部谱系，用户已判为不满意）：
-   奶油纸地面、发丝线分栏、章号标签、厚黑中文标题、手绘虚线框。
-   都不再出现。基调改高亮虹彩，图像承重，版面只做留白与层级。
+   1) 暖调近白的底（不是冷灰紫），白卡 + 圆角 + 柔影，用得大方
+   2) 超粗展示字排中文大标题，紧字距；不是细字重
+   3) 实心圆角**黄块**压在一两个关键字上 —— 是块，不是细细一道荧光笔
+   4) 小号灰色大写拉丁 kicker，宽字距
+   5) 蓝色一行小标题 + 手绘虚线下划线
+   6) 蓝色实心胶囊 + 白色描边胶囊，两个一组
+   7) 彩色数字（蓝 / 黄 / 珊瑚）配灰标签
+   8) 右侧一个有内容有颜色的视觉主体，周围挂白色悬浮胶囊标签
 
-   继续生效的纪律：
-   1) 颜色只有两个来源：palettes.css 的语义令牌，或 rgba(var(--*-rgb), a)。
-   2) 色散光谱锚在品牌三色（蓝 / 珊瑚 / 柠檬），不用默认彩虹 —— 全光谱
-      一眼读成「AI 光效」，那是硬禁的一档。
-   3) 禁止 color-mix()（Android WebView 整块失效）。
-   4) 正文对比度 ≥ 4.5:1。着色器里有一道「可读性雾」把文字区始终抬亮，
-      程序化画面再怎么变，字都读得清。
-   5) 无 bounce / elastic；入场一次性。光学体的漂移极慢且尊重 reduced-motion。
+   前两次返工的教训写在这里，别再犯：
+   - 细字重 + 发丝线 + 无影的平面版式 → 读作「寡淡」，不是「干净」
+   - 冷灰紫底 + 我自己发明的抽象 3D 形体 → 和这套语言没有血缘关系
+   - 强调色要够实。淡淡一道黄压在浅底上等于没画
+
+   继续生效：颜色只从 palettes.css 的语义令牌取；禁 color-mix()；
+   正文 ≥ 4.5:1；无 bounce / 无限循环动画。
    ========================================================================== */
 
 @import './palettes.css';
 
 /* ------------------------------------------------------------------ 字体 */
 /*
-   苹果字体优先，全站不为正文下发任何字体：Apple 设备上系统就有，零请求。
-   非 Apple 平台靠字体栈往后回落，Noto Sans SC 排在系统黑体之前（它就是思源黑，
-   与 PingFang 骨架最接近）。Phase 2 会把子集化的 webfont 插在 Segoe UI 之前，
-   webfont 一律排最后，好让 Apple 设备永远不触发下载。
+   展示字：得意黑 SmileySans（OFL，atelier-anchor）。只排大标题与章节标题，
+   按站内实际用字子集化，235 字 25.9 KB。它本身是带倾斜的海报体，
+   不做反向纠正 —— 那个斜度就是它的性格。
+
+   正文与 UI：苹果系统字，不下发任何文件。Apple 设备零字体请求，
+   非 Apple 平台按栈回落（Noto Sans SC 排在系统黑体之前，它就是思源黑）。
 */
+
+@font-face {
+  font-family: 'Smiley Display';
+  src: url('/fonts/SmileySans.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Caveat Web';
+  src: url('/fonts/Caveat.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
 
 :root {
   color-scheme: light;
 
-  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display',
-    'PingFang SC', 'Noto Sans SC', 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif;
-  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC',
-    'Noto Sans SC', 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif;
+  --font-display: 'Smiley Display', -apple-system, BlinkMacSystemFont, 'PingFang SC',
+    'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'PingFang SC', 'Noto Sans SC',
+    'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono',
     monospace;
+  --font-hand: 'Caveat Web', cursive;
 
-  /* 光学体的亮场两端。着色器从这两个令牌取色，改这里整块画面跟着变。 */
-  --optic-lo: #ccd4f0;
-  --optic-hi: #fdf5f8;
+  --gutter: clamp(20px, 4vw, 56px);
+  --wrap: 1280px;
+  --s-section: clamp(80px, 11vh, 150px);
 
-  --gutter: clamp(20px, 4.2vw, 64px);
-  --wrap: 1440px;
-  --s-section: clamp(88px, 12vh, 168px);
-
-  /* 字号级差。巨号标题靠字重轻 + 字号大建立气质，不靠厚黑压场。 */
-  --t-hero: clamp(2.4rem, 6vw, 5.4rem);
-  --t-h2: clamp(1.6rem, 3.2vw, 2.7rem);
-  --t-body: clamp(1rem, 1.05vw, 1.125rem);
+  /* 展示字很粗，同样的视觉重量下字号可以比细体小一档。 */
+  --t-hero: clamp(2.5rem, 5.6vw, 4.75rem);
+  --t-h2: clamp(1.75rem, 3vw, 2.5rem);
+  --t-body: clamp(1rem, 1.02vw, 1.0625rem);
   --t-small: 0.875rem;
   --t-label: 0.75rem;
 
   --r-sm: 10px;
+  --r-md: 12px;
+  --r-card: 16px;
+  --r-lg: 20px;
   --r-pill: 999px;
 
+  /* 柔影用得大方，但一律染墨色，禁纯黑。 */
+  --sh-card: 0 2px 10px rgba(26, 26, 46, 0.05), 0 12px 32px rgba(26, 26, 46, 0.07);
+  --sh-pill: 0 2px 8px rgba(26, 26, 46, 0.08), 0 8px 24px rgba(26, 26, 46, 0.08);
+  --sh-deck: 0 18px 48px rgba(26, 26, 46, 0.16);
+
+  --rule: #e7e2d6;
+
   --fg: var(--ink);
-  --fg-dim: #3d3f52;
-  --fg-faint: #5d6076;
+  --fg-dim: #4a4a5a;
+  --fg-faint: #6e6e80;
 
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -83,23 +112,17 @@ html {
 
 body {
   margin: 0;
+  /* 暖调近白。比 A 组的 --cream 再干净一档：那四个页读起来是「白纸」，
+     不是「米色纸」，米味一重就回到 v9–v12 那种旧感。 */
+  background: #fdfcf8;
   color: var(--fg);
   font-family: var(--font-sans);
   font-size: var(--t-body);
-  line-height: 1.75;
+  line-height: 1.85;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   overflow-x: hidden;
-  /*
-    CSS 亮场兜底。着色器建不起来（无 WebGL2、极老设备）时露出来的就是这一层，
-    和着色器里的亮场同色系，所以退化不会换一套配色。
-  */
-  background:
-    radial-gradient(120% 90% at 78% 8%, rgba(232, 236, 252, 0.95), rgba(232, 236, 252, 0) 62%),
-    radial-gradient(90% 70% at 96% 62%, rgba(252, 232, 236, 0.8), rgba(252, 232, 236, 0) 58%),
-    linear-gradient(168deg, var(--optic-hi), var(--optic-lo));
-  background-attachment: fixed;
 }
 
 h1,
@@ -123,12 +146,12 @@ button {
 }
 
 ::selection {
-  background: rgba(var(--ink-rgb), 0.86);
-  color: #fff;
+  background: var(--highlight);
+  color: var(--ink);
 }
 
 :focus-visible {
-  outline: 2px solid var(--brand-deep);
+  outline: 2px solid var(--brand);
   outline-offset: 3px;
   border-radius: 4px;
 }
@@ -151,64 +174,30 @@ button {
   transform: none;
 }
 
-/* ------------------------------------------------------------------ 光学体 */
-
-/*
-  固定铺满视口，永远在内容之下。pointer-events 关掉 —— 它是画面，不是控件，
-  指针要能穿过它选到字。
-*/
-.optic {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  display: block;
+.wrap {
   width: 100%;
-  height: 100%;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.9s var(--ease);
-}
-
-.optic[data-live='1'] {
-  opacity: 1;
-}
-
-/* 建不起来就彻底让位给 body 的 CSS 亮场，不要留一块黑 canvas。 */
-.optic[data-dead='1'] {
-  display: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .optic {
-    transition: none;
-  }
-}
-
-/* 内容层一律浮在光学体之上 */
-.nav,
-main {
-  position: relative;
-  z-index: 1;
+  max-width: var(--wrap);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
 }
 
 /* ------------------------------------------------------------------ 顶栏 */
 
-/*
-  参考站的顶栏只有一枚小标志和三个词，没有底、没有边、没有背景模糊。
-  满幅画面的站点必须这样：任何一条横线都会把画面切断。
-*/
 .nav {
-  position: fixed;
-  inset: 0 0 auto 0;
-  z-index: 20;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: rgba(253, 252, 248, 0.92);
+  border-bottom: 1px solid var(--rule);
+  backdrop-filter: saturate(180%) blur(8px);
 }
 
 .nav-in {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 32px;
-  height: 72px;
+  gap: 28px;
+  height: 64px;
   max-width: var(--wrap);
   margin-inline: auto;
   padding-inline: var(--gutter);
@@ -222,8 +211,8 @@ main {
 
 .nav-mark b {
   font-family: var(--font-display);
-  font-size: 1.0625rem;
-  font-weight: 600;
+  font-size: 1.15rem;
+  font-weight: 400;
   letter-spacing: 0.01em;
 }
 
@@ -231,32 +220,35 @@ main {
   text-decoration: none;
   font-family: var(--font-mono);
   font-size: var(--t-label);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   color: var(--fg-faint);
 }
 
 .nav-links {
   display: flex;
-  gap: clamp(16px, 2vw, 34px);
+  align-items: center;
+  gap: clamp(14px, 1.8vw, 30px);
   font-size: var(--t-small);
 }
 
 .nav-links a {
   position: relative;
-  padding-block: 4px;
+  padding-block: 6px;
   color: var(--fg-dim);
-  transition: color 0.18s var(--ease);
+  transition: color 0.16s var(--ease);
 }
 
+/* 当前项一条黄色下划线从左侧展开 —— repair 站的做法，照抄。 */
 .nav-links a::after {
   content: '';
   position: absolute;
   inset: auto 0 0 0;
-  height: 1px;
-  background: currentColor;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--highlight);
   transform: scaleX(0);
   transform-origin: 0 50%;
-  transition: transform 0.24s var(--ease);
+  transition: transform 0.22s var(--ease);
 }
 
 .nav-links a:hover {
@@ -267,8 +259,14 @@ main {
   transform: none;
 }
 
+.nav-links .gh {
+  font-family: var(--font-mono);
+  color: var(--fg);
+  font-weight: 600;
+}
+
 @media (max-width: 720px) {
-  .nav-links a:not(:last-child) {
+  .nav-links a:not(.gh) {
     display: none;
   }
 }
@@ -278,44 +276,42 @@ main {
 .btn {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 14px 24px;
+  gap: 9px;
+  padding: 15px 26px;
   border-radius: var(--r-pill);
-  font-size: var(--t-small);
+  font-size: 0.9375rem;
   font-weight: 600;
   transition:
-    transform 0.16s var(--ease),
+    transform 0.15s var(--ease),
+    box-shadow 0.18s var(--ease),
     background-color 0.18s var(--ease),
     border-color 0.18s var(--ease);
 }
 
-.btn--fill {
-  background: var(--ink);
+.btn--blue {
+  background: var(--brand);
   color: #fff;
+  box-shadow: 0 2px 8px rgba(43, 127, 216, 0.28), 0 10px 24px rgba(43, 127, 216, 0.18);
 }
 
-.btn--fill:hover {
+.btn--blue:hover {
   background: var(--brand-deep);
 }
 
-/*
-  描边按钮压在实时画面上：边和字都要够重，否则玻璃一扫过去就看不见了。
-  这里用墨色 34% 的边 + 一层极淡的同色底把它从画面里托出来 ——
-  不是玻璃拟态，没有模糊、没有高光，只是一块压住底的淡墨。
-*/
-.btn--line {
-  border: 1px solid rgba(var(--ink-rgb), 0.34);
-  background: rgba(255, 255, 255, 0.42);
+.btn--ghost {
+  background: #fff;
+  border: 1px solid var(--rule);
   color: var(--fg);
+  box-shadow: var(--sh-card);
 }
 
-.btn--line:hover {
+.btn--ghost:hover {
   border-color: var(--fg);
-  background: rgba(255, 255, 255, 0.62);
 }
 
 .btn:active {
   transform: translateY(1px);
+  box-shadow: none;
 }
 
 .btn i {
@@ -323,135 +319,340 @@ main {
   font-style: normal;
 }
 
-/* ============================================================================
-   00 开场
-   ========================================================================== */
+/* ------------------------------------------------------------------ 排印零件 */
 
-/*
-  整屏。内容压在左下 —— 着色器把形体摆在右上并从上缘、右缘出血，
-  左下是那道「可读性雾」抬亮的区域，两边是同一套构图约定，改一处要改两处。
-*/
-.hero {
+/* 实心圆角黄块，压在一两个关键字上。这是这套语言里最认得出的一件。
+   带宽度的色带、不是描边、不是淡底 —— 淡了就等于没画。 */
+.mark {
   position: relative;
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding-top: 96px;
-  padding-bottom: clamp(26px, 4vh, 52px);
+  isolation: isolate;
+  white-space: nowrap;
 }
 
-.hero__in {
-  width: 100%;
-  max-width: var(--wrap);
-  margin-inline: auto;
-  padding-inline: var(--gutter);
+.mark::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 30% -0.1em 10%;
+  background: var(--highlight);
+  border-radius: 5px;
 }
 
-.hero__kicker {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: clamp(16px, 2.4vh, 28px);
+/* 小号灰色大写拉丁 kicker */
+.kicker {
   font-family: var(--font-mono);
   font-size: var(--t-label);
-  letter-spacing: 0.16em;
+  font-weight: 500;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--fg-faint);
 }
 
-.hero__kicker::before {
-  content: '';
-  width: 26px;
-  height: 1px;
-  background: currentColor;
+/* 蓝色一行小标题 + 手绘虚线下划线 */
+.lead {
+  display: inline-block;
+  padding-bottom: 10px;
+  border-bottom: 2px dashed rgba(43, 127, 216, 0.42);
+  color: var(--brand-deep);
+  font-size: clamp(1.0625rem, 1.5vw, 1.3125rem);
+  font-weight: 600;
 }
 
-/*
-  巨号标题。字重给 300 —— 满幅发光画面上，细字比厚黑字贵得多，
-  也更接近参考站的气质；厚黑会把画面压死。层级靠「细 vs 半粗」的对比建立，
-  不靠颜色，也不靠荧光笔那种贴纸。
-*/
+/* ============================================================================
+   00 开场
+   ========================================================================== */
+
+.hero {
+  padding-top: clamp(44px, 7vh, 92px);
+  padding-bottom: clamp(48px, 8vh, 104px);
+}
+
+.hero__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.04fr) minmax(0, 0.96fr);
+  gap: clamp(32px, 5vw, 80px);
+  align-items: center;
+}
+
 .hero__h1 {
+  margin-top: clamp(16px, 2.4vh, 26px);
   font-family: var(--font-display);
   font-size: var(--t-hero);
-  font-weight: 300;
-  line-height: 1.14;
-  letter-spacing: -0.018em;
-  max-width: 20em;
+  font-weight: 400;
+  line-height: 1.24;
+  letter-spacing: 0.005em;
 }
 
 .hero__h1 > span {
   display: block;
 }
 
-/* 论点里的两个关键词：只加字重，不加色、不加底。 */
-.hero__h1 em {
-  font-style: normal;
-  font-weight: 600;
+.hero__lead {
+  margin-top: clamp(22px, 3vh, 34px);
 }
 
-.hero__sub {
-  max-width: 30em;
-  margin-top: clamp(18px, 2.6vh, 30px);
+.hero__body {
+  max-width: 32em;
+  margin-top: clamp(18px, 2.4vh, 26px);
   color: var(--fg-dim);
-  line-height: 1.8;
 }
 
 .hero__acts {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-top: clamp(22px, 3.2vh, 38px);
+  margin-top: clamp(24px, 3.2vh, 36px);
 }
 
-/* ---- 证据条 ---- */
+/* ---- 右侧：案例叠卡 ---- */
 
-/*
-  四个数贴在首屏最底。不做成卡片：卡片会把它读成装饰模块，而它是读数。
-  分隔只用一枚小圆点，压在实时画面上要够淡才不抢戏。
-*/
-.proof {
+.deck {
+  position: relative;
+  padding: clamp(14px, 2vw, 30px) clamp(8px, 1.6vw, 24px);
+}
+
+.deck__stack {
+  position: relative;
+}
+
+/* 后面三张只露边。颜色按 A 组三个强调色 + 一个青，
+   和 book 页那个叠卡器是同一个装置。 */
+.deck__back {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-card);
+}
+
+.deck__back[data-t='coral'] {
+  background: var(--pop);
+  transform: translate(14px, 12px) rotate(1.6deg);
+}
+
+.deck__back[data-t='yellow'] {
+  background: var(--highlight);
+  transform: translate(26px, 22px) rotate(3deg);
+}
+
+.deck__back[data-t='teal'] {
+  background: #2f9c95;
+  transform: translate(38px, 32px) rotate(4.4deg);
+}
+
+.deck__front {
+  position: relative;
+  border-radius: var(--r-lg);
+  background: var(--brand);
+  color: #fff;
+  padding: clamp(22px, 2.6vw, 34px);
+  box-shadow: var(--sh-deck);
+}
+
+.deck__no {
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  letter-spacing: 0.16em;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.deck__name {
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+
+.deck__claim {
+  margin-top: 14px;
+  font-family: var(--font-display);
+  font-size: clamp(1.3rem, 2.1vw, 1.8rem);
+  line-height: 1.42;
+}
+
+.deck__rule {
+  height: 1px;
+  margin: 18px 0 16px;
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.deck__nums {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  gap: clamp(14px, 2vw, 30px);
-  margin-top: clamp(26px, 4.2vh, 52px);
-  padding-top: 16px;
-  border-top: 1px solid rgba(var(--ink-rgb), 0.16);
+  gap: clamp(16px, 2vw, 30px);
 }
 
-.proof__i {
-  display: flex;
-  align-items: baseline;
+.deck__num b {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.625rem;
+  font-weight: 400;
+  letter-spacing: 0.005em;
+}
+
+.deck__num s {
+  text-decoration: none;
+  font-size: var(--t-label);
+  color: rgba(255, 255, 255, 0.78);
+}
+
+/* 白色悬浮胶囊标签：带柔影，钉在卡的边上。tutorial 页那两枚就是这个零件。 */
+.deck__pill {
+  position: absolute;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
   gap: 8px;
+  padding: 9px 16px;
+  border-radius: var(--r-pill);
+  background: #fff;
+  box-shadow: var(--sh-pill);
+  font-size: var(--t-small);
+  font-weight: 600;
+  white-space: nowrap;
 }
 
-.proof__v {
+.deck__pill em {
   font-family: var(--font-mono);
-  font-size: clamp(1.05rem, 1.5vw, 1.375rem);
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  font-style: normal;
   font-variant-numeric: tabular-nums;
 }
 
-.proof__l {
+.deck__pill--a {
+  top: 2px;
+  left: -6px;
+}
+
+.deck__pill--a em {
+  color: var(--pop-deep);
+}
+
+.deck__pill--b {
+  bottom: 4px;
+  right: -4px;
+}
+
+.deck__pill--b em {
+  color: var(--brand-deep);
+}
+
+@media (max-width: 900px) {
+  .hero__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .deck {
+    padding-inline: 0;
+  }
+
+  .deck__back[data-t='teal'] {
+    display: none;
+  }
+
+  /* 窄屏胶囊要移到卡外面去。压在卡上会正好盖掉 CASE 那一行 —— 宽屏有余量，
+     窄屏没有，卡也窄了半截。所以留出一条上边距，把胶囊抬到卡顶之上。 */
+  .deck__stack {
+    margin-top: 22px;
+  }
+
+  .deck__pill--a {
+    top: -20px;
+    left: 4px;
+  }
+
+  .deck__pill--b {
+    bottom: -16px;
+    right: 0;
+  }
+}
+
+/* ---- 彩色读数卡 ---- */
+
+/*
+  四块彩色读数卡横排。repair 页首屏底下那三块就是这个零件：
+  淡底 + 深色大数字 + 灰标签。不做成同一个灰白卡的网格 —— 那是模板感的来源。
+*/
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(12px, 1.6vw, 20px);
+  margin-top: clamp(38px, 6vh, 72px);
+}
+
+.stat {
+  padding: clamp(18px, 2vw, 26px);
+  border-radius: var(--r-card);
+  box-shadow: var(--sh-card);
+}
+
+.stat b {
+  display: block;
+  /* 大数字用展示字，不用等宽：book 页那三个彩色数字就是粗体，
+     等宽体在这个尺寸上偏工程、不够精神。 */
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 2.8vw, 2.5rem);
+  font-weight: 400;
+  letter-spacing: 0.005em;
+  line-height: 1.1;
+}
+
+.stat s {
+  display: block;
+  text-decoration: none;
+  margin-top: 6px;
   font-size: var(--t-small);
   color: var(--fg-dim);
 }
 
-.proof__as {
-  margin-left: auto;
+.stat[data-t='blue'] {
+  background: #eaf2fc;
+}
+
+.stat[data-t='blue'] b {
+  color: var(--brand-deep);
+}
+
+.stat[data-t='yellow'] {
+  background: #fdf5da;
+}
+
+.stat[data-t='yellow'] b {
+  color: #8a6a10;
+}
+
+.stat[data-t='coral'] {
+  background: #fdeef1;
+}
+
+.stat[data-t='coral'] b {
+  color: var(--pop-deep);
+}
+
+.stat[data-t='plain'] {
+  background: #fff;
+}
+
+.stat[data-t='plain'] b {
+  color: var(--fg);
+}
+
+.stat__src {
+  display: block;
+  margin-top: 8px;
   font-family: var(--font-mono);
-  font-size: var(--t-label);
-  letter-spacing: 0.06em;
+  font-size: 0.6875rem;
+  line-height: 1.5;
   color: var(--fg-faint);
 }
 
-@media (max-width: 720px) {
-  .proof__as {
-    margin-left: 0;
-    width: 100%;
+@media (max-width: 900px) {
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 460px) {
+  .stats {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -459,15 +660,15 @@ main {
 
 .js [data-stagger] {
   opacity: 0;
-  transform: translateY(16px);
+  transform: translateY(14px);
 }
 
 .js [data-stagger].is-in {
   opacity: 1;
   transform: none;
   transition:
-    opacity 0.72s var(--ease),
-    transform 0.72s var(--ease);
+    opacity 0.62s var(--ease),
+    transform 0.62s var(--ease);
 }
 
 @media (prefers-reduced-motion: reduce) {

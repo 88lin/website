@@ -1,16 +1,15 @@
 /**
- * 顶栏。一枚标志 + 三个词，没有底、没有边、没有背景模糊。
- *
- * 满幅实时画面的站点必须这样：任何一条横线、任何一块半透明底，都会把画面
- * 切成两段。参考站也是这个做法。八章的锚点不进顶栏 —— 一个满幅叙事页
- * 摆七个锚点等于告诉访客「这里很长」，这不是想给的第一印象。
+ * 顶栏。站名 + 三个锚点 + GitHub，当前项一条黄色下划线从左侧展开。
+ * 形态照 repair.88lin.eu.org —— 那是用户点名能看上的页面之一，
+ * 品牌上也该同源。
  */
 
-import { CTA_LABEL, CONTACT_HREF, profile } from '../content/site'
+import { profile } from '../content/site'
 
 const LINKS = [
   { href: '#cases', label: '案例' },
   { href: '#work', label: '作品' },
+  { href: '#contact', label: '联系' },
 ]
 
 export function Nav() {
@@ -27,7 +26,9 @@ export function Nav() {
               {l.label}
             </a>
           ))}
-          <a href={CONTACT_HREF}>{CTA_LABEL}</a>
+          <a className="gh" href="https://github.com/88lin" target="_blank" rel="noreferrer">
+            GitHub ↗
+          </a>
         </nav>
       </div>
     </header>
