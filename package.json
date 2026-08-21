@@ -12,8 +12,7 @@
     "chars": "node scripts/chars.mjs",
     "fonts": "npm run chars && python3 scripts/subset-fonts.py",
     "static": "node scripts/static.mjs",
-    "audit": "node scripts/audit.mjs",
-    "sculpt": "node scripts/sculpt.mjs"
+    "audit": "node scripts/audit.mjs"
   },
   "dependencies": {
     "gsap": "^3.13.0",
