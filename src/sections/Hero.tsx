@@ -1,119 +1,134 @@
 /**
- * EXP.00 开场 · 活字付印。
+ * 00 开场。
  *
- * v12：封面图版从星图换成铸字盘。首屏论点「把前沿 AI 变成可交付、可维护
- * 的工程结果」的 18 个字铸成活字，排在右侧 6×3 字盘里——荧光笔扫过的
- * 「交付」上黄面，朱笔圈住的「维护」上朱面，拉丁字母上墨面。字盘不是
- * 插图，是标题的排印底稿：左边那句话就是用右边这盘字排的。
+ * 首屏要在三秒内同时交出三件事：这人前端水准（页面本身）、他真做出过能跑的
+ * 东西（证据条上的四个数）、怎么联系（CTA 常驻）。
  *
- * 构图不变：左刊头与论点（巨字、荧光笔、手绘圈），右图版（手绘虚线框 +
- * 核实章 + Caveat 旁批）。视线落点偏左，不做居中 Hero。
+ * 标题与图版是同一台仪器的两个显示面：右边那件实体正面读「交付」、侧面读
+ * 「维护」，左边标题里的这两个词一个被荧光笔扫着、一个被朱笔圈着，
+ * 亮度跟着实体的转角走（--read，由 Sculpt 每帧写入）。转到侧读位时，
+ * 黄的退下去、朱的亮起来。这不是联动特效，是把「同一件东西看两次」这个
+ * 论点在版面上再说一遍。
  *
- * 三条纪律沿用：star / fork 不进这一章；读数全部由数组长度派生；零位图
- * （字盘是矢量与实时渲染，不是截图）。
+ * 两种版式（Phase 0 定稿用，定稿后删掉没被选中的那个）：
+ *  p1 版心留白 · 雕塑居右 —— 巨号三行阶梯标题在左，发丝线分栏，实体占右半。
+ *  p2 满幅雕塑 · 标题压角 —— 实体横过整个版心，标题降一档落到下沿当标签。
  */
 
-import { useEffect, useRef, useState } from 'react'
-import { TypeCase } from '../components/TypeCase'
-import { Circle, Frame, Stamp } from '../components/Ink'
-import { Annot } from '../components/Ink'
-import { AS_OF, CONTACT_EMAIL, CONTACT_HREF, garden, hero, profile, projects, writing } from '../content/site'
+import { Circle } from '../components/Ink'
+import { Sculpt } from '../components/Sculpt'
+import { AS_OF, CONTACT_HREF, garden, hero, metrics, profile } from '../content/site'
+import { useStagger } from '../lib/motion'
 
-const num = (n: number) => n.toLocaleString('en-US')
+export type HeroVariant = 'p1' | 'p2'
 
-const PILLS = [
-  { v: String(garden.length), k: 'SITES ONLINE' },
-  { v: String(projects.length), k: 'MAINTAINED' },
-  { v: num(writing.days), k: 'DAYS RUNNING' },
+/**
+ * 证据条的四个数。全部从唯一数据源派生 —— 小站数量取 garden 数组长度，
+ * 不写死（v8 在这里写死过一个错的「41」）。
+ */
+const PROOF = [
+  { v: metrics[0].value, l: '累计 Star' },
+  { v: metrics[2].value, l: '原创仓库' },
+  { v: String(garden.length), l: '在线小站' },
+  { v: profile.since, l: '年起持续在做' },
 ]
 
-export function Hero() {
-  const [done, setDone] = useState(false)
-  const timer = useRef<number | undefined>(undefined)
-
-  useEffect(() => () => window.clearTimeout(timer.current), [])
-
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(CONTACT_EMAIL)
-    } catch {
-      return // 不支持或没授权就静默失败：邮箱本来就明文摆在那儿，手选也能复制
-    }
-    setDone(true)
-    window.clearTimeout(timer.current)
-    timer.current = window.setTimeout(() => setDone(false), 1600)
-  }
-
+function Kicker() {
   return (
-    <section id="hero" className="ch ch--hero" data-tone="paper" aria-labelledby="hero-h">
-      <div className="hero-in">
-        <div className="hero-copy">
-          <p className="mast">
-            <span className="mast__name">茉灵智库</span>
-            <span className="mast__sub">TYPECAST · 活字付印</span>
-            <span className="mast__lat">{hero.latin}</span>
-          </p>
+    <p className="hero__kicker" data-stagger>
+      <i aria-hidden="true" />
+      {hero.latin}
+    </p>
+  )
+}
 
-          <h1 className="hero-h1" id="hero-h">
-            <i>{hero.line1}</i>
-            <i>
-              {hero.line2Pre}
-              <span className="hl-yellow">{hero.line2Mark}</span>
-              {hero.line2Mid}
-              <Circle seed="hero-keep">{hero.line2Circle}</Circle>
-            </i>
-            <i>{hero.line3}</i>
-          </h1>
+/** 三行阶梯标题。两个被标记的词永远排在同一行，才对得上实体的两读。 */
+function Headline() {
+  return (
+    <h1 className="hero__h1" data-stagger>
+      <span>{hero.line1}</span>
+      <span>
+        {hero.line2Pre}
+        <span className="hl">{hero.line2Mark}</span>
+        {hero.line2Mid}
+        <Circle seed="hero-maintain">{hero.line2Circle}</Circle>
+      </span>
+      <span>{hero.line3}</span>
+    </h1>
+  )
+}
 
-          <p className="hero-lead">{profile.latinTagline}</p>
-          <p className="hero-sub">{hero.sub}</p>
+function Sub() {
+  return (
+    <p className="hero__sub" data-stagger>
+      {hero.sub}
+    </p>
+  )
+}
 
-          {/* 整页唯一真正想让人带走的字符串，给它一键复制比再放一个按钮实用 */}
-          <div className="hero-cmd">
-            <span className="hero-cmd__p" aria-hidden="true">
-              mail:
-            </span>
-            <code>{CONTACT_EMAIL}</code>
-            <button
-              className="hero-cmd__copy"
-              type="button"
-              onClick={copy}
-              data-done={done ? '1' : undefined}
-            >
-              {done ? 'COPIED' : 'COPY'}
-            </button>
-          </div>
+function Acts() {
+  return (
+    <div className="hero__acts" data-stagger>
+      <a className="btn btn--fill" href={CONTACT_HREF}>
+        {hero.primaryCta}
+        <i aria-hidden="true">→</i>
+      </a>
+      <a className="btn btn--line" href="#cases">
+        {hero.secondaryCta}
+      </a>
+    </div>
+  )
+}
 
-          <div className="hero-act">
-            <a className="cta-btn" href={CONTACT_HREF}>
-              {hero.primaryCta}
-            </a>
-            <a className="cta-btn cta-btn--ghost" href="#cases">
-              {hero.secondaryCta}
-            </a>
-          </div>
+function Proof() {
+  return (
+    <div className="proof" data-stagger>
+      {PROOF.map((p) => (
+        <span className="proof__i" key={p.l}>
+          <b className="proof__v">{p.v}</b>
+          <span className="proof__l">{p.l}</span>
+        </span>
+      ))}
+      <span className="proof__as">核实 {AS_OF}</span>
+    </div>
+  )
+}
 
-          <div className="hero-pills">
-            {PILLS.map((p) => (
-              <div className="hero-pill" key={p.k}>
-                <b>{p.v}</b>
-                <s>{p.k}</s>
+export function Hero({ variant = 'p1' }: { variant?: HeroVariant }) {
+  const ref = useStagger<HTMLElement>(70)
+  return (
+    <section className={`hero hero--${variant}`} id="hero" data-tone="paper" ref={ref}>
+      <div className="hero__in">
+        {variant === 'p1' ? (
+          <>
+            <div className="hero__grid">
+              <div className="hero__say">
+                <Kicker />
+                <Headline />
+                <Sub />
+                <Acts />
               </div>
-            ))}
-          </div>
-
-          <p className="hero-src">数据取自 GITHUB 公开接口与博客统计条，截至 {AS_OF}</p>
-        </div>
-
-        <div className="hero-plate">
-          <Frame seed="plate-01" className="hero-plate__frame">
-            <TypeCase />
-          </Frame>
-          <Annot seed="plate-hub" className="hero-plate__annot">
-            荧光笔与朱圈标过的两个词，字面也换成了对应的颜色。字盘是标题的底稿
-          </Annot>
-          <Stamp seed="plate-stamp" date={AS_OF} label="活字付印 TYPECAST" className="hero-plate__stamp" />
-        </div>
+              <div className="hero__art">
+                <Sculpt />
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <Kicker />
+            <div className="hero__art">
+              <Sculpt />
+            </div>
+            <div className="hero__stack">
+              <div className="hero__say">
+                <Headline />
+                <Sub />
+              </div>
+              <Acts />
+            </div>
+          </>
+        )}
+        <Proof />
       </div>
     </section>
   )

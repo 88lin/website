@@ -19,6 +19,7 @@ const LINKS = chapters.filter((c) => c.id !== 'hero')
 
 export function Nav() {
   const bar = useRef<HTMLElement | null>(null)
+  const head = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
     const el = bar.current
@@ -26,6 +27,7 @@ export function Nav() {
 
     let raf = 0
     let last = -1
+    let stuck = -1
 
     const tick = () => {
       raf = 0
@@ -35,6 +37,12 @@ export function Nav() {
       if (Math.abs(p - last) > 0.0015) {
         last = p
         el.style.setProperty('--p', p.toFixed(4))
+      }
+      // 顶栏与页面同色，滚起来之后才需要一条发丝线把它和正文分开
+      const s = window.scrollY > 8 ? 1 : 0
+      if (s !== stuck) {
+        stuck = s
+        head.current?.setAttribute('data-stuck', String(s))
       }
     }
 
@@ -57,7 +65,7 @@ export function Nav() {
       <div className="scrollbar" aria-hidden="true">
         <i ref={bar} />
       </div>
-      <header className="nav">
+      <header className="nav" ref={head}>
         <div className="nav-in">
           <a className="nav-mark" href="#hero">
             <b>{profile.name}</b>

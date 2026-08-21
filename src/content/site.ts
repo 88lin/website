@@ -1,7 +1,7 @@
 /**
  * 全站唯一数据源。
  *
- * 所有数字都能被第三方核验，核实时间 2026-08-20：
+ * 所有数字都能被第三方核验，核实时间 2026-08-21：
  *  - GitHub REST API  /users/88lin 与 /users/88lin/repos?per_page=100（star / fork / 仓库数 / followers）
  *  - blog.88lin.eu.org 首页统计条与标签云（文章数 / 建站天数 / 标签计数）
  *  - video_vip.user.js v3.1.10（解析接口数 / 站点适配器数 / @include 条数，逐行数出来的）
@@ -11,7 +11,7 @@
  * 对不上就红。刷新方式见 README「数据刷新」。
  */
 
-export const AS_OF = '2026.08.20'
+export const AS_OF = '2026.08.21'
 
 /* ---------------------------------------------------------------- 章节 */
 
@@ -103,9 +103,9 @@ export const metricsIntro = {
 
 export const metrics: Metric[] = [
   {
-    value: '4,764',
+    value: '4,791',
     label: '累计 Star',
-    sub: '24 个原创仓库合计',
+    sub: '25 个原创仓库合计',
     source: 'GET /users/88lin/repos → Σ stargazers_count (fork=false)',
   },
   {
@@ -115,13 +115,13 @@ export const metrics: Metric[] = [
     source: 'GET /users/88lin/repos → Σ forks_count (fork=false)',
   },
   {
-    value: '24',
+    value: '25',
     label: '原创仓库',
-    sub: '另有 82 个 fork，共 106 个公开仓库',
+    sub: '另有 81 个 fork，共 106 个公开仓库',
     source: 'GET /users/88lin/repos → count(fork=false)',
   },
   {
-    value: '147',
+    value: '150',
     label: '关注者',
     sub: '没有互关任务，只有 7 个 following',
     source: 'GET /users/88lin → followers',
@@ -133,7 +133,7 @@ export const metrics: Metric[] = [
     source: 'blog.88lin.eu.org 首页统计条',
   },
   {
-    value: '1,794',
+    value: '1,795',
     label: '建站天数',
     sub: '2021 年 9 月至今，没断过',
     source: 'blog.88lin.eu.org 首页统计条',
@@ -280,7 +280,7 @@ export const projects: Project[] = [
     blurb:
       '2023 年写的油猴脚本，现在是我 star 最多的仓库。18 路解析接口可以随时切换，22 个站点各有独立的播放器容器与遮罩清理规则。它教会我的是：接口一定会挂，可切换才是功能。',
     stack: ['JavaScript', '油猴脚本', '多端适配'],
-    stars: 4658,
+    stars: 4669,
     forks: 476,
     state: 'maintained',
     live: 'https://88lin.github.io/vip/',
@@ -532,7 +532,7 @@ export const writing = {
   href: 'https://blog.88lin.eu.org',
   hrefLabel: 'blog.88lin.eu.org',
   posts: 56,
-  days: 1794,
+  days: 1795,
   /** blog.88lin.eu.org 首页标签云，2026-08-16 抓取 */
   tags: [
     { name: '工具', count: 29 },
