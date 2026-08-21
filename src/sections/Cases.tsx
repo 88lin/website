@@ -1,207 +1,76 @@
 /**
- * EXP.04 案例 · 粘性堆叠。
+ * 01 案例。四个深度案例，每个一整行，左右交替。
  *
- * 四张卡依次钉在同一个位置，后一张推上来时前一张缩小并沉回底色里。
- * 顺序叙事：你不能同时读四个案例，版面也不让你同时看见四个。
- * 「背景 / 卡在哪 / 怎么解」三段是最值钱的内容，编号步骤器保留。
- * 侧栏四块图形面板画的是项目里真实存在的结构，刻意不共用模子。
+ * 首页只放论点 + 摘要 + 实测面板；背景 / 卡在哪 / 怎么解 / 取舍留在案例子页。
+ * v12 就是这个分工，理由没变：首页要能被扫读，四段全文铺在首页没人看得完。
+ *
+ * 右侧那张「实测」面板是全站唯一的数据形状（见 components/Section.tsx），
+ * 里面每个数字都跟着出处 —— 这一章要证的不是「我做过」，是「数字你能自己核」。
  */
 
-import { useCallback, useRef } from 'react'
-import { ArrowOut } from '../components/Icons'
-import { cases, casesIntro, vipInterfaces, type CaseStudy } from '../content/cases'
-import { chapters } from '../content/site'
-import { WIDE_MQ } from '../lib/bp'
-import { caseStack, useLazyScene, useMediaQuery, type SceneApi } from '../lib/motion'
+import { Panel, Row, Section } from '../components/Section'
+import { cases, casesIntro } from '../content/cases'
 import { Link } from '../router'
-
-type Line = { k: string; t: string; c: string }
-
-/** 02 的面板画的是它那两条硬规则与路由结构，文字全部出自案例正文。 */
-const REPAIR: Line[] = [
-  { k: 'rule 1', t: '证据优先', c: '# 先读状态、日志与硬件事实' },
-  { k: 'rule 2', t: '只读优先', c: '# 写操作先给回滚与验证' },
-  { k: 'route', t: '62 个 Playbook 按需加载', c: '# 无关内容不进上下文' },
-  { k: 'ci', t: '路由表结构校验', c: '# 62 个文件永远对得上' },
-]
-
-/** 03 的面板是四条索引的实测裁决表：赢的留，输的关。负面结果也上榜。 */
-const FACETS: Line[] = [
-  { k: 'content', t: '内容向量', c: '# 唯一默认开启 · W1 集赢家' },
-  { k: 'lexical', t: '字面 FTS5 双索引', c: '# 实测 -5.4pp，默认关闭' },
-  { k: 'intent', t: 'LLM 意图查询', c: '# 未赢，默认关闭' },
-  { k: 'context', t: '收藏会话聚类', c: '# 未赢，默认关闭' },
-]
-
-function Panel({ c }: { c: CaseStudy }) {
-  if (c.slug === 'lofi') {
-    return (
-      <div className="case__panel">
-        <p className="case__ptop">
-          <span>STATIONS</span>
-          <b>21 / 0 SIGN-UP</b>
-        </p>
-        <p className="case__line">
-          21 路精选电台 <em># 一路不通就静默换下一路</em>
-        </p>
-        <div className="case__tiles" aria-hidden="true">
-          {Array.from({ length: 21 }, (_, i) => (
-            <span className="case__tile" key={i} />
-          ))}
-        </div>
-      </div>
-    )
-  }
-
-  if (c.slug === 'repair') {
-    return (
-      <div className="case__panel">
-        <p className="case__ptop">
-          <span>PLAYBOOK ROUTER</span>
-          <b>3 OS / 62 FILES</b>
-        </p>
-        {REPAIR.map((l) => (
-          <p className="case__line" key={l.k}>
-            <b>{l.k}</b> {l.t} <em>{l.c}</em>
-          </p>
-        ))}
-      </div>
-    )
-  }
-
-  if (c.slug === 'facetmark') {
-    return (
-      <div className="case__panel">
-        <p className="case__ptop">
-          <span>FACET EVAL</span>
-          <b>4 BUILT / 1 ON</b>
-        </p>
-        {FACETS.map((l) => (
-          <p className="case__line" key={l.k}>
-            <b>{l.k}</b> {l.t} <em>{l.c}</em>
-          </p>
-        ))}
-        <div className="case__ifs">
-          {['FTS5', 'vec', 'RRF', 'eval', 'SQLite', 'local-first'].map((n) => (
-            <span className="case__if" key={n}>
-              {n}
-            </span>
-          ))}
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="case__panel">
-      <p className="case__ptop">
-        <span>FALLBACK LIST</span>
-        <b>18 / 22 HOSTS</b>
-      </p>
-      <p className="case__line">
-        <b>strategy</b> ordered fallback <em># 判断权交给此刻能播的那一路</em>
-      </p>
-      <div className="case__ifs">
-        {vipInterfaces.map((n) => (
-          <span className="case__if" key={n}>
-            {n}
-          </span>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function Case({ c }: { c: CaseStudy }) {
-  return (
-    <article className="case" data-card="" data-tint={c.tint}>
-      <div className="case__hd">
-        <span className="case__no" aria-hidden="true">
-          {c.no}
-        </span>
-        <h3 className="case__name">{c.name}</h3>
-        <p className="case__cn">{c.cn}</p>
-        <p className="case__claim">{c.claim}</p>
-      </div>
-
-      <div className="case__grid">
-        {/* 三步一条链。最后一步是「怎么解」，用虚线框与珊瑚红圆徽单独拎出来。 */}
-        <div className="logic-flow">
-          {c.sections.map((s, i) => (
-            <section
-              className={i === 2 ? 'logic-step logic-step--fix' : 'logic-step'}
-              key={s.label}
-            >
-              <span className="logic-step__dot" aria-hidden="true">
-                {`0${i + 1}`}
-              </span>
-              <h4>{s.label}</h4>
-              <p>{s.body}</p>
-            </section>
-          ))}
-        </div>
-
-        <div className="case__side">
-          <Panel c={c} />
-          <dl className="case__res">
-            {c.results.map((r) => (
-              <div key={r.label}>
-                <dt>{r.label}</dt>
-                <dd>{r.value}</dd>
-              </div>
-            ))}
-          </dl>
-          <div className="case__go">
-            <Link className="cta-btn cta-btn--sm" to={`/case/${c.slug}/`}>
-              读完整案例
-            </Link>
-            {c.link ? (
-              <a
-                className="cta-btn cta-btn--ghost cta-btn--sm"
-                href={c.link}
-                target="_blank"
-                rel="noreferrer noopener"
-              >
-                {c.linkLabel || '在线'} <ArrowOut />
-              </a>
-            ) : null}
-          </div>
-        </div>
-      </div>
-    </article>
-  )
-}
+import { useStagger } from '../lib/motion'
 
 export function Cases() {
-  const root = useRef<HTMLDivElement | null>(null)
-  const wide = useMediaQuery(WIDE_MQ)
-  const ch = chapters.find((c) => c.id === 'cases')!
-
-  const build = useCallback(({ ScrollTrigger, root: el }: SceneApi) => {
-    caseStack(ScrollTrigger, el, Array.from(el.querySelectorAll<HTMLElement>('.case')))
-  }, [])
-
-  useLazyScene(root, build, wide)
+  const ref = useStagger<HTMLDivElement>(60)
 
   return (
-    <section id="cases" className="ch ch--cases" data-tone="paper" aria-labelledby="cases-h">
-      <div className="wrap ch-head">
-        <s className="ch-no" aria-hidden="true">
-          EXP.{ch.no}
-        </s>
-        <div className="ch-head__txt">
-          <h2 className="ch-title" id="cases-h">
-            {casesIntro.headline}
-          </h2>
-          <p className="ch-lede">{casesIntro.body}</p>
-        </div>
-      </div>
+    <Section id="cases" title={casesIntro.headline} intro={casesIntro.body}>
+      <div className="cases" ref={ref}>
+        {cases.map((c, i) => (
+          <article className="case" data-t={c.tint} data-flip={i % 2 === 1 ? '1' : undefined} key={c.slug}>
+            <div className="case__say">
+              <p className="case__meta">
+                <b className="case__no">{c.no}</b>
+                <span className="case__name">{c.name}</span>
+                <span className="case__cn">{c.cn}</span>
+              </p>
 
-      <div className="wrap cases-stack" ref={root}>
-        {cases.map((c) => (
-          <Case c={c} key={c.slug} />
+              <h3 className="case__claim">{c.claim}</h3>
+
+              <p className="case__sum">{c.summary}</p>
+
+              <p className="case__stack">{c.stackLine}</p>
+
+              <div className="case__acts">
+                <Link className="btn btn--blue" to={`/case/${c.slug}/`}>
+                  看完整案例
+                  <i aria-hidden="true">→</i>
+                </Link>
+                {c.link && (
+                  <a className="btn btn--ghost" href={c.link} target="_blank" rel="noreferrer">
+                    {c.linkLabel ?? '在线体验'} ↗
+                  </a>
+                )}
+                <a className="btn btn--ghost" href={c.repo} target="_blank" rel="noreferrer">
+                  源码 ↗
+                </a>
+              </div>
+            </div>
+
+            <div className="case__panel" data-stagger>
+              <Panel title={`${c.name} · 实测`} tint={c.tint === 'yellow' ? 'yellow' : c.tint === 'coral' ? 'coral' : 'blue'}>
+                <div className="pnums">
+                  {c.results.map((r) => (
+                    <span className="pnum" key={r.label}>
+                      <b>{r.value}</b>
+                      <s>{r.label}</s>
+                    </span>
+                  ))}
+                </div>
+                <div className="panel__rule" />
+                {c.provenance.map((p) => (
+                  <Row k={p.value} key={p.value}>
+                    {p.from}
+                  </Row>
+                ))}
+              </Panel>
+            </div>
+          </article>
         ))}
       </div>
-    </section>
+    </Section>
   )
 }

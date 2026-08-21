@@ -1,0 +1,5 @@
+Noto Sans SC — SIL Open Font License 1.1
+Source: https://github.com/notofonts/noto-cjk (Version 2.04)
+Subset for 88lin/website by scripts/fonts.mjs
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1. This Font Software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the SIL Open Font License for the specific language, permissions and limitations governing your use of this Font Software.

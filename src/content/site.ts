@@ -35,25 +35,26 @@ export type Tone = 'paper' | 'alt'
 /** 卡片色相。只染卡的边、条与投影，卡面永远是纸，字永远是墨。 */
 export type Tint = 'blue' | 'yellow' | 'coral'
 
-export type ChapterId = 'hero' | 'metrics' | 'craft' | 'work' | 'cases' | 'garden' | 'notes' | 'contact'
+export type ChapterId = 'hero' | 'cases' | 'craft' | 'work' | 'garden' | 'notes' | 'contact'
 
 export type Chapter = { id: ChapterId; label: string; tone: Tone; no: string }
 
 /**
- * v11「实验志」：八章 = 志里的八条编号实验。章序沿用 v9 的判断——
- * 先说能做什么（craft 章含三条可承接的服务），仓库与数字退到读数与作品章当证据。
- * EXP 编号承载信息：它是这本志的登记序号，也是导航锚点与深链接的一部分。
- * 地面色仍是两档纸色严格交替（v9 判词之后的定论，不再动摇）。
+ * 章序：案例提到第 01。
+ *
+ * v12 的读者要滚过读数、主线、作品三章才看到案例，这和「不滚动三屏之内给出
+ * 三个证据」直接冲突。现在开场之后立刻是四个深度案例 —— 招聘方与客户最想看的
+ * 就是这个；读数不再单独成章，四个核心数字并进开场的彩色读数卡。
+ * 地面色两档交替。
  */
 export const chapters: Chapter[] = [
   { id: 'hero', label: '开场', tone: 'paper', no: '00' },
-  { id: 'metrics', label: '读数', tone: 'alt', no: '01' },
+  { id: 'cases', label: '案例', tone: 'alt', no: '01' },
   { id: 'craft', label: '主线', tone: 'paper', no: '02' },
   { id: 'work', label: '作品', tone: 'alt', no: '03' },
-  { id: 'cases', label: '案例', tone: 'paper', no: '04' },
-  { id: 'garden', label: '标本馆', tone: 'alt', no: '05' },
-  { id: 'notes', label: '写作', tone: 'paper', no: '06' },
-  { id: 'contact', label: '联系', tone: 'alt', no: '07' },
+  { id: 'garden', label: '标本馆', tone: 'paper', no: '04' },
+  { id: 'notes', label: '写作', tone: 'alt', no: '05' },
+  { id: 'contact', label: '联系', tone: 'paper', no: '06' },
 ]
 
 /* ---------------------------------------------------------------- 身份 */

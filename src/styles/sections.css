@@ -1,0 +1,1184 @@
+/* ============================================================================
+   茉灵智库 v13 · 章节样式
+   ----------------------------------------------------------------------------
+   令牌、复位、顶栏、按钮、排印零件与 00 开场在 index.css；这里只放 01–06 章。
+   两条纪律在这一文件里反复出现，先写在开头：
+   1) 每章一种构图，撞型即回炉。案例是左右交替长行、主线是双轴 + 交点、
+      作品是横推轨、标本馆是密集索引、写作是量表、联系是巨号邮箱。
+   2) 卡面永远是纸（白），只染边、条、顶线与编号。彩色不铺满面。
+   ========================================================================== */
+
+/* ------------------------------------------------------------------ 章骨架 */
+
+/*
+  地面色两档严格交替（v9「整章刷饱和底没有任何排版能救」之后的定论）：
+  paper = 页面底 #fdfcf8，alt = 纯白。两档都是近白，靠 1% 明度差与一条细线分章。
+*/
+.sec {
+  padding-block: var(--s-section);
+}
+
+.sec[data-tone='alt'] {
+  background: #fff;
+  border-block: 1px solid var(--rule);
+}
+
+.chap {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  column-gap: 16px;
+  margin-bottom: clamp(34px, 5vh, 64px);
+}
+
+.chap__no {
+  grid-row: 1 / 3;
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 4vw, 3.5rem);
+  font-weight: 400;
+  line-height: 0.86;
+  color: var(--brand);
+}
+
+.chap__label {
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+
+.chap__title {
+  grid-column: 2;
+  font-family: var(--font-display);
+  font-size: var(--t-h2);
+  font-weight: 400;
+  line-height: 1.28;
+}
+
+.chap__intro {
+  grid-column: 2;
+  max-width: 46em;
+  margin-top: 12px;
+  color: var(--fg-dim);
+}
+
+@media (max-width: 640px) {
+  .chap {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .chap__no {
+    grid-row: auto;
+  }
+
+  .chap__title,
+  .chap__intro {
+    grid-column: 1;
+  }
+}
+
+/* ------------------------------------------------------- 数据面板（全站唯一） */
+
+.panel {
+  border: 1.5px dashed rgba(26, 26, 46, 0.2);
+  border-radius: var(--r-card);
+  background: #fff;
+  box-shadow: var(--sh-card);
+  overflow: hidden;
+}
+
+.panel__bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--rule);
+  background: #fcfbf7;
+}
+
+.panel__dots {
+  display: inline-flex;
+  gap: 6px;
+}
+
+/*
+  macOS 三色圆点。这三个色值是全站唯一允许写死的一组裸 hex：
+  它是一个有名字的既有形制，换成品牌色那块面就不再读作「窗口」。
+*/
+.panel__dots s {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  text-decoration: none;
+}
+
+.panel__dots s:nth-child(1) {
+  background: #ff5f57;
+}
+
+.panel__dots s:nth-child(2) {
+  background: #febc2e;
+}
+
+.panel__dots s:nth-child(3) {
+  background: #28c840;
+}
+
+.panel__title {
+  font-family: var(--font-mono);
+  font-size: var(--t-small);
+  color: var(--fg-dim);
+}
+
+.panel__body {
+  padding: clamp(16px, 2vw, 24px);
+}
+
+.panel__rule {
+  height: 1px;
+  margin: 16px 0 14px;
+  background: var(--rule);
+}
+
+.panel[data-t='blue'] .panel__bar {
+  box-shadow: inset 0 3px 0 var(--brand);
+}
+
+.panel[data-t='yellow'] .panel__bar {
+  box-shadow: inset 0 3px 0 var(--highlight);
+}
+
+.panel[data-t='coral'] .panel__bar {
+  box-shadow: inset 0 3px 0 var(--pop);
+}
+
+.panel[data-t='teal'] .panel__bar {
+  box-shadow: inset 0 3px 0 #2f9c95;
+}
+
+.pnums {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(16px, 2.4vw, 34px);
+}
+
+.pnum b {
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(1.375rem, 2vw, 1.75rem);
+  line-height: 1.15;
+}
+
+.pnum s {
+  display: block;
+  text-decoration: none;
+  margin-top: 2px;
+  font-size: var(--t-label);
+  color: var(--fg-faint);
+}
+
+/* 键值行：左键右值，等宽，虚线分隔。数字的出处就摆在这里。 */
+.prow {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 12px;
+  padding-block: 7px;
+  border-top: 1px dashed var(--rule);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  line-height: 1.7;
+}
+
+.prow:first-of-type {
+  border-top: 0;
+}
+
+.prow b {
+  font-weight: 600;
+}
+
+.prow span {
+  color: var(--fg-faint);
+}
+
+@media (max-width: 520px) {
+  .prow {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+}
+
+/* ============================================================================
+   01 案例
+   ========================================================================== */
+
+.cases {
+  display: grid;
+  gap: clamp(52px, 8vh, 104px);
+}
+
+.case {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: clamp(28px, 4vw, 64px);
+  align-items: center;
+}
+
+/* 左右交替：同一个形状连排四遍最容易读成模板，交替一下节奏就出来了。 */
+.case[data-flip='1'] .case__say {
+  order: 2;
+}
+
+.case__meta {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.case__no {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.case[data-t='blue'] .case__no {
+  color: var(--brand);
+}
+
+.case[data-t='yellow'] .case__no {
+  color: #b8890c;
+}
+
+.case[data-t='coral'] .case__no {
+  color: var(--pop);
+}
+
+.case__name {
+  font-family: var(--font-mono);
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+
+.case__cn {
+  font-size: var(--t-small);
+  color: var(--fg-faint);
+}
+
+.case__claim {
+  margin-top: 14px;
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 2.5vw, 2.125rem);
+  font-weight: 400;
+  line-height: 1.34;
+}
+
+.case__sum {
+  max-width: 34em;
+  margin-top: 16px;
+  color: var(--fg-dim);
+}
+
+.case__stack {
+  margin-top: 14px;
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  letter-spacing: 0.04em;
+  color: var(--fg-faint);
+}
+
+.case__acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.case__acts .btn {
+  padding: 11px 20px;
+  font-size: var(--t-small);
+}
+
+@media (max-width: 900px) {
+  .case {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .case[data-flip='1'] .case__say {
+    order: 0;
+  }
+}
+
+/* ============================================================================
+   02 主线
+   ========================================================================== */
+
+.tracks {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: clamp(20px, 3vw, 46px);
+}
+
+.track__head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--rule);
+}
+
+.track__head b {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.track[data-side='a'] .track__head b {
+  color: var(--pop);
+}
+
+.track[data-side='b'] .track__head b {
+  color: var(--brand);
+}
+
+.track__head span {
+  font-family: var(--font-display);
+  font-size: 1.1875rem;
+}
+
+.track__list {
+  list-style: none;
+  margin: 22px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 22px;
+}
+
+.track__list h4 {
+  margin: 0 0 6px;
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+
+.track__list p {
+  font-size: var(--t-small);
+  line-height: 1.8;
+  color: var(--fg-dim);
+}
+
+/* 中轴 + 交点圆章。这一章独有的装置。 */
+.tracks__axis {
+  position: relative;
+  width: 1px;
+  background: repeating-linear-gradient(to bottom, var(--rule) 0 6px, transparent 6px 12px);
+}
+
+.tracks__joint {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 8px 13px;
+  border-radius: var(--r-pill);
+  background: var(--highlight);
+  color: var(--ink);
+  font-size: var(--t-label);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  box-shadow: var(--sh-pill);
+}
+
+@media (max-width: 820px) {
+  .tracks {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 30px;
+  }
+
+  .tracks__axis {
+    width: 100%;
+    height: 1px;
+    background: repeating-linear-gradient(to right, var(--rule) 0 6px, transparent 6px 12px);
+  }
+}
+
+/* ---- 三件可接的活 ---- */
+
+.svc-head {
+  margin-top: clamp(56px, 9vh, 104px);
+  padding-top: clamp(28px, 4vh, 48px);
+  border-top: 1px solid var(--rule);
+}
+
+.svc-head__t {
+  font-family: var(--font-display);
+  font-size: var(--t-h2);
+  font-weight: 400;
+  line-height: 1.3;
+}
+
+.svc-head__b {
+  max-width: 44em;
+  margin-top: 10px;
+  color: var(--fg-dim);
+}
+
+.svcs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(16px, 2vw, 26px);
+  margin-top: clamp(26px, 4vh, 44px);
+}
+
+.svc {
+  padding: clamp(22px, 2.4vw, 32px);
+  border-radius: var(--r-card);
+  background: #fff;
+  border-top: 4px solid var(--rule);
+  box-shadow: var(--sh-card);
+}
+
+.svc[data-t='coral'] {
+  border-top-color: var(--pop);
+}
+
+.svc[data-t='blue'] {
+  border-top-color: var(--brand);
+}
+
+.svc[data-t='yellow'] {
+  border-top-color: var(--highlight);
+}
+
+.svc__no {
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  letter-spacing: 0.16em;
+  color: var(--fg-faint);
+}
+
+.svc__t {
+  margin-top: 8px;
+  font-family: var(--font-display);
+  font-size: 1.3125rem;
+  font-weight: 400;
+}
+
+.svc__b {
+  margin-top: 12px;
+  font-size: var(--t-small);
+  line-height: 1.85;
+  color: var(--fg-dim);
+}
+
+.svc__del {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.svc__del li {
+  padding: 5px 11px;
+  border-radius: var(--r-pill);
+  background: #f3f2ec;
+  font-size: 0.75rem;
+  color: var(--fg-dim);
+}
+
+.svc__fit {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--rule);
+  font-size: 0.75rem;
+  line-height: 1.7;
+  color: var(--fg-faint);
+}
+
+@media (max-width: 900px) {
+  .svcs {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ============================================================================
+   03 作品 —— 横推轨
+   ========================================================================== */
+
+.rail-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.rail-hint {
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  letter-spacing: 0.1em;
+  color: var(--fg-faint);
+}
+
+.rail-nav {
+  display: flex;
+  gap: 8px;
+}
+
+.rail-nav button {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--rule);
+  background: #fff;
+  box-shadow: var(--sh-card);
+  font-family: var(--font-mono);
+  transition:
+    border-color 0.16s var(--ease),
+    transform 0.14s var(--ease);
+}
+
+.rail-nav button:hover {
+  border-color: var(--fg);
+}
+
+.rail-nav button:active {
+  transform: translateY(1px);
+}
+
+/*
+  原生横向滚动 + snap，不用 gsap 把整章钉住做横推。
+  钉住式横推在移动端与触控板上手感难控（v8 就在这里留下过一屏死白），
+  原生滚动天生支持触摸、滚轮横滑、键盘与滚动条，且零 JS。
+*/
+.rail {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(288px, 25%);
+  gap: 20px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  padding-bottom: 8px;
+}
+
+.rail::-webkit-scrollbar {
+  display: none;
+}
+
+.wcard {
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  padding: clamp(20px, 2vw, 26px);
+  border-radius: var(--r-card);
+  background: #fff;
+  box-shadow: var(--sh-card);
+  border-left: 4px solid var(--rule);
+}
+
+.wcard[data-t='blue'] {
+  border-left-color: var(--brand);
+}
+
+.wcard[data-t='yellow'] {
+  border-left-color: var(--highlight);
+}
+
+.wcard[data-t='coral'] {
+  border-left-color: var(--pop);
+}
+
+.wcard__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.wcard__year {
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  letter-spacing: 0.1em;
+  color: var(--fg-faint);
+}
+
+.wcard__state {
+  padding: 4px 10px;
+  border-radius: var(--r-pill);
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.wcard__state[data-s='live'] {
+  background: #e7f6ee;
+  color: #1d7a4c;
+}
+
+.wcard__state[data-s='maintained'] {
+  background: #eaf2fc;
+  color: var(--brand-deep);
+}
+
+.wcard__state[data-s='archived'] {
+  background: #f2f1eb;
+  color: var(--fg-faint);
+}
+
+.wcard__name {
+  margin-top: 14px;
+  font-family: var(--font-mono);
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+
+.wcard__cn {
+  margin-top: 4px;
+  font-family: var(--font-display);
+  font-size: 1.1875rem;
+}
+
+.wcard__blurb {
+  margin-top: 12px;
+  font-size: var(--t-small);
+  line-height: 1.8;
+  color: var(--fg-dim);
+}
+
+.wcard__stack {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.wcard__stack li {
+  padding: 4px 9px;
+  border-radius: 6px;
+  background: #f3f2ec;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--fg-dim);
+}
+
+.wcard__foot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 18px;
+}
+
+.wcard__nums {
+  display: flex;
+  gap: 14px;
+  font-size: 0.75rem;
+  color: var(--fg-faint);
+}
+
+.wcard__nums b {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  color: var(--fg);
+}
+
+.wcard__links {
+  display: flex;
+  gap: 12px;
+  font-size: var(--t-small);
+  font-weight: 600;
+}
+
+.wcard__links a {
+  color: var(--brand-deep);
+}
+
+.wcard__links a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 900px) {
+  .rail {
+    grid-auto-columns: minmax(258px, 80%);
+  }
+
+  .rail-nav {
+    display: none;
+  }
+}
+
+/* ============================================================================
+   04 标本馆
+   ========================================================================== */
+
+.picks {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(14px, 1.8vw, 22px);
+}
+
+.pick {
+  display: grid;
+  gap: 7px;
+  padding: clamp(18px, 2vw, 24px);
+  border-radius: var(--r-card);
+  background: #fff;
+  box-shadow: var(--sh-card);
+  transition:
+    transform 0.16s var(--ease),
+    box-shadow 0.18s var(--ease);
+}
+
+.pick:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--sh-card), 0 16px 34px rgba(26, 26, 46, 0.08);
+}
+
+.pick__group {
+  justify-self: start;
+  padding: 4px 10px;
+  border-radius: var(--r-pill);
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.pick[data-t='coral'] .pick__group {
+  background: #fdeef1;
+  color: var(--pop-deep);
+}
+
+.pick[data-t='blue'] .pick__group {
+  background: #eaf2fc;
+  color: var(--brand-deep);
+}
+
+.pick[data-t='yellow'] .pick__group {
+  background: #fdf5da;
+  color: #8a6a10;
+}
+
+.pick[data-t='teal'] .pick__group {
+  background: #e6f4f2;
+  color: #1f6f69;
+}
+
+.pick__name {
+  font-family: var(--font-display);
+  font-size: 1.1875rem;
+}
+
+.pick__name i {
+  font-family: var(--font-mono);
+  font-style: normal;
+  font-size: 0.8em;
+  color: var(--fg-faint);
+}
+
+.pick__why {
+  font-size: var(--t-small);
+  line-height: 1.75;
+  color: var(--fg-dim);
+}
+
+/* ---- 密集索引：这一章的形状是索引，不是卡片网格 ---- */
+
+.index {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(18px, 2.4vw, 32px);
+  margin-top: clamp(32px, 5vh, 56px);
+  padding-top: clamp(26px, 4vh, 42px);
+  border-top: 1px solid var(--rule);
+}
+
+.index__label {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--rule);
+  font-family: var(--font-display);
+  font-size: 1.0625rem;
+}
+
+.index__label[data-t='coral'] {
+  border-bottom-color: var(--pop);
+}
+
+.index__label[data-t='blue'] {
+  border-bottom-color: var(--brand);
+}
+
+.index__label[data-t='yellow'] {
+  border-bottom-color: var(--highlight);
+}
+
+.index__label[data-t='teal'] {
+  border-bottom-color: #2f9c95;
+}
+
+.index__label s {
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  color: var(--fg-faint);
+}
+
+.index__list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.index__list a {
+  display: inline-block;
+  padding: 5px 11px;
+  border-radius: var(--r-pill);
+  background: #f3f2ec;
+  font-size: 0.8125rem;
+  color: var(--fg-dim);
+  transition:
+    background-color 0.15s var(--ease),
+    color 0.15s var(--ease);
+}
+
+.index__list a:hover {
+  background: var(--ink);
+  color: #fff;
+}
+
+.index__more {
+  margin-top: 22px;
+  font-size: var(--t-small);
+  color: var(--fg-faint);
+}
+
+.index__more a {
+  margin-left: 6px;
+  font-weight: 600;
+  color: var(--brand-deep);
+}
+
+.index__more a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 900px) {
+  .picks,
+  .index {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .picks,
+  .index {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ============================================================================
+   05 写作
+   ========================================================================== */
+
+.notes {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  gap: clamp(30px, 4.5vw, 72px);
+}
+
+.notes__nums {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(18px, 3vw, 40px);
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.notes__nums b {
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 2.6vw, 2.25rem);
+  line-height: 1.1;
+}
+
+.notes__nums span:nth-child(1) b {
+  color: var(--brand-deep);
+}
+
+.notes__nums span:nth-child(2) b {
+  color: #8a6a10;
+}
+
+.notes__nums span:nth-child(3) b {
+  color: var(--pop-deep);
+}
+
+.notes__nums s {
+  display: block;
+  text-decoration: none;
+  margin-top: 2px;
+  font-size: var(--t-small);
+  color: var(--fg-dim);
+}
+
+/* 标签量表：这一章独有的形状 */
+.bars {
+  list-style: none;
+  margin: 22px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 9px;
+}
+
+.bars li {
+  display: grid;
+  grid-template-columns: 5.5em minmax(0, 1fr) 2.2em;
+  align-items: center;
+  gap: 12px;
+}
+
+.bars__name {
+  font-size: var(--t-small);
+}
+
+.bars__track {
+  height: 9px;
+  border-radius: var(--r-pill);
+  background: #f1f0e9;
+  overflow: hidden;
+}
+
+.bars__track i {
+  display: block;
+  height: 100%;
+  border-radius: var(--r-pill);
+}
+
+.bars__track i[data-t='blue'] {
+  background: var(--brand);
+}
+
+.bars__track i[data-t='yellow'] {
+  background: var(--highlight);
+}
+
+.bars__track i[data-t='coral'] {
+  background: var(--pop);
+}
+
+.bars__track i[data-t='teal'] {
+  background: #2f9c95;
+}
+
+.bars__n {
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  text-align: right;
+  color: var(--fg-faint);
+}
+
+.notes__label {
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+
+.posts {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: grid;
+}
+
+.posts li {
+  border-top: 1px solid var(--rule);
+}
+
+.posts li:last-child {
+  border-bottom: 1px solid var(--rule);
+}
+
+.posts a {
+  display: grid;
+  grid-template-columns: 6.5em minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 14px;
+  padding: 15px 4px;
+  transition: background-color 0.15s var(--ease);
+}
+
+.posts a:hover {
+  background: #fbfaf5;
+}
+
+.posts__date {
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  color: var(--fg-faint);
+}
+
+.posts__t {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+.posts a i {
+  font-family: var(--font-mono);
+  font-style: normal;
+  color: var(--fg-faint);
+}
+
+.notes__all {
+  margin-top: 20px;
+  padding: 11px 20px;
+  font-size: var(--t-small);
+}
+
+@media (max-width: 900px) {
+  .notes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .posts a {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .posts__date {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ============================================================================
+   06 联系
+   ========================================================================== */
+
+/*
+  收口做成一整块饱和蓝卡，白字。
+  这是全页唯一的大色面 —— book 页那张蓝卡就是这个角色。没有它，整页都是
+  白卡压近白底，读下来会「寡淡」（前两稿被判难看的主因之一）。
+  只放一块：两块以上就成了色块拼贴，不再是重音。
+*/
+.contact {
+  display: grid;
+  gap: clamp(24px, 3.4vh, 40px);
+  justify-items: start;
+  padding: clamp(28px, 4vw, 60px);
+  border-radius: var(--r-lg);
+  background: var(--brand);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(43, 127, 216, 0.2), 0 22px 54px rgba(43, 127, 216, 0.22);
+}
+
+/* 邮箱是这一页真正的出口，排成整章最大的一行。 */
+.mailto {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  font-family: var(--font-mono);
+  font-size: clamp(1.125rem, 4vw, 2.625rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  word-break: break-all;
+  color: #fff;
+  transition: color 0.16s var(--ease);
+}
+
+.mailto:hover {
+  color: var(--highlight);
+}
+
+.mailto i {
+  font-style: normal;
+  color: var(--highlight);
+}
+
+.chans {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.chans a {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 9px;
+  padding: 12px 18px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.13);
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  color: #fff;
+  font-size: var(--t-small);
+  transition:
+    background-color 0.16s var(--ease),
+    border-color 0.16s var(--ease),
+    transform 0.14s var(--ease);
+}
+
+.chans a:hover {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: #fff;
+  transform: translateY(-2px);
+}
+
+.chans b {
+  font-weight: 600;
+}
+
+.chans span {
+  color: rgba(255, 255, 255, 0.76);
+}
+
+.chans i {
+  font-family: var(--font-mono);
+  font-style: normal;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+/* ---- 页脚 ---- */
+
+.foot {
+  margin-top: clamp(56px, 9vh, 104px);
+  padding-top: clamp(24px, 4vh, 38px);
+  border-top: 1px solid var(--rule);
+  font-size: var(--t-small);
+  color: var(--fg-faint);
+}
+
+.foot__note {
+  max-width: 46em;
+  margin-top: 8px;
+}
+
+.foot__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 16px;
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+}
+
+.foot__meta a {
+  color: var(--brand-deep);
+  font-weight: 600;
+}
+
+.foot__meta a:hover {
+  text-decoration: underline;
+}

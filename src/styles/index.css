@@ -24,6 +24,8 @@
    ========================================================================== */
 
 @import './palettes.css';
+@import './sections.css';
+@import './case.css';
 
 /* ------------------------------------------------------------------ 字体 */
 /*
@@ -43,6 +45,33 @@
   font-display: swap;
 }
 
+/*
+  正文兜底字体。两档定轴子集（wght 400 / 600），由 scripts/fonts.mjs 采真实
+  用字后生成，零缺字校验过。
+
+  摆放位置是有讲究的：它排在 'PingFang SC' 与 'Noto Sans SC' **之后**。
+   · Apple 设备 → PingFang SC 命中，这两个文件一个字节都不下载
+   · Windows/Linux 装了思源黑（Noto Sans SC）→ 用本地那份，也不下载
+   · 都没有 → 才下发这里的子集
+  于是「Windows 上看着和 Mac 一致」这件事成立，代价只落在真正需要的机器上。
+  一律 swap，不预加载：预加载上百 KB 的 CJK 会直接把 LCP 拖过 2.5s。
+*/
+@font-face {
+  font-family: 'Noto Sans SC Sub';
+  src: url('/fonts/NotoSansSC-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Noto Sans SC Sub';
+  src: url('/fonts/NotoSansSC-600.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
 @font-face {
   font-family: 'Caveat Web';
   src: url('/fonts/Caveat.woff2') format('woff2');
@@ -55,9 +84,9 @@
   color-scheme: light;
 
   --font-display: 'Smiley Display', -apple-system, BlinkMacSystemFont, 'PingFang SC',
-    'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+    'Noto Sans SC', 'Noto Sans SC Sub', 'Microsoft YaHei', sans-serif;
   --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'PingFang SC', 'Noto Sans SC',
-    'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif;
+    'Noto Sans SC Sub', 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono',
     monospace;
   --font-hand: 'Caveat Web', cursive;
@@ -118,11 +147,25 @@ body {
   color: var(--fg);
   font-family: var(--font-sans);
   font-size: var(--t-body);
-  line-height: 1.85;
+  /* 1.8 是中文长正文的甜点：他们那几个页面在 1.7，但那是短段落；
+     本站单段常到四五行，1.7 会挤，2.0 会散。 */
+  line-height: 1.8;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   overflow-x: hidden;
+}
+
+/* 段落收尾不留孤字。Chrome 117+ / Safari 17.5+ 支持，不支持的浏览器无副作用。 */
+p {
+  text-wrap: pretty;
+}
+
+/* 标题按整体平衡断行，避免最后一行只剩两个字。 */
+h1,
+h2,
+h3 {
+  text-wrap: balance;
 }
 
 h1,

@@ -1,214 +1,178 @@
 /**
- * 案例子页 · 实验记录。
+ * 案例子页 /case/:slug/。
  *
- * 首页那三张卡是「一眼看懂」，这里是「愿意读完」——单栏长文、没有横推、
- * 没有堆叠。读长文的人不需要被表演。三段正文挂编号步骤器（背景→卡在哪→怎么解），
- * 「怎么解」套手绘虚线框：它是每条记录里被验证的那一步。
- * 页面上每个数字都能在「数字出处」里找到出处，结果表盖一枚核实章。
+ * 首页那一章只放论点与实测；这里才铺全文：背景 / 卡在哪 / 怎么解 三段，
+ * 加「关键取舍」与「数字出处」。
+ *
+ * 取舍单独成块是有意的：写清楚**放弃了什么**比罗列做了什么更能说明判断力，
+ * 挑剔的读者只看这一块。数字出处也单独成块，一行一条，可以自己去核。
+ *
+ * 版式沿用全站语言：彩色读数卡、编号竖轴的分段、虚线数据面板、胶囊按钮。
+ * 不为子页新造形状。
  */
 
-import { ArrowBack, ArrowOut } from '../components/Icons'
-import { CodeMac, type Tok } from '../components/CodeMac'
-import { Frame, Stamp } from '../components/Ink'
-import { caseBySlug, vipHosts, vipInterfaces } from '../content/cases'
-import { AS_OF, footer } from '../content/site'
+import { caseBySlug, cases } from '../content/cases'
+import { CONTACT_HREF, AS_OF, footer, profile } from '../content/site'
+import { Panel, Row } from '../components/Section'
 import { Link } from '../router'
+import { useStagger } from '../lib/motion'
 
-type Line = { k: string; v: string; note?: string }
-
-/** 每个案例的结构约定，逐条对应正文「怎么解」里写明的做法。 */
-const SPEC: Record<string, Line[]> = {
-  lofi: [
-    { k: 'player', v: 'collapsed', note: '默认收拢成一枚窄条' },
-    { k: 'feedback', v: 'waveform', note: '状态靠波形，不弹提示' },
-    { k: 'stations', v: '21', note: '精选电台，可用性由我负责' },
-    { k: 'fallback', v: 'retry → switch', note: '静默重试与换源' },
-    { k: 'account', v: 'none', note: '没有登录，也就没有第一个理由' },
-  ],
-  repair: [
-    { k: 'rule 1', v: 'evidence first', note: '先读状态、日志与硬件事实' },
-    { k: 'rule 2', v: 'read only first', note: '写操作先给影响面与回滚' },
-    { k: 'playbooks', v: '62 on demand', note: '一张路由索引，按问题加载' },
-    { k: 'os', v: 'windows / macos / linux', note: '三条独立排查路径' },
-    { k: 'ci', v: 'route table check', note: '校验 62 个文件的路由表' },
-  ],
-  facetmark: [
-    { k: 'facets', v: '4 indexed', note: '字面 / 内容 / 意图 / 上下文' },
-    { k: 'fusion', v: 'rrf measured', note: '实测 -5.4pp，输给最简配置' },
-    { k: 'default', v: 'content only', note: '赢的留，输的关' },
-    { k: 'store', v: '1 sqlite file', note: '本地优先，书签库只读' },
-    { k: 'tests', v: '1524', note: 'CI 全绿，负面结果进 README' },
-  ],
-  'video-vip': [
-    { k: 'parsers', v: '18 switchable', note: '悬浮面板一秒换一路' },
-    { k: 'adapters', v: '22 per host', note: '改一个站不牵动其余 21 个' },
-    { k: 'include', v: '35 rules', note: '同时覆盖 PC 与移动端入口' },
-    { k: 'button', v: 'draggable', note: '位置记住，不挡任何站的控制条' },
-  ],
-}
-
-/** 结构约定的文件名：读起来就是它自己仓库里的一个真实配置文件 */
-const SPEC_FILE: Record<string, string> = {
-  lofi: 'player.constraints.yml',
-  repair: 'playbook-router.yaml',
-  facetmark: 'facet.eval.yml',
-  'video-vip': 'fallback.strategy.yml',
-}
-
-/** 行数组 → 词法记号数组（k 关键字、v 字符串、note 注释）。 */
-function toTok(lines: Line[]): Tok[][] {
-  return lines.map((l) => {
-    const row: Tok[] = [{ t: l.k, c: 'kw' }, { t: ': ' }, { t: l.v, c: 'str' }]
-    if (l.note) row.push({ t: `  # ${l.note}`, c: 'cmt' })
-    return row
-  })
-}
-
-function Console({ slug }: { slug: string }) {
-  const lines = SPEC[slug] || []
+/** 子页顶栏：站名回首页 + 一枚联系入口。锚点导航在子页上没有意义，所以不放。 */
+function CaseNav() {
   return (
-    <div className="cpage__console">
-      <CodeMac file={SPEC_FILE[slug] || 'spec.yml'} code={toTok(lines)} />
-      {slug === 'video-vip' ? (
-        <div className="cpage__tokens-wrap">
-          <ul className="cpage__tokens">
-            {vipInterfaces.map((n) => (
-              <li key={n}>{n}</li>
-            ))}
-          </ul>
-          <ul className="cpage__tokens">
-            {vipHosts.map((h) => (
-              <li key={h}>{h}</li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-    </div>
+    <header className="nav">
+      <div className="nav-in">
+        <Link className="nav-mark" to="/">
+          <b>{profile.name}</b>
+          <s>@88LIN</s>
+        </Link>
+        <nav className="nav-links" aria-label="导航">
+          <a className="gh" href={CONTACT_HREF}>
+            聊聊合作
+          </a>
+        </nav>
+      </div>
+    </header>
   )
 }
 
+const TINT_CLASS: Record<string, 'blue' | 'yellow' | 'coral'> = {
+  blue: 'blue',
+  yellow: 'yellow',
+  coral: 'coral',
+}
+
+/** 读数卡的配色按顺序轮，和首页那四块同一个零件。 */
+const STAT_TINTS = ['blue', 'yellow', 'coral', 'plain'] as const
+
 export function CasePage({ slug }: { slug: string }) {
   const c = caseBySlug(slug)
+  const ref = useStagger<HTMLElement>(60)
 
   if (!c) {
     return (
-      <main id="main" className="cpage" data-tone="paper">
-        <div className="wrap">
-          <Link className="cpage__back" to="/">
-            <ArrowBack />
-            回首页
-          </Link>
-          <h1 className="cpage__h">没有这一页</h1>
-        </div>
-      </main>
+      <>
+        <CaseNav />
+        <main className="wrap cpage" id="main">
+          <p className="cpage__miss">
+            没有这个案例。回<Link to="/">首页</Link>看四个案例。
+          </p>
+        </main>
+      </>
     )
   }
 
+  const tint = TINT_CLASS[c.tint] ?? 'blue'
+
   return (
-    <main id="main" className="cpage" data-tone="paper" data-tint={c.tint}>
+    <>
+      <CaseNav />
+      <main className="cpage" id="main" ref={ref}>
       <div className="wrap">
-        <Link className="cpage__back" to="/">
-          <ArrowBack />
-          回首页
-        </Link>
+        <p className="cpage__back">
+          <Link to="/">← 回首页</Link>
+        </p>
 
-        <div className="cpage__hd">
-          <p className="cpage__no">
-            RECORD {c.no} <span aria-hidden="true">/</span> {c.year}
+        <header className="cpage__hd" data-t={tint}>
+          <p className="cpage__meta">
+            <b className="cpage__no">{c.no}</b>
+            <span className="cpage__name">{c.name}</span>
+            <span className="cpage__cn">{c.cn}</span>
           </p>
-          <h1 className="cpage__h">{c.name}</h1>
-          <p className="cpage__claim">{c.claim}</p>
-          <div className="cpage__meta">
-            <span>{c.role}</span>
-            <span>{c.stackLine}</span>
-          </div>
-        </div>
+          <h1 className="cpage__claim" data-stagger>
+            {c.claim}
+          </h1>
+          <p className="cpage__spec" data-stagger>
+            {c.year} · {c.role} · {c.stackLine}
+          </p>
+        </header>
 
-        <Console slug={c.slug} />
-
-        <div className="cpage__body">
-          <section>
-            <h2>{c.cn}</h2>
-            <p>{c.summary}</p>
-          </section>
-          <div className="cpage__flow">
-            {c.sections.map((s, i) =>
-              i === 2 ? (
-                <Frame seed={'case-fix-' + c.slug} className="cpage__fix" key={s.label}>
-                  <section className="cpage__step">
-                    <span className="cpage__stepdot cpage__stepdot--fix" aria-hidden="true">
-                      {`0${i + 1}`}
-                    </span>
-                    <h2>{s.label}</h2>
-                    <p>{s.body}</p>
-                  </section>
-                </Frame>
-              ) : (
-                <section className="cpage__step" key={s.label}>
-                  <span className="cpage__stepdot" aria-hidden="true">
-                    {`0${i + 1}`}
-                  </span>
-                  <h2>{s.label}</h2>
-                  <p>{s.body}</p>
-                </section>
-              ),
-            )}
-          </div>
-          <div className="cpage__offs">
-            <h2 className="cpage__offs-h">放弃了什么</h2>
-            {c.tradeoffs.map((t) => (
-              <section className="cpage__off" key={t.title}>
-                <h3>{t.title}</h3>
-                <p>{t.body}</p>
-              </section>
-            ))}
-          </div>
-        </div>
-
-        <div className="cpage__reswrap">
-          <h2>测量结果</h2>
-          <dl className="cpage__res">
-            {c.results.map((r) => (
-              <div className="slab" key={r.label}>
-                <dt>{r.label}</dt>
-                <dd>{r.value}</dd>
-              </div>
-            ))}
-          </dl>
-          <Stamp seed={'case-stamp-' + c.slug} date={AS_OF} className="cpage__stamp" />
-        </div>
-
-        <div className="cpage__prov">
-          <h2>数字出处</h2>
-          {c.provenance.map((p) => (
-            <p key={p.value}>
-              <b>{p.value}</b> {p.from}
-            </p>
+        <div className="stats cpage__stats" data-stagger>
+          {c.results.map((r, i) => (
+            <div className="stat" data-t={STAT_TINTS[i % STAT_TINTS.length]} key={r.label}>
+              <b>{r.value}</b>
+              <s>{r.label}</s>
+            </div>
           ))}
         </div>
 
-        <div className="cpage__go">
-          {c.link ? (
-            <a className="cta-btn" href={c.link} target="_blank" rel="noreferrer noopener">
-              {c.linkLabel || '在线'} <ArrowOut />
+        <div className="cpage__flow">
+          {c.sections.map((s, i) => (
+            <section className="step" key={s.label} data-stagger>
+              <p className="step__k">
+                <b>{String(i + 1).padStart(2, '0')}</b>
+                <span>{s.label}</span>
+              </p>
+              <p className="step__b">{s.body}</p>
+            </section>
+          ))}
+        </div>
+
+        <section className="offs" data-stagger>
+          <h2 className="offs__h">关键取舍</h2>
+          <p className="offs__lead">写清楚放弃了什么，比罗列做了什么更说明判断。</p>
+          <div className="offs__grid">
+            {c.tradeoffs.map((t) => (
+              <article className="off" key={t.title}>
+                <h3>{t.title}</h3>
+                <p>{t.body}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="cpage__prov" data-stagger>
+          <Panel title={`${c.name} · 数字出处`} tint={tint}>
+            {c.provenance.map((p) => (
+              <Row k={p.value} key={p.value}>
+                {p.from}
+              </Row>
+            ))}
+          </Panel>
+        </section>
+
+        <div className="cpage__acts" data-stagger>
+          {c.link && (
+            <a className="btn btn--blue" href={c.link} target="_blank" rel="noreferrer">
+              {c.linkLabel ?? '在线体验'} ↗
             </a>
-          ) : null}
-          <a
-            className="cta-btn cta-btn--ghost"
-            href={c.repo}
-            target="_blank"
-            rel="noreferrer noopener"
-          >
-            仓库 <ArrowOut />
+          )}
+          <a className="btn btn--ghost" href={c.repo} target="_blank" rel="noreferrer">
+            源码 ↗
+          </a>
+          <a className="btn btn--ghost" href={CONTACT_HREF}>
+            聊聊合作
           </a>
         </div>
 
+        <nav className="cpage__more" aria-label="其它案例">
+          <p className="notes__label">其它案例</p>
+          <ul>
+            {cases
+              .filter((o) => o.slug !== c.slug)
+              .map((o) => (
+                <li key={o.slug}>
+                  <Link to={`/case/${o.slug}/`}>
+                    <b>{o.name}</b>
+                    <span>{o.claim}</span>
+                    <i aria-hidden="true">→</i>
+                  </Link>
+                </li>
+              ))}
+          </ul>
+        </nav>
+
         <footer className="foot">
-          <span>{footer.copyright}</span>
-          <Link to="/">回首页</Link>
-          <span>数据核实于 {footer.asOf}</span>
+          <p>{footer.copyright}</p>
+          <p className="foot__meta">
+            <a href={footer.source} target="_blank" rel="noreferrer">
+              本站源码 ↗
+            </a>
+            <span>数字核实于 {AS_OF}</span>
+          </p>
         </footer>
       </div>
-    </main>
+      </main>
+    </>
   )
 }

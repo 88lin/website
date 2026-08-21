@@ -1,12 +1,18 @@
 /**
- * 首页。
+ * 首页。七章：开场 / 案例 / 主线 / 作品 / 标本馆 / 写作 / 联系。
  *
- * 这一版先只铺 00 开场：底子的好看要先立住（用户判过两次「难看」），
- * 确认之后其余章节按同一套语言铺开，再往上加 3D 与滚动动效。
+ * 章序把案例提到第 01 —— 招聘方与客户最想看的就是它，
+ * 不该让人先滚过三章读数与主线。每章一种构图，撞型即回炉。
  */
 
 import { Nav } from '../components/Nav'
 import { Hero } from '../sections/Hero'
+import { Cases } from '../sections/Cases'
+import { Craft } from '../sections/Craft'
+import { Work } from '../sections/Work'
+import { Garden } from '../sections/Garden'
+import { Notes } from '../sections/Notes'
+import { Contact } from '../sections/Contact'
 
 export function Home() {
   return (
@@ -14,6 +20,12 @@ export function Home() {
       <Nav />
       <main id="main">
         <Hero />
+        <Cases />
+        <Craft />
+        <Work />
+        <Garden />
+        <Notes />
+        <Contact />
       </main>
     </>
   )
