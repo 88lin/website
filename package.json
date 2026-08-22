@@ -11,7 +11,9 @@
     "preview": "vite preview",
     "fonts": "node scripts/fonts.mjs",
     "static": "node scripts/static.mjs",
-    "audit": "node scripts/audit.mjs"
+    "verify": "node scripts/verify.mjs",
+    "shots": "node scripts/shots.mjs",
+    "icons": "python scripts/mkicon.py"
   },
   "dependencies": {
     "gsap": "^3.13.0",
