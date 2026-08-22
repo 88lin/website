@@ -122,7 +122,7 @@
 .panel {
   border: 1.5px dashed rgba(26, 26, 46, 0.2);
   border-radius: var(--r-card);
-  background: #fff;
+  background: var(--face);
   box-shadow: var(--sh-card);
   overflow: hidden;
 }
@@ -795,7 +795,8 @@
   font-size: clamp(1.375rem, 2.7vw, 2.125rem);
   font-weight: 400;
   line-height: 1.42;
-  box-shadow: 0 3px 12px rgba(244, 215, 88, 0.42), 0 18px 44px rgba(244, 215, 88, 0.34);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 3px 12px rgba(244, 215, 88, 0.42),
+    0 18px 44px rgba(244, 215, 88, 0.34);
 }
 
 /* ---- 三件可接的活：规格表 ---- */
@@ -1013,8 +1014,8 @@
   height: 38px;
   border-radius: 50%;
   border: 1px solid var(--rule);
-  background: #fff;
-  box-shadow: var(--sh-card);
+  background: var(--face);
+  box-shadow: var(--lit), var(--sh-card);
   font-family: var(--font-mono);
   transition:
     border-color 0.16s var(--ease),
@@ -1131,8 +1132,8 @@
   flex-direction: column;
   padding: clamp(20px, 2vw, 26px);
   border-radius: var(--r-card);
-  background: #fff;
-  box-shadow: var(--sh-card);
+  background: var(--face);
+  box-shadow: var(--lit), var(--sh-card);
   border-left: 4px solid var(--rule);
   transition:
     transform 0.2s var(--ease),
@@ -1142,7 +1143,7 @@
 /* 悬停抬 4px。轨道在拖动中时不抬，否则一路拖过去七张卡轮流跳。 */
 .rail:not([data-grab]) .wcard:hover {
   transform: translateY(-4px);
-  box-shadow: var(--sh-lift);
+  box-shadow: var(--lit), var(--sh-lift);
 }.wcard[data-t='blue'] {
   border-left-color: var(--brand);
 }
@@ -1740,10 +1741,13 @@
   justify-items: start;
   padding: clamp(28px, 4vw, 60px);
   border-radius: var(--r-lg);
-  background: var(--brand);
+  /* 同色相的竖向明度落差（亮档 → 深档），不是两个色的渐变 ——
+     后者就是被判掉的「蓝紫渐变」。这样它读作一块受光的实体板。 */
+  background: linear-gradient(170deg, #3288db, var(--brand) 46%, #2673c6);
   color: #fff;
   /* 饱和蓝面上的投影用蓝，不用墨 —— 墨影落在饱和色上会发脏发黑。 */
-  box-shadow: 0 4px 14px rgba(43, 127, 216, 0.2), 0 22px 54px rgba(43, 127, 216, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 4px 14px rgba(43, 127, 216, 0.2),
+    0 22px 54px rgba(43, 127, 216, 0.22);
 }
 
 /*

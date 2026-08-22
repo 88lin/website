@@ -240,30 +240,39 @@ try {
   await p.goBack({ waitUntil: 'networkidle' })
   await p.waitForTimeout(300)
 
-  /* ---- 横推轨随滚动自动推进，且读者一动手就永久让位 ---- */
+  /* ---- 横推轨自己一直在滚，悬停即停，移开接着走 ---- */
   /*
-    这条必须排在下面那些手动输入之前：一旦滚轮/拖拽发生过，自动推进就永久停手，
-    顺序颠倒的话这条永远测不到。
+    这条必须排在下面那些手动输入之前：手动输入会把自动滚暂停 2.5s。
+    第一版这里写死过一个 bug —— 一帧只走 0.5px，而 scrollLeft 会抹掉亚像素，
+    写 0.51 读回来是 0，轨道五秒不动。所以断言要看「确实往前走了」，
+    不能只看「函数被调用了」。
   */
   {
-    const top = await p.$eval('#work', (e) => e.getBoundingClientRect().top + window.scrollY)
-    const at = async (dy) => {
-      await p.evaluate((y) => window.scrollTo({ top: y, behavior: 'instant' }), top + dy)
-      await p.waitForTimeout(280)
-      return p.$eval('.rail', (e) => Math.round(e.scrollLeft))
-    }
-    const a = await at(-500)
-    const bb = await at(200)
-    const cc = await at(600)
-    ok(a === 0 && bb > 200 && cc > bb, `横推轨 · 随滚动推进 ${a} → ${bb} → ${cc}`)
+    /* 指针先挪走：上面那些叠卡测试把鼠标留在了页面中部，滚过来之后正好压在轨道上，
+       而悬停就是暂停 —— 不挪走的话这里测到的是「悬停即停」，不是「不会自动滚」。 */
+    await p.mouse.move(8, 8)
+    await p.$eval('#work', (e) => e.scrollIntoView({ block: 'center', behavior: 'instant' }))
+    await p.waitForTimeout(600)
+    const read = () => p.$eval('.rail', (e) => Math.round(e.scrollLeft))
+    const a0 = await read()
+    await p.waitForTimeout(1600)
+    const a1 = await read()
+    ok(a1 > a0 + 20, `横推轨 · 自动横滚 ${a0} → ${a1}`)
 
-    // 手动介入一次，再滚一屏，位置不该被自动推进改掉
-    await p.$eval('.rail', (e) => {
-      e.dispatchEvent(new WheelEvent('wheel', { deltaY: 120, bubbles: true, cancelable: true }))
+    const rbox = await p.$eval('.rail', (e) => {
+      const r = e.getBoundingClientRect()
+      return { x: r.x + 200, y: r.y + r.height / 2 }
     })
-    const held = await p.$eval('.rail', (e) => Math.round(e.scrollLeft))
-    const after = await at(1000)
-    ok(after === held, `横推轨 · 读者动手后自动推进让位（${held} 保持不变）`)
+    await p.mouse.move(rbox.x, rbox.y)
+    const h0 = await read()
+    await p.waitForTimeout(1300)
+    const h1 = await read()
+    ok(Math.abs(h1 - h0) < 5, `横推轨 · 悬停即停（${h0} → ${h1}）`)
+
+    await p.mouse.move(8, 8)
+    await p.waitForTimeout(1500)
+    const r1 = await read()
+    ok(r1 > h1 + 10, `横推轨 · 移开后接着走（${h1} → ${r1}）`)
   }
 
   /* ---- 横推轨：滚轮 / 拖拽 / 键盘 / 到头交回页面 ---- */

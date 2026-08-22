@@ -120,6 +120,18 @@
   --rule: #e5e0d3;
   --rule-soft: #efebe0;
 
+  /*
+    材质。白卡摆在暖白纸上，如果只有一条边框加一层投影，它读起来是
+    「一个白矩形」而不是「一张纸」。补两样就够：
+      --lit   上缘一道 1px 的纯白高光 + 下缘一道极淡的暗线，模拟从上方来的光
+      --face  竖向 0.6% 的明度落差，让面本身有一点弧度
+    两样都极淡（高光 100% 白但只有 1px，渐变落差不到两个色阶），
+    放大看几乎看不见，但整页的「薄」就是这么补起来的。
+    刻意不用大面积渐变：那会立刻变成 v9 被判掉的那种「渐变底」。
+  */
+  --lit: inset 0 1px 0 #fff, inset 0 -1px 0 rgba(26, 26, 46, 0.035);
+  --face: linear-gradient(#fff, #fcfbf6);
+
   --fg: var(--ink);
   --fg-dim: #4a4a5a;
   --fg-faint: #6e6e80;
@@ -305,6 +317,31 @@ button {
   background: rgba(253, 252, 248, 0.92);
   border-bottom: 1px solid var(--rule);
   backdrop-filter: saturate(180%) blur(8px);
+  /*
+    页面滚起来之后顶栏落一道极淡的影，它才真的「浮在」内容上面。
+    只有一条 1px 边线时，顶栏和下面的内容是同一个平面，滚动时会糊在一起。
+    animation-timeline 的可用性与进度条那条一样：不支持就没有，不影响功能。
+  */
+  box-shadow: 0 0 0 rgba(26, 26, 46, 0);
+}
+
+@supports (animation-timeline: scroll()) {
+  .nav {
+    animation: nav-lift linear both;
+    animation-timeline: scroll(root block);
+    /* 只用最前面 120px 的滚动量来做这个过渡，之后保持 */
+    animation-range: 0 120px;
+  }
+}
+
+@keyframes nav-lift {
+  from {
+    box-shadow: 0 0 0 rgba(26, 26, 46, 0);
+  }
+
+  to {
+    box-shadow: 0 1px 2px rgba(26, 26, 46, 0.04), 0 8px 24px rgba(26, 26, 46, 0.06);
+  }
 }
 
 .nav-in {
@@ -431,10 +468,10 @@ button {
 }
 
 .btn--ghost {
-  background: #fff;
+  background: var(--face);
   border: 1px solid var(--rule);
   color: var(--fg);
-  box-shadow: var(--sh-card);
+  box-shadow: var(--lit), var(--sh-card);
 }
 
 .btn--ghost:hover {
@@ -598,8 +635,8 @@ button {
   padding-left: 46px;
   border: 1px solid var(--rule);
   border-radius: var(--r-lg);
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(26, 26, 46, 0.05), 0 16px 40px rgba(26, 26, 46, 0.1);
+  background: var(--face);
+  box-shadow: var(--lit), 0 2px 8px rgba(26, 26, 46, 0.05), 0 16px 40px rgba(26, 26, 46, 0.1);
   transition:
     transform 0.52s var(--ease),
     box-shadow 0.3s var(--ease);
@@ -697,7 +734,7 @@ button {
 }
 
 .dcard[data-slot='0']:hover {
-  box-shadow: var(--sh-lift);
+  box-shadow: var(--lit), var(--sh-lift);
 }
 
 .dcard[data-slot='1'] {
@@ -738,7 +775,7 @@ button {
 */
 .dcard:not([data-slot='0']) {
   pointer-events: none;
-  box-shadow: 0 2px 6px rgba(26, 26, 46, 0.04), 0 10px 24px rgba(26, 26, 46, 0.07);
+  box-shadow: var(--lit), 0 2px 6px rgba(26, 26, 46, 0.04), 0 10px 24px rgba(26, 26, 46, 0.07);
 }
 
 .dcard:not([data-slot='0'])::after {
@@ -880,8 +917,8 @@ button {
   flex: none;
   border-radius: 50%;
   border: 1px solid var(--rule);
-  background: #fff;
-  box-shadow: var(--sh-card);
+  background: var(--face);
+  box-shadow: var(--lit), var(--sh-card);
   font-family: var(--font-mono);
   transition:
     border-color 0.16s var(--ease),

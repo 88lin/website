@@ -13,16 +13,20 @@
  *  4) 进度条 —— 藏起来的滚动条用一条自绘的替回来，可点可拖
  * 触摸与键盘走原生 overflow 行为，不需要额外代码。
  *
- * 另加一层「随页面滚动自己走」：本章经过视口时，轨道按章节滚动进度往前推六成行程。
- * 它解决的是发现性 —— 一条不动的横轨，读者根本不知道右边还有东西。
- * 一旦读者自己动过手（滚轮、拖、箭头、方向键），这层立刻永久让位，
- * 不跟人抢方向盘。
+ * 轨道**自己一直在滚**（用户点名要的）。做法与纪律：
+ *  · rAF 驱动 scrollLeft，约 26px/s —— 慢到能读完一张卡的标题
+ *  · 到头不跳回，改向往回走（乒乓），两端各停 900ms。复制一份内容做无缝循环
+ *    会让进度条失去意义，也会让屏幕阅读器读到两遍
+ *  · 只在本章进入视口时跑；离开视口就停，不空转
+ *  · 指针悬停、聚焦、拖拽、滚轮、点箭头全部暂停；最后一次动手 2.5s 后自动接着走
+ *  · prefers-reduced-motion 完全不启动
+ * 这一层替掉了上一版的「随页面滚动推进」：两套机制同时抢 scrollLeft 只会打架。
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Section } from '../components/Section'
 import { projects, worksIntro } from '../content/site'
-import { useLazyScene, type SceneApi } from '../lib/motion'
+import { prefersReducedMotion } from '../lib/caps'
 
 const STATE: Record<string, string> = {
   live: '在线',
@@ -33,8 +37,8 @@ const STATE: Record<string, string> = {
 export function Work() {
   const rail = useRef<HTMLDivElement | null>(null)
   const dragged = useRef(false)
-  /** 读者自己动过手就不再自动推。一次为真、永远为真，不做超时恢复。 */
-  const taken = useRef(false)
+  /** 手动输入调它：暂停自动滚，2.5s 后自动接着走。由下面那个 effect 填实现。 */
+  const pause = useRef<() => void>(() => {})
   const scene = useRef<HTMLDivElement | null>(null)
 
   /** 进度（0–1）、可视比例（缩略条的宽度）、两头是否到底 */
@@ -56,7 +60,7 @@ export function Work() {
   const page = useCallback((dir: 1 | -1) => {
     const el = rail.current
     if (!el) return
-    taken.current = true
+    pause.current()
     const card = el.querySelector<HTMLElement>('.wcard')
     const step = card ? card.getBoundingClientRect().width + 20 : el.clientWidth * 0.8
     el.scrollBy({ left: step * dir, behavior: 'smooth' })
@@ -86,7 +90,7 @@ export function Work() {
       if ((step > 0 && el.scrollLeft >= max - 1) || (step < 0 && el.scrollLeft <= 1)) return
       e.preventDefault()
       e.stopPropagation()
-      taken.current = true
+      pause.current()
       el.scrollLeft = Math.max(0, Math.min(max, el.scrollLeft + step))
     }
     el.addEventListener('wheel', onWheel, { passive: false })
@@ -99,7 +103,7 @@ export function Work() {
 
     const onDown = (e: PointerEvent) => {
       if (e.button !== 0) return
-      taken.current = true
+      pause.current()
       down = true
       sx = e.clientX
       sl = el.scrollLeft
@@ -142,29 +146,90 @@ export function Work() {
   }, [sync])
 
   /*
-    随滚动推进。只推 60% 行程：全推到底的话读者到这一章就没事可做了，
-    留 40% 给他自己滑，箭头与进度条才有存在的意义。
+    自动横滚。速度、两端停顿、暂停与恢复都在这一个 effect 里，
+    对外只有一个 pause() —— 手动输入统一调它，不必各自记状态。
   */
-  const build = useCallback(({ ScrollTrigger, root }: SceneApi) => {
+  useEffect(() => {
     const el = rail.current
-    if (!el) return
-    ScrollTrigger.create({
-      trigger: root,
-      start: 'top bottom',
-      end: 'bottom top',
-      onUpdate: (self: { progress: number }) => {
-        if (taken.current) return
-        const max = el.scrollWidth - el.clientWidth
-        if (max <= 0) return
-        // 进度 0–1 里取中间那段（0.15–0.85）做映射，两头留静止区，
-        // 否则章节刚露头轨道就在动，读者还没看清它是什么
-        const t = Math.min(1, Math.max(0, (self.progress - 0.15) / 0.7))
-        el.scrollLeft = t * max * 0.6
-      },
-    })
-  }, [])
+    const root = scene.current
+    if (!el || !root) return
+    if (prefersReducedMotion()) return
 
-  useLazyScene(scene, build)
+    const SPEED = 32 / 1000 // px per ms
+    const DWELL = 900 // 到头停多久再往回
+    const RESUME = 2500 // 手动动过之后多久接着走
+
+    let dir: 1 | -1 = 1
+    let dwellUntil = 0
+    let pausedUntil = 0
+    let hovering = false
+    let inView = false
+    let raf = 0
+    let last = 0
+    /*
+      位置自己记在 pos 里，**不从 el.scrollLeft 读回来**。
+      一帧只走 0.5px 左右，而滚动容器的 scrollLeft 会把亚像素抹掉：
+      写 0.51 读回来是 0，下一帧又从 0 加起，轨道永远停在原地 ——
+      第一版就是这么写死的，实测 scrollLeft 五秒不动。
+    */
+    let pos = el.scrollLeft
+
+    const tick = (now: number) => {
+      raf = requestAnimationFrame(tick)
+      const dt = last ? Math.min(now - last, 64) : 0
+      last = now
+      if (!inView || hovering || now < pausedUntil || now < dwellUntil) return
+      const max = el.scrollWidth - el.clientWidth
+      if (max <= 1) return
+      pos += dir * SPEED * dt
+      if (pos >= max) {
+        pos = max
+        dir = -1
+        dwellUntil = now + DWELL
+      } else if (pos <= 0) {
+        pos = 0
+        dir = 1
+        dwellUntil = now + DWELL
+      }
+      el.scrollLeft = pos
+    }
+
+    pause.current = () => {
+      pausedUntil = performance.now() + RESUME
+      // 读者刚拖/滚过，位置以他为准，恢复时从那里接着走
+      pos = el.scrollLeft
+    }
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) inView = e.isIntersecting
+      },
+      { rootMargin: '0px 0px -10% 0px', threshold: 0.05 },
+    )
+    io.observe(root)
+
+    const enter = () => {
+      hovering = true
+    }
+    const leave = () => {
+      hovering = false
+    }
+    el.addEventListener('pointerenter', enter)
+    el.addEventListener('pointerleave', leave)
+    el.addEventListener('focusin', enter)
+    el.addEventListener('focusout', leave)
+
+    raf = requestAnimationFrame(tick)
+    return () => {
+      cancelAnimationFrame(raf)
+      io.disconnect()
+      el.removeEventListener('pointerenter', enter)
+      el.removeEventListener('pointerleave', leave)
+      el.removeEventListener('focusin', enter)
+      el.removeEventListener('focusout', leave)
+      pause.current = () => {}
+    }
+  }, [])
 
   /** 刚拖完的那一次 click 不算点击，否则一拖就跳走。 */
   const swallowClick = (e: React.MouseEvent) => {
@@ -178,7 +243,7 @@ export function Work() {
   const seek = (e: React.PointerEvent<HTMLDivElement>) => {
     const el = rail.current
     if (!el) return
-    taken.current = true
+    pause.current()
     const box = e.currentTarget.getBoundingClientRect()
     const t = Math.min(1, Math.max(0, (e.clientX - box.left) / box.width))
     el.scrollLeft = t * (el.scrollWidth - el.clientWidth)
@@ -192,7 +257,7 @@ export function Work() {
       <div ref={scene}>
       <div className="rail-top">
         <p className="rail-hint">
-          随滚动自动推进，也可以滚轮 / 拖拽 / 箭头接手 · <b>{projects.length}</b> 个
+          自动横滚，悬停即停 · 也可滚轮 / 拖拽 / 箭头 · <b>{projects.length}</b> 个
         </p>
         <div className="rail-nav">
           <button type="button" onClick={() => page(-1)} disabled={atStart} aria-label="上一张">
@@ -219,7 +284,7 @@ export function Work() {
         aria-roledescription="横向卡轨"
         aria-label={`${projects.length} 个作品，左右方向键横推`}
         onKeyDown={(e) => {
-          if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') taken.current = true
+          if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') pause.current()
           if (e.key === 'ArrowRight') {
             e.preventDefault()
             page(1)
