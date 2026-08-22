@@ -189,12 +189,8 @@ export function Work() {
           }
         }}
       >
-        {projects.map((p, i) => (
+        {projects.map((p) => (
           <article className="wcard" data-t={p.tint} key={p.slug}>
-            <b className="wcard__ghost" aria-hidden="true">
-              {String(i + 1).padStart(2, '0')}
-            </b>
-
             <div className="wcard__top">
               <span className="wcard__year">{p.year}</span>
               <span className="wcard__state" data-s={p.state}>

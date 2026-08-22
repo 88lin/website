@@ -92,7 +92,12 @@
   /* 正文比上一版大半档：中文在 16px 上偏挤，17px 才有「读物」的松弛感。 */
   --t-body: clamp(1rem, 0.94rem + 0.22vw, 1.0938rem);
   --t-small: 0.875rem;
-  --t-label: 0.75rem;
+  /* 标签 13px。上一版是 12px，而站内还有一大批 11px 的硬编码 ——
+     中文在 11–12px 上笔画糊成一团，Windows 上尤其明显（用户原话「细小的字体极丑」）。
+     这一档是中文次级文字的下限，再小就不该出现在版面上。 */
+  --t-label: 0.8125rem;
+  /* 只给纯拉丁/数字的微型文字（年份、计数、序号）。中文一律不许用这一档。 */
+  --t-mini: 0.75rem;
 
   --r-sm: 10px;
   --r-md: 12px;
@@ -619,7 +624,7 @@ button {
   bottom: 18px;
   width: 46px;
   font-family: var(--font-mono);
-  font-size: 0.6875rem;
+  font-size: var(--t-mini);
   font-weight: 600;
   letter-spacing: 0.14em;
   text-align: center;
@@ -627,40 +632,7 @@ button {
   writing-mode: vertical-rl;
   text-orientation: mixed;
   color: var(--fg-faint);
-}
-
-/*
-  巨号编号衬底。压在右下角、故意切掉右侧一小块，是海报做法而不是徽章做法。
-  它同时在填空：卡的高度由最高那张定，短的那几张下半部分会空出来，
-  空白里放一个巨号编号，比放一段可有可无的字更干净。
-*/
-.dcard__ghost {
-  position: absolute;
-  z-index: 0;
-  right: -0.02em;
-  bottom: -0.34em;
-  font-family: var(--font-display);
-  font-size: clamp(6rem, 10vw, 8.5rem);
-  font-weight: 400;
-  line-height: 1;
-  letter-spacing: -0.03em;
-  color: #f0eee4;
-  pointer-events: none;
-}
-
-.dcard[data-t='blue'] .dcard__ghost {
-  color: #eaf1fb;
-}
-
-.dcard[data-t='yellow'] .dcard__ghost {
-  color: #fbf3d8;
-}
-
-.dcard[data-t='coral'] .dcard__ghost {
-  color: #fcecef;
-}
-
-/* 槽位 → 位置。--dx / --rot 只有最前那张非零，由 Deck.tsx 按拖拽距离写入。 */
+}/* 槽位 → 位置。--dx / --rot 只有最前那张非零，由 Deck.tsx 按拖拽距离写入。 */
 .dcard[data-slot='0'] {
   z-index: 4;
   transform: translate3d(var(--dx, 0px), 0, 0) rotate(var(--rot, 0deg));
@@ -731,7 +703,7 @@ button {
   display: flex;
   align-items: center;
   gap: 9px;
-  font-family: var(--font-mono);
+  /* 这一行里有中文（角色），所以不用等宽 */
   font-size: var(--t-label);
   letter-spacing: 0.08em;
   color: var(--fg-faint);
@@ -759,7 +731,7 @@ button {
 .dcard__stack {
   margin-top: 12px;
   font-family: var(--font-mono);
-  font-size: 0.6875rem;
+  font-size: var(--t-mini);
   letter-spacing: 0.03em;
   color: var(--fg-faint);
 }
@@ -797,7 +769,7 @@ button {
   display: block;
   text-decoration: none;
   margin-top: 1px;
-  font-size: 0.6875rem;
+  font-size: var(--t-mini);
   color: var(--fg-faint);
 }
 
@@ -878,7 +850,7 @@ button {
 }
 
 .deck__hint {
-  font-size: 0.75rem;
+  font-size: var(--t-label);
   color: var(--fg-faint);
 }
 
@@ -1001,7 +973,7 @@ button {
   display: block;
   margin-top: 8px;
   font-family: var(--font-mono);
-  font-size: 0.6875rem;
+  font-size: var(--t-mini);
   line-height: 1.5;
   color: var(--fg-faint);
 }
@@ -1052,7 +1024,7 @@ button {
     /* 命中区往右铺开一点，指针不必精确打在 8px 的横线上 */
     padding-right: 40px;
     font-family: var(--font-mono);
-    font-size: 0.6875rem;
+    font-size: var(--t-mini);
     letter-spacing: 0.06em;
     color: #b8b2a0;
     transition: color 0.16s var(--ease);

@@ -10,8 +10,9 @@
  * React 不必重排，动画也不会因为重挂载而断。
  *
  * 四种输入都通：拖、点箭头、点圆点、左右方向键。
- * 卡面不做「白卡 + 灰标题 + 一段话」那套通用件：编号做成压在右上角的巨号衬底，
- * 名字竖排在左边一条窄轨上，正面因此在露出一条边时也认得出是哪一张。
+ *
+ * 卡面上曾经压过一个切边出血的巨号编号。删了：用户第一反应是「字显示不全，故意的吗」。
+ * 出血在海报上成立，在网页上会被读成渲染出错 —— 读者的默认假设是「文字应该完整」。
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -39,13 +40,20 @@ export function Deck() {
     setDragging(true)
     startX.current = e.clientX
     moved.current = 0
-    e.currentTarget.setPointerCapture(e.pointerId)
+    // 这里**不能**抢指针。Chrome 在指针被捕获时会把兼容鼠标事件（含 click）
+    // 一并重定向到捕获元素上，于是 click 落在 .deck__stack 而不是卡里的链接上，
+    //「看完整案例」永远点不动 —— 用户报的就是这个。改成越过阈值才抢（见 onMove）。
   }
 
   const onMove = (e: React.PointerEvent) => {
     if (!dragging) return
     const d = e.clientX - startX.current
     moved.current = Math.max(moved.current, Math.abs(d))
+    // 真的在拖了才接管指针：低于阈值时这一下还可能是普通点击，
+    // 抢了就会把 click 从链接身上夺走。
+    if (moved.current > CLICK_SLOP && !e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.setPointerCapture(e.pointerId)
+    }
     setDrag(d)
   }
 
@@ -110,10 +118,6 @@ export function Deck() {
                 } as React.CSSProperties
               }
             >
-              <b className="dcard__ghost" aria-hidden="true">
-                {c.no}
-              </b>
-
               <p className="dcard__spine" aria-hidden="true">
                 {c.name}
               </p>

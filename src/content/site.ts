@@ -4,11 +4,11 @@
  * 所有数字都能被第三方核验，核实时间 2026-08-21：
  *  - GitHub REST API  /users/88lin 与 /users/88lin/repos?per_page=100（star / fork / 仓库数 / followers）
  *  - blog.88lin.eu.org 首页统计条与标签云（文章数 / 建站天数 / 标签计数）
- *  - video_vip.user.js v3.1.10（解析接口数 / 站点适配器数 / @include 条数，逐行数出来的）
+ *  - video_vip.user.js v3.1.15（解析源数 / 站点适配条数 / @include 条数，逐行数出来的）
  *  - 各仓库 README 与 description（项目文案逐字或据实改写）
  *
- * `npm run audit` 的第 8 关会重新拉一次上面这些源，跟本文件逐个比对，
- * 对不上就红。刷新方式见 README「数据刷新」。
+ * `npm run verify` 的 A 段会检查产物里的数字与本文件一致、且旧值一个不剩。
+ * 刷新方式见 README「数据刷新流程」。
  */
 
 export const AS_OF = '2026.08.21'
@@ -79,7 +79,7 @@ export const hero = {
   line2Mid: '、可',
   line2Circle: '维护',
   line3: '的工程结果。',
-  sub: '接口会挂，平台会变，需求会改。我做的东西按「可切换」设计，所以到今天还活着。',
+  sub: '做 Agent 工作流、创意前端与设计系统。下面四个案例都还在线上跑着，每个数字都写了出处，可以自己去核。',
   latin: '88LIN · WORK THAT SHIPPED',
   primaryCta: '聊聊合作',
   secondaryCta: '看四个案例',
@@ -288,7 +288,7 @@ export const projects: Project[] = [
     year: '2023',
     kind: '长期维护',
     blurb:
-      '2023 年写的油猴脚本，现在是我 star 最多的仓库。18 路解析接口可以随时切换，22 个站点各有独立的播放器容器与遮罩清理规则。它教会我的是：接口一定会挂，可切换才是功能。',
+      '2023 年写的油猴脚本，现在是我 star 最多的仓库。在视频站播放页挂一枚可拖动的按钮，把播放地址交给第三方解析源换回能播的播放器。当前 16 路解析源可随时切换，22 条站点适配各写自己的容器与遮罩清理规则。',
     stack: ['JavaScript', '油猴脚本', '多端适配'],
     stars: 4669,
     forks: 476,
@@ -304,7 +304,7 @@ export const projects: Project[] = [
     year: '2026',
     kind: '创意前端',
     blurb:
-      'macOS 灵动岛式播放器，21 个精选电台，打开即听，不用注册也不用下载。支持 PWA 安装、睡眠定时与专注时钟。',
+      'macOS 灵动岛式播放器可拖到任意位置，21 个精选电台，打开即听，不用注册也不用下载。五个单键快捷键、专注计时、睡眠定时 15 分钟到 8 小时，支持 PWA 安装。',
     stack: ['Next.js 16', 'React', 'TypeScript', 'PWA'],
     stars: 89,
     forks: 23,

@@ -87,7 +87,6 @@
 
 .cpage__spec {
   margin-top: 16px;
-  font-family: var(--font-mono);
   font-size: var(--t-small);
   color: var(--fg-faint);
 }

@@ -68,9 +68,10 @@
   display: flex;
   align-items: center;
   gap: clamp(12px, 2vw, 22px);
-  font-family: var(--font-mono);
+  /* 章名是中文，走无衬线。等宽字里的中文在 Windows 上是 Consolas 回落到雅黑，
+     笔画粗细和拉丁部分对不齐，小字号下很脏。 */
   font-size: var(--t-label);
-  letter-spacing: 0.18em;
+  letter-spacing: 0.14em;
   color: var(--fg-faint);
 }
 
@@ -153,7 +154,6 @@
 }
 
 .panel__title {
-  font-family: var(--font-mono);
   font-size: var(--t-small);
   color: var(--fg-dim);
 }
@@ -212,9 +212,9 @@
   gap: 12px;
   padding-block: 7px;
   border-top: 1px dashed var(--rule-soft);
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  line-height: 1.7;
+  /* 出处是整句中文，不能用等宽 */
+  font-size: var(--t-label);
+  line-height: 1.75;
 }
 
 .prow:first-of-type {
@@ -333,7 +333,7 @@
 .case__name {
   margin-top: 14px;
   font-family: var(--font-mono);
-  font-size: 0.8125rem;
+  font-size: var(--t-label);
   font-weight: 600;
   line-height: 1.5;
   word-break: break-word;
@@ -341,7 +341,7 @@
 
 .case__cn {
   margin-top: 4px;
-  font-size: 0.75rem;
+  font-size: var(--t-label);
   line-height: 1.6;
   color: var(--fg-faint);
 }
@@ -438,7 +438,7 @@
 }
 
 .ledger li span {
-  font-size: 0.8125rem;
+  font-size: var(--t-label);
   line-height: 1.5;
   color: var(--fg-dim);
 }
@@ -476,9 +476,8 @@
   gap: 9px;
   list-style: none;
   cursor: pointer;
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.06em;
+  font-size: var(--t-label);
+  letter-spacing: 0.04em;
   color: var(--fg-faint);
   transition: color 0.15s var(--ease);
 }
@@ -532,7 +531,7 @@
 .prov__body .prow {
   grid-template-columns: minmax(0, 1fr);
   gap: 1px;
-  font-size: 0.6875rem;
+  font-size: var(--t-mini);
 }
 
 @media (max-width: 1080px) {
@@ -813,7 +812,6 @@
 }
 
 .spec__k {
-  font-family: var(--font-mono);
   font-size: var(--t-label);
   letter-spacing: 0.08em;
   line-height: 1.9;
@@ -897,7 +895,7 @@
 }
 
 .spec__fit {
-  font-size: 0.8125rem;
+  font-size: var(--t-label);
   line-height: 1.75;
   color: var(--fg-faint);
 }
@@ -959,9 +957,8 @@
 }
 
 .rail-hint {
-  font-family: var(--font-mono);
   font-size: var(--t-label);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.06em;
   color: var(--fg-faint);
 }
 
@@ -1110,50 +1107,7 @@
 .rail:not([data-grab]) .wcard:hover {
   transform: translateY(-4px);
   box-shadow: var(--sh-lift);
-}
-
-/*
-  卡侧的巨号序号衬底，右缘切掉一半。和首屏叠卡、联系块用的是同一个海报手法：
-  七张卡不再是七个一模一样的白盒子，扫过去能数到第几张。
-
-  位置选在右缘中段而不是右下角：右下角是「打开 / 源码」两个链接，
-  巨号压在链接底下会互相干扰；中段只有灰色小字正文，压过去读起来像页码水印。
-*/
-.wcard__ghost {
-  position: absolute;
-  z-index: 0;
-  top: 50%;
-  right: -0.2em;
-  font-family: var(--font-display);
-  font-size: 6.5rem;
-  font-weight: 400;
-  line-height: 1;
-  letter-spacing: -0.03em;
-  color: #f4f2ea;
-  transform: translateY(-50%);
-  pointer-events: none;
-  user-select: none;
-}
-
-.wcard[data-t='blue'] .wcard__ghost {
-  color: #ecf3fc;
-}
-
-.wcard[data-t='yellow'] .wcard__ghost {
-  color: #fcf5de;
-}
-
-.wcard[data-t='coral'] .wcard__ghost {
-  color: #fdeef1;
-}
-
-/* 卡里的内容都要压在衬底之上 */
-.wcard > *:not(.wcard__ghost) {
-  position: relative;
-  z-index: 1;
-}
-
-.wcard[data-t='blue'] {
+}.wcard[data-t='blue'] {
   border-left-color: var(--brand);
 }
 
@@ -1182,7 +1136,7 @@
 .wcard__state {
   padding: 4px 10px;
   border-radius: var(--r-pill);
-  font-size: 0.6875rem;
+  font-size: var(--t-mini);
   font-weight: 600;
 }
 
@@ -1235,7 +1189,7 @@
   border-radius: 6px;
   background: #f3f2ec;
   font-family: var(--font-mono);
-  font-size: 0.6875rem;
+  font-size: var(--t-mini);
   color: var(--fg-dim);
 }
 
@@ -1251,7 +1205,7 @@
 .wcard__nums {
   display: flex;
   gap: 14px;
-  font-size: 0.75rem;
+  font-size: var(--t-label);
   color: var(--fg-faint);
 }
 
@@ -1364,8 +1318,8 @@
 */
 .cat__list a {
   display: block;
-  padding: 7px 0;
-  font-size: 0.875rem;
+  padding: 8px 0;
+  font-size: var(--t-small);
   color: var(--fg-dim);
   transition:
     color 0.14s var(--ease),
@@ -1447,8 +1401,8 @@
 .cat__ol s {
   display: block;
   text-decoration: none;
-  margin-top: 3px;
-  font-size: 0.8125rem;
+  margin-top: 4px;
+  font-size: var(--t-label);
   line-height: 1.7;
   color: var(--fg-faint);
 }
@@ -1609,10 +1563,8 @@
 }
 
 .notes__label {
-  font-family: var(--font-mono);
   font-size: var(--t-label);
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  letter-spacing: 0.14em;
   color: var(--fg-faint);
 }
 
@@ -1707,31 +1659,11 @@
   box-shadow: 0 4px 14px rgba(43, 127, 216, 0.2), 0 22px 54px rgba(43, 127, 216, 0.22);
 }
 
-/*
-  巨号 @88lin 衬底。上一版这块是一片空蓝，右下角大片死面。
-  用白色低透明度而不是深色：饱和面上压深色会发脏，和投影那条是同一个道理。
-*/
-.contact__ghost {
-  position: absolute;
-  z-index: 0;
-  right: -0.04em;
-  bottom: -0.3em;
-  font-family: var(--font-display);
-  font-size: clamp(4.5rem, 11vw, 10rem);
-  font-weight: 400;
-  line-height: 1;
-  letter-spacing: -0.02em;
-  color: rgba(255, 255, 255, 0.1);
-  pointer-events: none;
-  user-select: none;
-}
-
 .contact__k {
   position: relative;
   z-index: 1;
-  font-family: var(--font-mono);
   font-size: var(--t-label);
-  letter-spacing: 0.18em;
+  letter-spacing: 0.14em;
   color: rgba(255, 255, 255, 0.7);
 }
 
@@ -1844,8 +1776,8 @@
   display: grid;
   justify-items: end;
   gap: 8px;
-  font-family: var(--font-mono);
   font-size: var(--t-label);
+  font-variant-numeric: tabular-nums;
   text-align: right;
 }
 

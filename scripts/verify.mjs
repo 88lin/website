@@ -221,6 +221,25 @@ try {
   await p.waitForTimeout(700)
   ok((await front()) !== c3, '叠卡 · 拖拽翻页')
 
+  /*
+    ---- 叠卡「看完整案例」必须真的跳转 ----
+    这条是用户报的 bug：原来 pointerdown 就 setPointerCapture，而 Chrome 在指针被捕获时
+    会把兼容鼠标事件（含 click）一并重定向到捕获元素上，于是 click 落在 .deck__stack
+    而不是卡里的链接上，链接永远点不动。改成越过阈值才抢指针。
+  */
+  await p.goto(url, { waitUntil: 'networkidle' })
+  const slug = await p.$eval('.dcard[data-slot="0"] .dcard__go', (e) => e.getAttribute('href'))
+  await p.click('.dcard[data-slot="0"] .dcard__go')
+  await p.waitForTimeout(500)
+  const landed = await p.evaluate(() => location.pathname)
+  ok(
+    slug !== null && landed.endsWith(slug.replace(/^\.\//, '')),
+    `叠卡 · 点「看完整案例」跳到了 ${landed}`,
+  )
+  ok((await p.$$eval('h1', (e) => e.length)) === 1, '叠卡 · 跳过去之后是案例子页（单个 H1）')
+  await p.goBack({ waitUntil: 'networkidle' })
+  await p.waitForTimeout(300)
+
   /* ---- 横推轨：滚轮 / 拖拽 / 键盘 / 到头交回页面 ---- */
   await p.$eval('#work', (e) => e.scrollIntoView({ block: 'center', behavior: 'instant' }))
   await p.waitForTimeout(700)
