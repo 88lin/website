@@ -12,11 +12,17 @@
  *  3) 箭头 —— 到头即置灰，提示是真的而不是装饰
  *  4) 进度条 —— 藏起来的滚动条用一条自绘的替回来，可点可拖
  * 触摸与键盘走原生 overflow 行为，不需要额外代码。
+ *
+ * 另加一层「随页面滚动自己走」：本章经过视口时，轨道按章节滚动进度往前推六成行程。
+ * 它解决的是发现性 —— 一条不动的横轨，读者根本不知道右边还有东西。
+ * 一旦读者自己动过手（滚轮、拖、箭头、方向键），这层立刻永久让位，
+ * 不跟人抢方向盘。
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Section } from '../components/Section'
 import { projects, worksIntro } from '../content/site'
+import { useLazyScene, type SceneApi } from '../lib/motion'
 
 const STATE: Record<string, string> = {
   live: '在线',
@@ -27,6 +33,9 @@ const STATE: Record<string, string> = {
 export function Work() {
   const rail = useRef<HTMLDivElement | null>(null)
   const dragged = useRef(false)
+  /** 读者自己动过手就不再自动推。一次为真、永远为真，不做超时恢复。 */
+  const taken = useRef(false)
+  const scene = useRef<HTMLDivElement | null>(null)
 
   /** 进度（0–1）、可视比例（缩略条的宽度）、两头是否到底 */
   const [prog, setProg] = useState(0)
@@ -47,6 +56,7 @@ export function Work() {
   const page = useCallback((dir: 1 | -1) => {
     const el = rail.current
     if (!el) return
+    taken.current = true
     const card = el.querySelector<HTMLElement>('.wcard')
     const step = card ? card.getBoundingClientRect().width + 20 : el.clientWidth * 0.8
     el.scrollBy({ left: step * dir, behavior: 'smooth' })
@@ -76,6 +86,7 @@ export function Work() {
       if ((step > 0 && el.scrollLeft >= max - 1) || (step < 0 && el.scrollLeft <= 1)) return
       e.preventDefault()
       e.stopPropagation()
+      taken.current = true
       el.scrollLeft = Math.max(0, Math.min(max, el.scrollLeft + step))
     }
     el.addEventListener('wheel', onWheel, { passive: false })
@@ -88,6 +99,7 @@ export function Work() {
 
     const onDown = (e: PointerEvent) => {
       if (e.button !== 0) return
+      taken.current = true
       down = true
       sx = e.clientX
       sl = el.scrollLeft
@@ -129,6 +141,31 @@ export function Work() {
     }
   }, [sync])
 
+  /*
+    随滚动推进。只推 60% 行程：全推到底的话读者到这一章就没事可做了，
+    留 40% 给他自己滑，箭头与进度条才有存在的意义。
+  */
+  const build = useCallback(({ ScrollTrigger, root }: SceneApi) => {
+    const el = rail.current
+    if (!el) return
+    ScrollTrigger.create({
+      trigger: root,
+      start: 'top bottom',
+      end: 'bottom top',
+      onUpdate: (self: { progress: number }) => {
+        if (taken.current) return
+        const max = el.scrollWidth - el.clientWidth
+        if (max <= 0) return
+        // 进度 0–1 里取中间那段（0.15–0.85）做映射，两头留静止区，
+        // 否则章节刚露头轨道就在动，读者还没看清它是什么
+        const t = Math.min(1, Math.max(0, (self.progress - 0.15) / 0.7))
+        el.scrollLeft = t * max * 0.6
+      },
+    })
+  }, [])
+
+  useLazyScene(scene, build)
+
   /** 刚拖完的那一次 click 不算点击，否则一拖就跳走。 */
   const swallowClick = (e: React.MouseEvent) => {
     if (!dragged.current) return
@@ -141,6 +178,7 @@ export function Work() {
   const seek = (e: React.PointerEvent<HTMLDivElement>) => {
     const el = rail.current
     if (!el) return
+    taken.current = true
     const box = e.currentTarget.getBoundingClientRect()
     const t = Math.min(1, Math.max(0, (e.clientX - box.left) / box.width))
     el.scrollLeft = t * (el.scrollWidth - el.clientWidth)
@@ -151,9 +189,10 @@ export function Work() {
 
   return (
     <Section id="work" title={worksIntro.headline} intro={worksIntro.body}>
+      <div ref={scene}>
       <div className="rail-top">
         <p className="rail-hint">
-          滚轮 / 拖拽 / 箭头横推 · <b>{projects.length}</b> 个
+          随滚动自动推进，也可以滚轮 / 拖拽 / 箭头接手 · <b>{projects.length}</b> 个
         </p>
         <div className="rail-nav">
           <button type="button" onClick={() => page(-1)} disabled={atStart} aria-label="上一张">
@@ -180,6 +219,7 @@ export function Work() {
         aria-roledescription="横向卡轨"
         aria-label={`${projects.length} 个作品，左右方向键横推`}
         onKeyDown={(e) => {
+          if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') taken.current = true
           if (e.key === 'ArrowRight') {
             e.preventDefault()
             page(1)
@@ -249,6 +289,7 @@ export function Work() {
         onPointerMove={(e) => e.buttons === 1 && seek(e)}
       >
         <i style={{ width: `${thumb}%`, left: `calc((100% - ${thumb}%) * ${prog})` }} />
+      </div>
       </div>
     </Section>
   )

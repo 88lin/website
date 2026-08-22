@@ -430,6 +430,27 @@
   padding-block: 10px;
 }
 
+/*
+  悬停时引线由点变实、数值往右让 3px。行本身不是链接，所以这不是「可点」的暗示，
+  是「你正在读这一行」的反馈 —— 密集的表格里这一点手感很值。
+*/
+.ledger li i {
+  transition: border-bottom-color 0.18s var(--ease);
+}
+
+.ledger li b {
+  transition: transform 0.18s var(--ease);
+}
+
+.ledger li:hover i {
+  border-bottom-style: solid;
+  border-bottom-color: var(--rule);
+}
+
+.ledger li:hover b {
+  transform: translateX(3px);
+}
+
 .ledger li i {
   flex: 1 1 auto;
   min-width: 18px;

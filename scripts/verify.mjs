@@ -240,7 +240,38 @@ try {
   await p.goBack({ waitUntil: 'networkidle' })
   await p.waitForTimeout(300)
 
+  /* ---- 横推轨随滚动自动推进，且读者一动手就永久让位 ---- */
+  /*
+    这条必须排在下面那些手动输入之前：一旦滚轮/拖拽发生过，自动推进就永久停手，
+    顺序颠倒的话这条永远测不到。
+  */
+  {
+    const top = await p.$eval('#work', (e) => e.getBoundingClientRect().top + window.scrollY)
+    const at = async (dy) => {
+      await p.evaluate((y) => window.scrollTo({ top: y, behavior: 'instant' }), top + dy)
+      await p.waitForTimeout(280)
+      return p.$eval('.rail', (e) => Math.round(e.scrollLeft))
+    }
+    const a = await at(-500)
+    const bb = await at(200)
+    const cc = await at(600)
+    ok(a === 0 && bb > 200 && cc > bb, `横推轨 · 随滚动推进 ${a} → ${bb} → ${cc}`)
+
+    // 手动介入一次，再滚一屏，位置不该被自动推进改掉
+    await p.$eval('.rail', (e) => {
+      e.dispatchEvent(new WheelEvent('wheel', { deltaY: 120, bubbles: true, cancelable: true }))
+    })
+    const held = await p.$eval('.rail', (e) => Math.round(e.scrollLeft))
+    const after = await at(1000)
+    ok(after === held, `横推轨 · 读者动手后自动推进让位（${held} 保持不变）`)
+  }
+
   /* ---- 横推轨：滚轮 / 拖拽 / 键盘 / 到头交回页面 ---- */
+  /* 上面那段自动推进把轨道推到了六成行程，先归零，否则后面几条没有剩余行程可推 */
+  await p.$eval('.rail', (e) => {
+    e.scrollLeft = 0
+  })
+  await p.waitForTimeout(200)
   await p.$eval('#work', (e) => e.scrollIntoView({ block: 'center', behavior: 'instant' }))
   await p.waitForTimeout(700)
   const rb = await p.$eval('.rail', (e) => {

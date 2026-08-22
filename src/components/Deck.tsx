@@ -10,6 +10,9 @@
  * React 不必重排，动画也不会因为重挂载而断。
  *
  * 四种输入都通：拖、点箭头、点圆点、左右方向键。
+ * 手感：不拖的时候整叠跟指针微倾（±5°，CSS 里换算），拖动时倾斜让位给位移，
+ * 松手回正。倾斜幅度刻意压得比常见的「卡片 3D hover」小一档 —— 那种一动就翻 15°
+ * 的做法在真用的时候很晃眼。
  *
  * 卡面上曾经压过一个切边出血的巨号编号。删了：用户第一反应是「字显示不全，故意的吗」。
  * 出血在海报上成立，在网页上会被读成渲染出错 —— 读者的默认假设是「文字应该完整」。
@@ -18,6 +21,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { cases } from '../content/cases'
 import { Link } from '../router'
+import { useTilt } from '../lib/motion'
 
 /** 拖过这个距离才算翻页，低于它松手就弹回；也用来判断这一下是拖还是点。 */
 const THRESHOLD = 56
@@ -31,6 +35,8 @@ export function Deck() {
   const startX = useRef(0)
   const moved = useRef(0)
   const host = useRef<HTMLDivElement | null>(null)
+  /* 指针微倾：钩子只写 --px / --py，转成多少度交给 CSS（见 index.css .dcard） */
+  const tilt = useTilt<HTMLDivElement>()
 
   const go = useCallback((d: number) => setIndex((i) => (i + d + n) % n), [n])
 
@@ -90,7 +96,10 @@ export function Deck() {
     <div className="deck">
       <div
         className="deck__stack"
-        ref={host}
+        ref={(el) => {
+          host.current = el
+          tilt.current = el
+        }}
         tabIndex={0}
         role="group"
         aria-roledescription="卡组"

@@ -403,8 +403,14 @@ button {
   border-radius: var(--r-pill);
   font-size: 0.9375rem;
   font-weight: 600;
+  /*
+    --mx / --my 由 useMagnet 写入（指针靠近时朝指针偏几个像素）。
+    没挂钩子的按钮这两个变量取 0，表达式退化成纯 hover 位移，所以这里
+    不需要为「有磁吸」和「没磁吸」写两套规则。
+  */
+  transform: translate(var(--mx, 0px), var(--my, 0px));
   transition:
-    transform 0.15s var(--ease),
+    transform 0.22s var(--ease),
     box-shadow 0.18s var(--ease),
     background-color 0.18s var(--ease),
     border-color 0.18s var(--ease);
@@ -419,7 +425,7 @@ button {
 
 .btn--blue:hover {
   background: var(--brand-deep);
-  transform: translateY(-1px);
+  transform: translate(var(--mx, 0px), calc(var(--my, 0px) - 2px));
   box-shadow: 0 2px 4px rgba(30, 91, 168, 0.24), 0 6px 14px rgba(30, 91, 168, 0.24),
     0 16px 34px rgba(30, 91, 168, 0.2);
 }
@@ -433,13 +439,13 @@ button {
 
 .btn--ghost:hover {
   border-color: var(--fg);
-  transform: translateY(-1px);
+  transform: translate(var(--mx, 0px), calc(var(--my, 0px) - 2px));
   box-shadow: var(--sh-lift);
 }
 
 /* :active 排在 :hover 之后，按下时一定压得回去 */
 .btn:active {
-  transform: translateY(1px);
+  transform: translate(var(--mx, 0px), calc(var(--my, 0px) + 1px)) scale(0.985);
   box-shadow: none;
 }
 
@@ -557,8 +563,13 @@ button {
   padding: 0 clamp(34px, 4vw, 58px) clamp(30px, 3.4vw, 46px) 0;
 }
 
+/*
+  perspective 挂在容器上而不是卡上：这样四张卡共享同一个消失点，
+  倾斜时整叠像一个物件在动，而不是四张各自转。
+*/
 .deck__stack {
   display: grid;
+  perspective: 1400px;
   border-radius: var(--r-lg);
   cursor: grab;
   /* 竖向滚动交回页面，横向手势归叠卡 */
@@ -632,10 +643,22 @@ button {
   writing-mode: vertical-rl;
   text-orientation: mixed;
   color: var(--fg-faint);
-}/* 槽位 → 位置。--dx / --rot 只有最前那张非零，由 Deck.tsx 按拖拽距离写入。 */
+}/*
+  槽位 → 位置。--dx / --rot 由 Deck.tsx 按拖拽距离写入（只有最前那张非零）；
+  --px / --py 由 useTilt 写入指针在整叠里的相对位置（-1 ~ 1）。
+
+  倾斜幅度只有 ±5° / ±3.5°，比常见的「卡片 3D hover」小一档 ——
+  那种一动就翻 15° 的做法在真用的时候很晃眼，尤其这张卡上还有正文要读。
+*/
 .dcard[data-slot='0'] {
   z-index: 4;
-  transform: translate3d(var(--dx, 0px), 0, 0) rotate(var(--rot, 0deg));
+  transform: translate3d(var(--dx, 0px), 0, 0) rotate(var(--rot, 0deg))
+    rotateY(calc(var(--px, 0) * 5deg)) rotateX(calc(var(--py, 0) * -3.5deg));
+}
+
+/* 后面那几张跟着倾一点点，差速让整叠有厚度 */
+.dcard:not([data-slot='0']) {
+  transform-origin: 50% 50%;
 }
 
 .dcard[data-slot='0']:hover {
@@ -644,23 +667,34 @@ button {
 
 .dcard[data-slot='1'] {
   z-index: 3;
-  transform: translate3d(20px, 15px, 0) scale(0.966) rotate(1.3deg);
+  transform: translate3d(20px, 15px, 0) scale(0.966) rotate(1.3deg)
+    rotateY(calc(var(--px, 0) * 3.4deg));
 }
 
 .dcard[data-slot='2'] {
   z-index: 2;
-  transform: translate3d(38px, 29px, 0) scale(0.933) rotate(2.6deg);
+  transform: translate3d(38px, 29px, 0) scale(0.933) rotate(2.6deg)
+    rotateY(calc(var(--px, 0) * 2.2deg));
 }
 
 .dcard[data-slot='3'] {
   z-index: 1;
-  transform: translate3d(54px, 41px, 0) scale(0.902) rotate(3.9deg);
+  transform: translate3d(54px, 41px, 0) scale(0.902) rotate(3.9deg)
+    rotateY(calc(var(--px, 0) * 1.2deg));
 }
 
 /* 拖拽中不要过渡，否则手感变成「跟不上」 */
 .deck__stack[data-dragging] .dcard[data-slot='0'] {
   transition: none;
 }
+
+/* 拖动时倾斜让位给位移：同时又倾又移会读成「卡在抖」 */
+.deck__stack[data-dragging] .dcard {
+  --px: 0;
+  --py: 0;
+}
+
+/* 倾斜的回正过渡跟位移共用一条 transition（见 .dcard），松手自然回位 */
 
 /*
   压在后面的卡蒙一层**页面底色**，不用 opacity 也不用 brightness()：
@@ -1109,6 +1143,44 @@ button {
     transform 0.62s var(--ease);
 }
 
+/* ---- 2a) 首屏大标题：逐字揭示 ---- */
+/*
+  每个字自己从下方浮起并回正，28ms 一个，三行首尾相接连成一句。
+  上一版是整行遮片上移 —— 那个动作太整齐，读者只会觉得「有东西淡入了」；
+  逐字才读得出「这句话正在被印上去」。
+
+  幅度用 em 而不是 px：字号是 clamp 出来的，用 px 在窄屏上会显得过冲。
+  轻微的 rotate 是关键，纯垂直位移会像在滚百叶窗。
+*/
+.js .hero__h1 .ch {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(0.4em) rotate(2.5deg);
+}
+
+.js .hero__h1.is-in .ch {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.44s var(--ease),
+    transform 0.72s var(--ease);
+  transition-delay: calc(var(--i, 0) * 28ms);
+}
+
+/* 黄块跟着它盖住的那几个字一起出现，不能先画块再填字 */
+.js .hero__h1 .mark::before {
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+}
+
+.js .hero__h1.is-in .mark::before {
+  transform: none;
+  transition: transform 0.5s var(--ease);
+  /* 延迟对齐它盖住的第一个字：line1 长度 + line2Pre 长度，写死在这里不划算，
+     取一个够接近的值即可 —— 早半拍比晚半拍好看。 */
+  transition-delay: 0.2s;
+}
+
 /* ---- 2) 遮片揭示：给大号展示字用 ---- */
 /*
   clip-path 的四边都留负值：中文展示字有出头与斜度，inset(0) 会在收尾那一帧
@@ -1252,8 +1324,30 @@ button {
   }
 
   .js .chap__label::before,
-  .js .chap.is-in .chap__label::before {
+  .js .chap.is-in .chap__label::before,
+  .js .hero__h1 .mark::before,
+  .js .hero__h1.is-in .mark::before {
     transform: none;
     transition: none;
+  }
+
+  .js .hero__h1 .ch,
+  .js .hero__h1.is-in .ch {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  /*
+    指针驱动的那两样（磁吸、微倾）由钩子直接不挂，这里只把变量兜成 0。
+    注意**不能**写 transform: none —— 叠卡的槽位偏移也在 transform 里，
+    清掉的话四张卡会完全重叠。减弱动效要关的是动作，不是布局。
+  */
+  .btn,
+  .deck__stack .dcard {
+    --mx: 0px;
+    --my: 0px;
+    --px: 0;
+    --py: 0;
   }
 }

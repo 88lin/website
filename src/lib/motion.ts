@@ -99,6 +99,85 @@ export function useReveal<T extends Element>(rootMargin = '-12% 0px -8% 0px') {
   return ref as RefObject<T>
 }
 
+/* ------------------------------------------------------------ 手感 */
+
+/**
+ * 磁吸。指针靠近时元素朝指针方向偏一点，离开就回位。
+ *
+ * 幅度只有几个像素，但它把「静态的一块」变成「会回应你的一块」。
+ * 关键是**不要跟得太紧**：位移取指针到中心距离的一个小比例，并且
+ * 出了元素范围就立刻归零 —— 跟太紧会变成粘手，读者反而想躲。
+ *
+ * 只在有精确指针的设备上挂（触屏没有 hover 这个状态），
+ * 减弱动效时整个不挂。
+ */
+export function useMagnet<T extends HTMLElement>(strength = 6) {
+  const ref = useRef<T | null>(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    if (prefersReducedMotion() || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return
+
+    const move = (e: PointerEvent) => {
+      const r = el.getBoundingClientRect()
+      const dx = (e.clientX - (r.left + r.width / 2)) / (r.width / 2)
+      const dy = (e.clientY - (r.top + r.height / 2)) / (r.height / 2)
+      el.style.setProperty('--mx', `${(dx * strength).toFixed(2)}px`)
+      el.style.setProperty('--my', `${(dy * strength).toFixed(2)}px`)
+    }
+    const leave = () => {
+      el.style.setProperty('--mx', '0px')
+      el.style.setProperty('--my', '0px')
+    }
+
+    el.addEventListener('pointermove', move)
+    el.addEventListener('pointerleave', leave)
+    return () => {
+      el.removeEventListener('pointermove', move)
+      el.removeEventListener('pointerleave', leave)
+      leave()
+    }
+  }, [strength])
+  return ref as RefObject<T>
+}
+
+/**
+ * 指针微倾。把指针在元素内的相对位置写成 --px / --py（-1 ~ 1），
+ * 具体转成什么角度交给 CSS —— 这样同一个钩子既能做卡片倾斜，也能做别的。
+ * 松开/离开时回零，回零的过渡也在 CSS 里。
+ */
+export function useTilt<T extends HTMLElement>() {
+  const ref = useRef<T | null>(null)
+  // 返回可写的 ref：调用方常常要把同一个节点同时交给别的 ref（叠卡就是这样），
+  // 所以这里不收窄成 RefObject。
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    if (prefersReducedMotion() || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return
+
+    const move = (e: PointerEvent) => {
+      const r = el.getBoundingClientRect()
+      const px = (e.clientX - (r.left + r.width / 2)) / (r.width / 2)
+      const py = (e.clientY - (r.top + r.height / 2)) / (r.height / 2)
+      el.style.setProperty('--px', Math.max(-1, Math.min(1, px)).toFixed(3))
+      el.style.setProperty('--py', Math.max(-1, Math.min(1, py)).toFixed(3))
+    }
+    const reset = () => {
+      el.style.setProperty('--px', '0')
+      el.style.setProperty('--py', '0')
+    }
+
+    el.addEventListener('pointermove', move)
+    el.addEventListener('pointerleave', reset)
+    return () => {
+      el.removeEventListener('pointermove', move)
+      el.removeEventListener('pointerleave', reset)
+      reset()
+    }
+  }, [])
+  return ref
+}
+
 /** 子元素级联：给容器内所有 [data-stagger] 依次加 .is-in。 */
 export function useStagger<T extends HTMLElement>(step = 55) {
   const ref = useRef<T | null>(null)
