@@ -627,6 +627,41 @@ button {
   background: #fdeef1;
 }
 
+/*
+  巨号编号衬底。位置钉在卡的右下角，**整个在卡内**，右边与下边各留 18px 余量 ——
+  它有过一次切边出血的版本，被读成「字显示不全」。出血是问题，衬底不是：
+  它是这张卡上唯一的图形重量，删掉之后卡面就空了。
+
+  色相取本卡那一档最淡的调，落在正文之下（z-index: 0，.dcard__say 是 1）。
+  不用 opacity 压：opacity 会让它连带纸色一起变浅，直接给足够淡的实色更干净。
+*/
+.dcard__ghost {
+  position: absolute;
+  z-index: 0;
+  right: 18px;
+  bottom: 14px;
+  font-family: var(--font-display);
+  font-size: clamp(5rem, 9vw, 7.5rem);
+  font-weight: 400;
+  line-height: 0.82;
+  letter-spacing: -0.03em;
+  color: #f1efe6;
+  pointer-events: none;
+  user-select: none;
+}
+
+.dcard[data-t='blue'] .dcard__ghost {
+  color: #e7effb;
+}
+
+.dcard[data-t='yellow'] .dcard__ghost {
+  color: #faf1d3;
+}
+
+.dcard[data-t='coral'] .dcard__ghost {
+  color: #fbe8ec;
+}
+
 /* 项目名竖排在窄轨上。等宽 + 宽字距，读起来像标本瓶上的标签。 */
 .dcard__spine {
   position: absolute;

@@ -14,8 +14,10 @@
  * 松手回正。倾斜幅度刻意压得比常见的「卡片 3D hover」小一档 —— 那种一动就翻 15°
  * 的做法在真用的时候很晃眼。
  *
- * 卡面上曾经压过一个切边出血的巨号编号。删了：用户第一反应是「字显示不全，故意的吗」。
- * 出血在海报上成立，在网页上会被读成渲染出错 —— 读者的默认假设是「文字应该完整」。
+ * 卡面右下角压一个巨号编号衬底。它有过一次来回：先做成切边出血（海报做法），
+ * 被读成「字显示不全」；我又整个删掉，结果卡面更空。
+ * 定论是**留着但必须完整**：出血才是问题，衬底本身是这张卡上唯一的图形重量。
+ * 所以现在它整个在卡内，四边都留出余量，只靠淡到极致的色相退到文字后面。
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -127,6 +129,10 @@ export function Deck() {
                 } as React.CSSProperties
               }
             >
+              <b className="dcard__ghost" aria-hidden="true">
+                {c.no}
+              </b>
+
               <p className="dcard__spine" aria-hidden="true">
                 {c.name}
               </p>

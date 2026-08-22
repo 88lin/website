@@ -229,9 +229,12 @@ export function Work() {
           }
         }}
       >
-        {projects.map((p) => (
+        {projects.map((p, i) => (
           <article className="wcard" data-t={p.tint} key={p.slug}>
             <div className="wcard__top">
+              {/* 编号不做水印，直接当版式的一部分：巨号 + 年份并排，右边是状态。
+                  水印做法上一版被读成「字显示不全」，这样它完整、也有信息。 */}
+              <b className="wcard__no">{String(i + 1).padStart(2, '0')}</b>
               <span className="wcard__year">{p.year}</span>
               <span className="wcard__state" data-s={p.state}>
                 {STATE[p.state]}

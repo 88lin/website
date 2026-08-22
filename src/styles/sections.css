@@ -1142,9 +1142,38 @@
 
 .wcard__top {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: baseline;
   gap: 10px;
+}
+
+/*
+  编号是版式的一部分，不是水印：巨号压在年份左边，状态胶囊推到最右。
+  上一版把它做成切边的角标水印，被读成「字显示不全」——
+  同样的重量放进正常的信息层级里，就既完整又有用。
+*/
+.wcard__no {
+  font-family: var(--font-display);
+  font-size: 2.125rem;
+  font-weight: 400;
+  line-height: 0.85;
+  letter-spacing: -0.02em;
+  color: var(--rule);
+}
+
+.wcard[data-t='blue'] .wcard__no {
+  color: #b7d3f2;
+}
+
+.wcard[data-t='yellow'] .wcard__no {
+  color: #e8cf7a;
+}
+
+.wcard[data-t='coral'] .wcard__no {
+  color: #f2b3bd;
+}
+
+.wcard__state {
+  margin-left: auto;
 }
 
 .wcard__year {
@@ -1678,6 +1707,39 @@
   color: #fff;
   /* 饱和蓝面上的投影用蓝，不用墨 —— 墨影落在饱和色上会发脏发黑。 */
   box-shadow: 0 4px 14px rgba(43, 127, 216, 0.2), 0 22px 54px rgba(43, 127, 216, 0.22);
+}
+
+/*
+  巨号 @88lin。整个在块内（右下各留 24px），并且是**白色描边**而不是填色：
+  描边字一眼就是图形，不会被误读成一段没渲染完的正文 ——
+  这块之前的两个版本，一个切边被读成「字看不全」，一个删掉之后右下角是一片死蓝。
+
+  描边用 -webkit-text-stroke（Chrome / Safari / 新 Edge 都认）；
+  不认的浏览器 fallback 到 color 那一档半透明白，不会消失。
+*/
+.contact__ghost {
+  position: absolute;
+  z-index: 0;
+  /* 竖直居中在右侧那片真正空着的地方：底部那一行是渠道胶囊，
+     压在胶囊上会啃掉「导航站」几个字的可读性。 */
+  top: 50%;
+  right: 26px;
+  transform: translateY(-54%);
+  font-family: var(--font-display);
+  font-size: clamp(3.5rem, 8vw, 7rem);
+  font-weight: 400;
+  line-height: 0.82;
+  letter-spacing: -0.01em;
+  color: rgba(255, 255, 255, 0.14);
+  pointer-events: none;
+  user-select: none;
+}
+
+@supports (-webkit-text-stroke: 2px white) {
+  .contact__ghost {
+    color: transparent;
+    -webkit-text-stroke: 1.6px rgba(255, 255, 255, 0.3);
+  }
 }
 
 .contact__k {

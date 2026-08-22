@@ -5,12 +5,14 @@
  * 渠道做成一排胶囊。页脚写清「每个数字都来自公开接口、源码开源」与核实日期 ——
  * 这不是免责声明，是这一页的立场。
  *
- * 蓝块右下角曾经压过一个切边出血的巨号 @88lin。删了：用户第一反应是「字看不全」。
- * 网页上文字被切就是被读成出错，不管它在版式上多说得通。
+ * 蓝块右下角压一个巨号 @88lin。它同样来回过一次：先切边出血被读成「字看不全」，
+ * 又被我整个删掉、结果右下角是一大片死蓝。
+ * 现在整个在块内、四边留余量，并且改成**白色描边**而不是填色 ——
+ * 描边字一眼就是图形，不会被误读成一段没渲染完的正文。
  */
 
 import { Section } from '../components/Section'
-import { AS_OF, CONTACT_EMAIL, CONTACT_HREF, contact, footer } from '../content/site'
+import { AS_OF, CONTACT_EMAIL, CONTACT_HREF, contact, footer, profile } from '../content/site'
 import { useStagger } from '../lib/motion'
 
 export function Contact() {
@@ -19,6 +21,10 @@ export function Contact() {
   return (
     <Section id="contact" title={contact.headline} intro={contact.body}>
       <div className="contact" ref={ref}>
+        <b className="contact__ghost" aria-hidden="true">
+          @{profile.handle}
+        </b>
+
         <p className="contact__k" data-stagger>
           写信到
         </p>
