@@ -26,27 +26,34 @@
 }
 
 /*
-  章头。编号在左，章名在右，中间一条细线把两头拉开：
-      04 ─────────────────────── 标本馆
-      还在跑的小站
-  上一版是「编号 + 紧挨着的小标签」，两个字挤在巨号旁边，读起来像脚注。
-  改成贯通的一条线之后，每一章的入口都有了明确的开幕动作，而且不占额外高度。
+  章头 = 刊头。巨号编号在左，跨两行，底线与章名对齐；右边一行是
+  「章名 ───────────」，下面才是标题：
+
+      ┌──┐  标本馆 ────────────────────
+      │04│  还在跑的小站
+      └──┘  这些年做的小页面全挂在导航站上……
+
+  编号从 3.5rem 提到 6.5rem 是这一版的定论：删掉巨号编号那次，
+  用户第一句话是「更加什么都没有了」。整页的图形重量主要就靠这类排字，
+  它必须够大才撑得住一章的开头 —— 小号编号读起来只是个脚注。
 */
 .chap {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  column-gap: 16px;
+  align-items: end;
+  column-gap: clamp(14px, 1.8vw, 26px);
   margin-bottom: clamp(34px, 5vh, 64px);
 }
 
 .chap__no {
   grid-column: 1;
-  grid-row: 1;
+  grid-row: 1 / 3;
   font-family: var(--font-display);
-  font-size: clamp(2.25rem, 4vw, 3.5rem);
+  font-size: clamp(3rem, 6.4vw, 6.25rem);
   font-weight: 400;
-  line-height: 0.86;
+  /* 0.78 让数字的底缘正好落在章名标题的基线上 */
+  line-height: 0.78;
+  letter-spacing: -0.02em;
   color: var(--brand);
 }
 
@@ -68,14 +75,14 @@
   display: flex;
   align-items: center;
   gap: clamp(12px, 2vw, 22px);
-  /* 章名是中文，走无衬线。等宽字里的中文在 Windows 上是 Consolas 回落到雅黑，
+  /* 章名是中文，走无衬线。等宽字里的中文在 Windows 上回落雅黑，
      笔画粗细和拉丁部分对不齐，小字号下很脏。 */
   font-size: var(--t-label);
   letter-spacing: 0.14em;
   color: var(--fg-faint);
 }
 
-.chap__label::before {
+.chap__label::after {
   content: '';
   flex: 1;
   height: 1px;
@@ -83,26 +90,30 @@
 }
 
 .chap__title {
-  grid-column: 1 / -1;
+  grid-column: 2;
   grid-row: 2;
-  margin-top: clamp(14px, 2vh, 22px);
+  margin-top: clamp(8px, 1.2vh, 14px);
   font-family: var(--font-display);
   font-size: var(--t-h2);
   font-weight: 400;
-  line-height: 1.28;
+  line-height: 1.18;
 }
 
 .chap__intro {
   grid-column: 1 / -1;
   grid-row: 3;
   max-width: 46em;
-  margin-top: 12px;
+  margin-top: clamp(14px, 2vh, 22px);
   color: var(--fg-dim);
 }
 
 @media (max-width: 640px) {
+  .chap {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
   .chap__no {
-    font-size: 2.25rem;
+    font-size: 3rem;
   }
 }
 
@@ -256,7 +267,7 @@
 
 .case {
   display: grid;
-  grid-template-columns: clamp(84px, 9vw, 128px) minmax(0, 1fr) clamp(200px, 21vw, 272px);
+  grid-template-columns: clamp(96px, 10vw, 150px) minmax(0, 1fr) clamp(200px, 21vw, 272px);
   column-gap: clamp(18px, 2.6vw, 44px);
   row-gap: clamp(20px, 3vh, 32px);
   padding-block: clamp(36px, 6vh, 68px);
@@ -291,7 +302,7 @@
 
 /* 奇数行整行镜像。三列宽度也要跟着倒过来，否则文本会被塞进窄列。 */
 .case[data-flip='1'] {
-  grid-template-columns: clamp(200px, 21vw, 272px) minmax(0, 1fr) clamp(84px, 9vw, 128px);
+  grid-template-columns: clamp(200px, 21vw, 272px) minmax(0, 1fr) clamp(96px, 10vw, 150px);
 }
 
 .case[data-flip='1'] .case__idx {
@@ -309,13 +320,17 @@
 
 /* ---- 编号轨 ---- */
 
+/*
+  行编号排到和章头刊头同一档（5.75rem）。上一版是 4.25rem，比章头小了一截，
+  于是这一章读起来比别的章「轻」——而它恰恰是最该被看进去的一章。
+*/
 .case__no {
   display: block;
   font-family: var(--font-display);
-  font-size: clamp(2.75rem, 5vw, 4.25rem);
+  font-size: clamp(3rem, 5.8vw, 5.75rem);
   font-weight: 400;
-  line-height: 0.88;
-  letter-spacing: -0.01em;
+  line-height: 0.82;
+  letter-spacing: -0.02em;
 }
 
 .case[data-t='blue'] .case__no {
@@ -1343,13 +1358,34 @@
   border-bottom-color: #2f9c95;
 }
 
-/* 计数用等宽两位数（01–14），右对齐成一列，像目录的页码 */
+/*
+  每类的条目数用展示字排大一档，和章头那个巨号编号是同一套语言。
+  上一版是 12px 等宽小灰字，整堵目录墙于是只有细字，没有任何抓手 ——
+  「更加什么都没有了」说的就是这种情形。
+*/
 .cat__label s {
   text-decoration: none;
-  font-family: var(--font-mono);
-  font-size: var(--t-label);
+  font-family: var(--font-display);
+  font-size: 1.5rem;
   font-variant-numeric: tabular-nums;
-  color: var(--fg-faint);
+  line-height: 1;
+  color: var(--rule);
+}
+
+.cat__label[data-t='coral'] s {
+  color: #f2b3bd;
+}
+
+.cat__label[data-t='blue'] s {
+  color: #b7d3f2;
+}
+
+.cat__label[data-t='yellow'] s {
+  color: #e8cf7a;
+}
+
+.cat__label[data-t='teal'] s {
+  color: #9ecfca;
 }
 
 .cat__list {
@@ -1511,8 +1547,9 @@
 .notes__nums b {
   display: block;
   font-family: var(--font-display);
-  font-size: clamp(1.75rem, 2.6vw, 2.25rem);
-  line-height: 1.1;
+  font-size: clamp(2.25rem, 3.6vw, 3.25rem);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
 }
 
 .notes__nums span:nth-child(1) b {
@@ -1701,7 +1738,12 @@
   display: grid;
   gap: clamp(16px, 2.4vh, 26px);
   justify-items: start;
-  padding: clamp(28px, 4vw, 60px);
+  /*
+    底部单独留一条 96–132px 的空带，给右下角那个巨号 @88lin。
+    不留带子的话它只能压在渠道胶囊上，会啃掉「导航站」几个字 ——
+    之前那一版就是这么撞的，所以是用留白解决，不是把字缩到看不见。
+  */
+  padding: clamp(28px, 4vw, 60px) clamp(28px, 4vw, 60px) clamp(96px, 10vw, 132px);
   border-radius: var(--r-lg);
   background: var(--brand);
   color: #fff;
@@ -1710,36 +1752,27 @@
 }
 
 /*
-  巨号 @88lin。整个在块内（右下各留 24px），并且是**白色描边**而不是填色：
-  描边字一眼就是图形，不会被误读成一段没渲染完的正文 ——
-  这块之前的两个版本，一个切边被读成「字看不全」，一个删掉之后右下角是一片死蓝。
-
-  描边用 -webkit-text-stroke（Chrome / Safari / 新 Edge 都认）；
-  不认的浏览器 fallback 到 color 那一档半透明白，不会消失。
+  巨号 @88lin。这块来回过三版，结论写清楚：
+    v1 右下切边出血 → 被读成「字看不全」
+    v2 整个删掉     → 右下角一片死蓝，「更加什么都没有了」
+    v3 右侧居中描边 → 描边字不好看，位置也偏高
+  现在是 v4：**回到右下、填色、完整**。用户原话「还不如你之前放下面一点好看，
+  只要显示得全就行」—— 那就按这个来，靠上面那条底部空带保证它不压胶囊。
+  填色用低透明度的白：饱和蓝面上压深色会发脏，这条和投影那条纪律是一致的。
 */
 .contact__ghost {
   position: absolute;
   z-index: 0;
-  /* 竖直居中在右侧那片真正空着的地方：底部那一行是渠道胶囊，
-     压在胶囊上会啃掉「导航站」几个字的可读性。 */
-  top: 50%;
   right: 26px;
-  transform: translateY(-54%);
+  bottom: 18px;
   font-family: var(--font-display);
-  font-size: clamp(3.5rem, 8vw, 7rem);
+  font-size: clamp(2.75rem, 5.4vw, 4.5rem);
   font-weight: 400;
-  line-height: 0.82;
+  line-height: 0.86;
   letter-spacing: -0.01em;
-  color: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.16);
   pointer-events: none;
   user-select: none;
-}
-
-@supports (-webkit-text-stroke: 2px white) {
-  .contact__ghost {
-    color: transparent;
-    -webkit-text-stroke: 1.6px rgba(255, 255, 255, 0.3);
-  }
 }
 
 .contact__k {

@@ -7,9 +7,13 @@
  * 文案里必须写「标签」不是「分类」—— 首页那 27 个词是标签，
  * 一篇文章可以挂多个，所以合计比文章数大，这一点在正文里说清楚。
  * v9 的教训：每篇必须带链接，只有标题和日期就是六行点不开的死字。
+ *
+ * 三个数字排到 3.25rem 并从 0 滚起（components/Count.tsx）：这一章原来通篇是
+ * 小字与细条，没有一处图形重量，扫过去等于没看见。
  */
 
 import { Section } from '../components/Section'
+import { Count } from '../components/Count'
 import { writing } from '../content/site'
 import { useStagger } from '../lib/motion'
 
@@ -25,15 +29,21 @@ export function Notes() {
         <div className="notes__left">
           <div className="notes__nums">
             <span>
-              <b>{writing.posts}</b>
+              <b>
+                <Count value={String(writing.posts)} />
+              </b>
               <s>篇文章</s>
             </span>
             <span>
-              <b>{writing.days.toLocaleString('en-US')}</b>
+              <b>
+                <Count value={writing.days.toLocaleString('en-US')} />
+              </b>
               <s>天没断过</s>
             </span>
             <span>
-              <b>{writing.tagTotal}</b>
+              <b>
+                <Count value={String(writing.tagTotal)} />
+              </b>
               <s>个标签</s>
             </span>
           </div>

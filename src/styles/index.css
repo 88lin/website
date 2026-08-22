@@ -1249,12 +1249,12 @@ button {
     transform 0.5s var(--ease);
 }
 
-.js .chap__label::before {
+.js .chap__label::after {
   transform: scaleX(0);
   transform-origin: 0 50%;
 }
 
-.js .chap.is-in .chap__label::before {
+.js .chap.is-in .chap__label::after {
   transform: none;
   transition: transform 0.9s 0.08s var(--ease);
 }
@@ -1358,8 +1358,8 @@ button {
     transition: none;
   }
 
-  .js .chap__label::before,
-  .js .chap.is-in .chap__label::before,
+  .js .chap__label::after,
+  .js .chap.is-in .chap__label::after,
   .js .hero__h1 .mark::before,
   .js .hero__h1.is-in .mark::before {
     transform: none;
