@@ -37,7 +37,7 @@ export type Tint = 'blue' | 'yellow' | 'coral'
 
 export type ChapterId = 'hero' | 'cases' | 'craft' | 'work' | 'garden' | 'notes' | 'contact'
 
-export type Chapter = { id: ChapterId; label: string; tone: Tone; no: string }
+export type Chapter = { id: ChapterId; label: string; tone: Tone; no: string; tint: Tint | 'teal' }
 
 /**
  * 章序：案例提到第 01。
@@ -46,15 +46,18 @@ export type Chapter = { id: ChapterId; label: string; tone: Tone; no: string }
  * 三个证据」直接冲突。现在开场之后立刻是四个深度案例 —— 招聘方与客户最想看的
  * 就是这个；读数不再单独成章，四个核心数字并进开场的彩色读数卡。
  * 地面色两档交替。
+ *
+ * tint 只染章头那个巨号编号。六章六个颜色不重复相邻，是为了让整页滚下来有色相节奏
+ * ——上一版六个编号全是同一个蓝，从上到下越读越单调，这是「越往下越普通」的一部分。
  */
 export const chapters: Chapter[] = [
-  { id: 'hero', label: '开场', tone: 'paper', no: '00' },
-  { id: 'cases', label: '案例', tone: 'alt', no: '01' },
-  { id: 'craft', label: '主线', tone: 'paper', no: '02' },
-  { id: 'work', label: '作品', tone: 'alt', no: '03' },
-  { id: 'garden', label: '标本馆', tone: 'paper', no: '04' },
-  { id: 'notes', label: '写作', tone: 'alt', no: '05' },
-  { id: 'contact', label: '联系', tone: 'paper', no: '06' },
+  { id: 'hero', label: '开场', tone: 'paper', no: '00', tint: 'blue' },
+  { id: 'cases', label: '案例', tone: 'alt', no: '01', tint: 'blue' },
+  { id: 'craft', label: '主线', tone: 'paper', no: '02', tint: 'coral' },
+  { id: 'work', label: '作品', tone: 'alt', no: '03', tint: 'yellow' },
+  { id: 'garden', label: '标本馆', tone: 'paper', no: '04', tint: 'teal' },
+  { id: 'notes', label: '写作', tone: 'alt', no: '05', tint: 'coral' },
+  { id: 'contact', label: '联系', tone: 'paper', no: '06', tint: 'blue' },
 ]
 
 /* ---------------------------------------------------------------- 身份 */
@@ -147,7 +150,13 @@ export type Track = { id: string; title: string; body: string }
 
 export const tracksIntro = {
   headline: '两条主线，一个交点',
-  body: '左边这条负责让 AI 真的能改到线上，右边这条负责让人愿意看、看得懂、用得下去。交点是同一件事：把不确定的能力，接进确定的工程约束里。',
+  body: '左边这条负责让 AI 真的能改到线上，右边这条负责让人愿意看、看得懂、用得下去。',
+  /**
+   * 交点那句单独拎出来，在页面中段做成一整块黄底论点。
+   * 原来它是 body 的最后一句，混在灰色说明里；这一页从上到下只有末尾联系那一块
+   * 有大色面，中段全是白纸压近白底，读下来会「寡淡」。这块黄是页面唯一的中段色锚。
+   */
+  thesis: '交点是同一件事：把不确定的能力，接进确定的工程约束里。',
 }
 
 export const trackA = {

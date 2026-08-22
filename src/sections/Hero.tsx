@@ -5,19 +5,18 @@
  * demo-readme-tutorial），不是我的偏好：
  *  左栏 —— 灰色大写 kicker、得意黑超粗大标题（关键字压实心黄块）、
  *          蓝色一行小标题带虚线下划线、灰正文、蓝实心 + 白描边两枚胶囊
- *  右栏 —— 有颜色有内容的视觉主体：案例叠卡（book 页那个装置），
- *          周围挂白色悬浮胶囊标签（tutorial 页那两枚零件）
+ *  右栏 —— 四个案例站的**真机截图叠卡**，可拖可翻（components/Deck.tsx）
  *  底部 —— 四块彩色读数卡（repair 页首屏底下那三块）
  *
- * 3D 与滚动动效这一版先不上：底子的好看要先立住，再往上加。
+ * 右栏为什么换成真机截图：对比过普通商业官网之后量出来的差距不在配色也不在字号，
+ * 在于本站一张图都没有，全靠排版硬撑，所以读起来「啥也没有」。
+ * 主人手上有四个在线案例站，它们的真实界面既是视觉也是证据——第一屏就把
+ * 「他真做过能跑的东西」这条摆出来，而不是等滚到第二屏。
  */
 
-import { cases } from '../content/cases'
+import { Deck } from '../components/Deck'
 import { AS_OF, CONTACT_HREF, garden, hero, metrics, profile } from '../content/site'
 import { useStagger } from '../lib/motion'
-
-/** 叠卡最前面那张放 star 最多、故事最硬的一个。 */
-const FRONT = cases.find((c) => c.slug === 'video-vip') ?? cases[0]
 
 /** 四块读数卡。全部从唯一数据源派生；小站数量取 garden 长度，不写死。 */
 const STATS = [
@@ -38,15 +37,19 @@ export function Hero() {
             {hero.latin}
           </p>
 
-          <h1 className="hero__h1" data-stagger>
-            <span>{hero.line1}</span>
-            <span>
+          {/*
+            三行分别做遮片揭示（不是整块淡入）：一行一行从下往上开，
+            像标题被逐行印上去。data-stagger="mask" 走的是 index.css 里的 clip-path 那一路。
+          */}
+          <h1 className="hero__h1">
+            <span data-stagger="mask">{hero.line1}</span>
+            <span data-stagger="mask">
               {hero.line2Pre}
               <span className="mark">{hero.line2Mark}</span>
               {hero.line2Mid}
               {hero.line2Circle}
             </span>
-            <span>{hero.line3}</span>
+            <span data-stagger="mask">{hero.line3}</span>
           </h1>
 
           <p data-stagger>
@@ -68,34 +71,8 @@ export function Hero() {
           </div>
         </div>
 
-        <div className="deck" data-stagger>
-          <div className="deck__stack">
-            <i className="deck__back" data-t="teal" aria-hidden="true" />
-            <i className="deck__back" data-t="yellow" aria-hidden="true" />
-            <i className="deck__back" data-t="coral" aria-hidden="true" />
-
-            <article className="deck__front">
-              <p className="deck__no">CASE {FRONT.no} · {FRONT.year}</p>
-              <p className="deck__name">{FRONT.name}</p>
-              <p className="deck__claim">{FRONT.claim}</p>
-              <div className="deck__rule" />
-              <div className="deck__nums">
-                {FRONT.results.slice(0, 3).map((r) => (
-                  <span className="deck__num" key={r.label}>
-                    <b>{r.value}</b>
-                    <s>{r.label}</s>
-                  </span>
-                ))}
-              </div>
-            </article>
-          </div>
-
-          <span className="deck__pill deck__pill--a">
-            <em>18</em> 路接口，挂一路换一路
-          </span>
-          <span className="deck__pill deck__pill--b">
-            <em>{cases.length}</em> 个深度案例
-          </span>
+        <div data-stagger>
+          <Deck />
         </div>
       </div>
 

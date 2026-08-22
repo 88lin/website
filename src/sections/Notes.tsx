@@ -55,7 +55,14 @@ export function Notes() {
         </div>
 
         <div className="notes__right">
-          <p className="notes__label">最近六篇</p>
+          {/* 「最近六篇」与博客入口同一行左右分列。上一版入口是列表下面一枚孤零零的胶囊，
+              四周全是空白，读起来像掉在那儿的。 */}
+          <p className="notes__hd">
+            <span className="notes__label">最近六篇</span>
+            <a href={writing.href} target="_blank" rel="noreferrer">
+              {writing.hrefLabel} ↗
+            </a>
+          </p>
           <ul className="posts">
             {writing.latest.map((p) => (
               <li key={p.href} data-stagger>
@@ -67,9 +74,6 @@ export function Notes() {
               </li>
             ))}
           </ul>
-          <a className="btn btn--ghost notes__all" href={writing.href} target="_blank" rel="noreferrer">
-            {writing.hrefLabel} ↗
-          </a>
         </div>
       </div>
     </Section>

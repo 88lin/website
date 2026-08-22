@@ -1,13 +1,20 @@
 /**
- * 03 作品。七个还在线上跑着的东西，横向滑。
+ * 03 作品。七个还在线上跑着的东西，横着推。
  *
- * 用原生 overflow-x + scroll-snap，不用 gsap 把整章钉住做横推：
- * 钉住式横推在移动端与触控板上手感难控（v8 就在这里留下过一屏死白），
- * 而原生滚动天生支持触摸、滚轮横滑、键盘与滚动条，且零 JS。
- * 桌面端额外给一对翻页按钮，因为鼠标用户没有横向滑动手势。
+ * 上一版这里是个真 bug：容器确实可以横向滚（scrollWidth 2136 / clientWidth 1168），
+ * 但**鼠标滚轮滚不动横向容器**，而我又把滚动条藏了——于是鼠标用户既没有可用输入，
+ * 也没有任何提示。我在旧注释里写「原生滚动天生支持滚轮横滑」，那句话只对触控板成立，
+ * 对滚轮是错的。用户的原话是「横向滑动 · 7 个它自己为什么不能滚动？」，问得对。
+ *
+ * 这一版四种输入都通，且都有可见提示：
+ *  1) 滚轮 —— 竖向滚轮转成横移，推到头再把滚动交回页面（不劫持整页）
+ *  2) 拖拽 —— 按住就能拖，拖动超过阈值时吃掉那一次 click，不误点开链接
+ *  3) 箭头 —— 到头即置灰，提示是真的而不是装饰
+ *  4) 进度条 —— 藏起来的滚动条用一条自绘的替回来，可点可拖
+ * 触摸与键盘走原生 overflow 行为，不需要额外代码。
  */
 
-import { useCallback, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Section } from '../components/Section'
 import { projects, worksIntro } from '../content/site'
 
@@ -19,6 +26,23 @@ const STATE: Record<string, string> = {
 
 export function Work() {
   const rail = useRef<HTMLDivElement | null>(null)
+  const dragged = useRef(false)
+
+  /** 进度（0–1）、可视比例（缩略条的宽度）、两头是否到底 */
+  const [prog, setProg] = useState(0)
+  const [ratio, setRatio] = useState(1)
+  const [atStart, setAtStart] = useState(true)
+  const [atEnd, setAtEnd] = useState(false)
+
+  const sync = useCallback(() => {
+    const el = rail.current
+    if (!el) return
+    const max = el.scrollWidth - el.clientWidth
+    setRatio(el.scrollWidth > 0 ? el.clientWidth / el.scrollWidth : 1)
+    setProg(max > 0 ? el.scrollLeft / max : 0)
+    setAtStart(el.scrollLeft <= 1)
+    setAtEnd(max <= 0 || el.scrollLeft >= max - 1)
+  }, [])
 
   const page = useCallback((dir: 1 | -1) => {
     const el = rail.current
@@ -28,23 +52,126 @@ export function Work() {
     el.scrollBy({ left: step * dir, behavior: 'smooth' })
   }, [])
 
+  useEffect(() => {
+    const el = rail.current
+    if (!el) return
+    sync()
+
+    el.addEventListener('scroll', sync, { passive: true })
+    const ro = new ResizeObserver(sync)
+    ro.observe(el)
+
+    /**
+     * 滚轮转横移。两处细节决定它是「顺手」还是「烦人」：
+     *  · 横向 delta 更大时直接放手 —— 那是触控板横滑，浏览器原生处理得更好
+     *  · 推到任一头就不再 preventDefault，滚动权交回页面，不把整页钉住
+     * stopPropagation 是给 lenis 的：它挂在 window 上，不拦住会两边一起滚。
+     */
+    const onWheel = (e: WheelEvent) => {
+      const max = el.scrollWidth - el.clientWidth
+      if (max <= 0) return
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return
+      // deltaMode: 0 像素 / 1 行 / 2 页
+      const step = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaMode === 2 ? e.deltaY * el.clientWidth : e.deltaY
+      if ((step > 0 && el.scrollLeft >= max - 1) || (step < 0 && el.scrollLeft <= 1)) return
+      e.preventDefault()
+      e.stopPropagation()
+      el.scrollLeft = Math.max(0, Math.min(max, el.scrollLeft + step))
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+
+    /* 拖拽横移 */
+    let down = false
+    let sx = 0
+    let sl = 0
+    let moved = 0
+
+    const onDown = (e: PointerEvent) => {
+      if (e.button !== 0) return
+      down = true
+      sx = e.clientX
+      sl = el.scrollLeft
+      moved = 0
+      dragged.current = false
+    }
+    const onMove = (e: PointerEvent) => {
+      if (!down) return
+      const dx = e.clientX - sx
+      moved = Math.max(moved, Math.abs(dx))
+      if (moved <= 4) return
+      // 越过阈值才抢指针：低于阈值时这一下还可能是普通点击
+      if (!el.hasPointerCapture(e.pointerId)) {
+        el.setPointerCapture(e.pointerId)
+        el.dataset.grab = '1'
+      }
+      el.scrollLeft = sl - dx
+    }
+    const onUp = () => {
+      if (!down) return
+      down = false
+      delete el.dataset.grab
+      dragged.current = moved > 6
+    }
+
+    el.addEventListener('pointerdown', onDown)
+    el.addEventListener('pointermove', onMove)
+    el.addEventListener('pointerup', onUp)
+    el.addEventListener('pointercancel', onUp)
+
+    return () => {
+      el.removeEventListener('scroll', sync)
+      ro.disconnect()
+      el.removeEventListener('wheel', onWheel)
+      el.removeEventListener('pointerdown', onDown)
+      el.removeEventListener('pointermove', onMove)
+      el.removeEventListener('pointerup', onUp)
+      el.removeEventListener('pointercancel', onUp)
+    }
+  }, [sync])
+
+  /** 刚拖完的那一次 click 不算点击，否则一拖就跳走。 */
+  const swallowClick = (e: React.MouseEvent) => {
+    if (!dragged.current) return
+    dragged.current = false
+    e.preventDefault()
+    e.stopPropagation()
+  }
+
+  /** 进度条：点哪跳哪，按住可拖。这是把藏掉的滚动条还回来。 */
+  const seek = (e: React.PointerEvent<HTMLDivElement>) => {
+    const el = rail.current
+    if (!el) return
+    const box = e.currentTarget.getBoundingClientRect()
+    const t = Math.min(1, Math.max(0, (e.clientX - box.left) / box.width))
+    el.scrollLeft = t * (el.scrollWidth - el.clientWidth)
+    if (e.type === 'pointerdown') e.currentTarget.setPointerCapture(e.pointerId)
+  }
+
+  const thumb = Math.max(14, Math.min(100, ratio * 100))
+
   return (
     <Section id="work" title={worksIntro.headline} intro={worksIntro.body}>
       <div className="rail-top">
-        <p className="rail-hint">横向滑动 · {projects.length} 个</p>
+        <p className="rail-hint">
+          滚轮 / 拖拽 / 箭头横推 · <b>{projects.length}</b> 个
+        </p>
         <div className="rail-nav">
-          <button type="button" onClick={() => page(-1)} aria-label="上一张">
+          <button type="button" onClick={() => page(-1)} disabled={atStart} aria-label="上一张">
             ←
           </button>
-          <button type="button" onClick={() => page(1)} aria-label="下一张">
+          <button type="button" onClick={() => page(1)} disabled={atEnd} aria-label="下一张">
             →
           </button>
         </div>
       </div>
 
-      <div className="rail" ref={rail}>
-        {projects.map((p) => (
+      <div className="rail" id="work-rail" ref={rail} onClickCapture={swallowClick}>
+        {projects.map((p, i) => (
           <article className="wcard" data-t={p.tint} key={p.slug}>
+            <b className="wcard__ghost" aria-hidden="true">
+              {String(i + 1).padStart(2, '0')}
+            </b>
+
             <div className="wcard__top">
               <span className="wcard__year">{p.year}</span>
               <span className="wcard__state" data-s={p.state}>
@@ -88,6 +215,20 @@ export function Work() {
             </div>
           </article>
         ))}
+        <i className="rail-pad" aria-hidden="true" />
+      </div>
+
+      <div
+        className="rail-bar"
+        role="scrollbar"
+        aria-controls="work-rail"
+        aria-orientation="horizontal"
+        aria-valuenow={Math.round(prog * 100)}
+        tabIndex={-1}
+        onPointerDown={seek}
+        onPointerMove={(e) => e.buttons === 1 && seek(e)}
+      >
+        <i style={{ width: `${thumb}%`, left: `calc((100% - ${thumb}%) * ${prog})` }} />
       </div>
     </Section>
   )

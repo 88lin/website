@@ -108,10 +108,12 @@
   --r-lg: 20px;
   --r-pill: 999px;
 
-  /* 柔影用得大方，但一律染墨色，禁纯黑。 */
+  /* 柔影用得大方，但一律染墨色，禁纯黑。
+     一条硬规矩：墨影只准落在纸面上。落到饱和色面（蓝卡、青卡）上会发脏发黑，
+     放大看就是一块硬边黑方块 —— 上一版首屏的「黑色四方形阴影」就是这么来的。
+     饱和面上的投影必须用那个面自己的色相，见 .contact 与 .btn--blue。 */
   --sh-card: 0 2px 10px rgba(26, 26, 46, 0.05), 0 12px 32px rgba(26, 26, 46, 0.07);
   --sh-pill: 0 2px 8px rgba(26, 26, 46, 0.08), 0 8px 24px rgba(26, 26, 46, 0.08);
-  --sh-deck: 0 18px 48px rgba(26, 26, 46, 0.16);
 
   --rule: #e7e2d6;
 
@@ -447,135 +449,348 @@ button {
   margin-top: clamp(24px, 3.2vh, 36px);
 }
 
-/* ---- 右侧：案例叠卡 ---- */
+
+/* ============================================================================
+   00 开场 · 右栏：案例叠卡
+   ----------------------------------------------------------------------------
+   四张卡都在同一个 grid 单元格里（grid-area: 1/1），所以容器高度 = 最高那张，
+   翻页时高度不跳。位置全靠 transform，DOM 从不重排。
+
+   卡面刻意不做「白卡 + 灰小标题 + 一段话」那套通用件：
+   编号是压在右上角的巨号衬底，项目名竖排在左边一条窄轨上。
+   于是这张卡只露出左边一条边时也认得出是哪一个案例 —— 叠卡才有叠的意义。
+   ========================================================================== */
 
 .deck {
   position: relative;
-  padding: clamp(14px, 2vw, 30px) clamp(8px, 1.6vw, 24px);
+  /* 后面三张卡往右下错开，给它们留出溢出空间，否则会被裁掉 */
+  padding: 0 clamp(34px, 4vw, 58px) clamp(30px, 3.4vw, 46px) 0;
 }
 
 .deck__stack {
-  position: relative;
+  display: grid;
+  border-radius: var(--r-lg);
+  cursor: grab;
+  /* 竖向滚动交回页面，横向手势归叠卡 */
+  touch-action: pan-y;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
-/* 后面三张只露边。颜色按 A 组三个强调色 + 一个青，
-   和 book 页那个叠卡器是同一个装置。 */
-.deck__back {
+.deck__stack[data-dragging] {
+  cursor: grabbing;
+}
+
+.dcard {
+  position: relative;
+  grid-area: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: clamp(272px, 30vw, 348px);
+  padding-left: 46px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-lg);
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(26, 26, 46, 0.05), 0 16px 40px rgba(26, 26, 46, 0.1);
+  transition:
+    transform 0.52s var(--ease),
+    box-shadow 0.3s var(--ease);
+}
+
+/* 左边那条窄轨：卡的色相全靠它，不刷满面。 */
+.dcard::before {
+  content: '';
   position: absolute;
+  inset: 0 auto 0 0;
+  width: 46px;
+  border-right: 1px solid var(--rule);
+  background: #fbfaf4;
+}
+
+.dcard[data-t='blue']::before {
+  background: #eaf2fc;
+}
+
+.dcard[data-t='yellow']::before {
+  background: #fdf5da;
+}
+
+.dcard[data-t='coral']::before {
+  background: #fdeef1;
+}
+
+/* 项目名竖排在窄轨上。等宽 + 宽字距，读起来像标本瓶上的标签。 */
+.dcard__spine {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  bottom: 18px;
+  width: 46px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-align: center;
+  white-space: nowrap;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  color: var(--fg-faint);
+}
+
+/*
+  巨号编号衬底。压在右下角、故意切掉右侧一小块，是海报做法而不是徽章做法。
+  它同时在填空：卡的高度由最高那张定，短的那几张下半部分会空出来，
+  空白里放一个巨号编号，比放一段可有可无的字更干净。
+*/
+.dcard__ghost {
+  position: absolute;
+  z-index: 0;
+  right: -0.05em;
+  bottom: -0.24em;
+  font-family: var(--font-display);
+  font-size: clamp(7rem, 13vw, 11rem);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: #f0eee4;
+  pointer-events: none;
+}
+
+.dcard[data-t='blue'] .dcard__ghost {
+  color: #e2ecfa;
+}
+
+.dcard[data-t='yellow'] .dcard__ghost {
+  color: #faeec7;
+}
+
+.dcard[data-t='coral'] .dcard__ghost {
+  color: #fbe3e9;
+}
+
+/* 槽位 → 位置。--dx / --rot 只有最前那张非零，由 Deck.tsx 按拖拽距离写入。 */
+.dcard[data-slot='0'] {
+  z-index: 4;
+  transform: translate3d(var(--dx, 0px), 0, 0) rotate(var(--rot, 0deg));
+}
+
+.dcard[data-slot='1'] {
+  z-index: 3;
+  transform: translate3d(20px, 15px, 0) scale(0.966) rotate(1.3deg);
+}
+
+.dcard[data-slot='2'] {
+  z-index: 2;
+  transform: translate3d(38px, 29px, 0) scale(0.933) rotate(2.6deg);
+}
+
+.dcard[data-slot='3'] {
+  z-index: 1;
+  transform: translate3d(54px, 41px, 0) scale(0.902) rotate(3.9deg);
+}
+
+/* 拖拽中不要过渡，否则手感变成「跟不上」 */
+.deck__stack[data-dragging] .dcard[data-slot='0'] {
+  transition: none;
+}
+
+/*
+  压在后面的卡蒙一层**页面底色**，不用 opacity 也不用 brightness()：
+  opacity 会让后卡透出前卡的字，brightness 会把纸压成脏灰（等于偷偷做深色模式）。
+  盖纸色读起来就是「沉回背景」。
+*/
+.dcard:not([data-slot='0']) {
+  pointer-events: none;
+  box-shadow: 0 2px 6px rgba(26, 26, 46, 0.04), 0 10px 24px rgba(26, 26, 46, 0.07);
+}
+
+.dcard:not([data-slot='0'])::after {
+  content: '';
+  position: absolute;
+  z-index: 3;
   inset: 0;
-  border-radius: var(--r-lg);
-  box-shadow: var(--sh-card);
+  border-radius: inherit;
+  background: #fdfcf8;
 }
 
-.deck__back[data-t='coral'] {
-  background: var(--pop);
-  transform: translate(14px, 12px) rotate(1.6deg);
+.dcard[data-slot='1']::after {
+  opacity: 0.46;
 }
 
-.deck__back[data-t='yellow'] {
-  background: var(--highlight);
-  transform: translate(26px, 22px) rotate(3deg);
+.dcard[data-slot='2']::after {
+  opacity: 0.68;
 }
 
-.deck__back[data-t='teal'] {
-  background: #2f9c95;
-  transform: translate(38px, 32px) rotate(4.4deg);
+.dcard[data-slot='3']::after {
+  opacity: 0.84;
 }
 
-.deck__front {
+.dcard__say {
   position: relative;
-  border-radius: var(--r-lg);
-  background: var(--brand);
-  color: #fff;
-  padding: clamp(22px, 2.6vw, 34px);
-  box-shadow: var(--sh-deck);
+  z-index: 1;
+  padding: clamp(20px, 2.2vw, 28px) clamp(20px, 2.2vw, 28px) 0;
 }
 
-.deck__no {
+.dcard__meta {
+  display: flex;
+  align-items: center;
+  gap: 9px;
   font-family: var(--font-mono);
   font-size: var(--t-label);
-  letter-spacing: 0.16em;
-  color: rgba(255, 255, 255, 0.72);
+  letter-spacing: 0.08em;
+  color: var(--fg-faint);
 }
 
-.deck__name {
-  margin-top: 6px;
-  font-family: var(--font-mono);
-  font-size: 1.0625rem;
-  font-weight: 600;
+/* 分隔用的小方点，不用「·」—— 等宽字里的间隔号偏细，摆在宽字距里会消失。 */
+.dcard__meta s {
+  width: 3px;
+  height: 3px;
+  flex: none;
+  border-radius: 50%;
+  background: currentcolor;
+  text-decoration: none;
 }
 
-.deck__claim {
-  margin-top: 14px;
+.dcard__claim {
+  margin-top: 12px;
+  max-width: 18em;
   font-family: var(--font-display);
-  font-size: clamp(1.3rem, 2.1vw, 1.8rem);
-  line-height: 1.42;
+  font-size: clamp(1.3125rem, 2vw, 1.75rem);
+  font-weight: 400;
+  line-height: 1.34;
 }
 
-.deck__rule {
-  height: 1px;
-  margin: 18px 0 16px;
-  background: rgba(255, 255, 255, 0.24);
+.dcard__stack {
+  margin-top: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.03em;
+  color: var(--fg-faint);
 }
 
-.deck__nums {
+.dcard__nums {
   display: flex;
   flex-wrap: wrap;
   gap: clamp(16px, 2vw, 30px);
+  margin-top: clamp(18px, 2.2vw, 26px);
+  padding-top: 14px;
+  border-top: 1px dashed var(--rule);
 }
 
-.deck__num b {
+.dcard__nums b {
   display: block;
   font-family: var(--font-display);
-  font-size: 1.625rem;
+  font-size: 1.5rem;
   font-weight: 400;
-  letter-spacing: 0.005em;
+  line-height: 1.12;
 }
 
-.deck__num s {
-  text-decoration: none;
-  font-size: var(--t-label);
-  color: rgba(255, 255, 255, 0.78);
+.dcard[data-t='blue'] .dcard__nums b {
+  color: var(--brand-deep);
 }
 
-/* 白色悬浮胶囊标签：带柔影，钉在卡的边上。tutorial 页那两枚就是这个零件。 */
-.deck__pill {
-  position: absolute;
-  z-index: 3;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 16px;
-  border-radius: var(--r-pill);
-  background: #fff;
-  box-shadow: var(--sh-pill);
-  font-size: var(--t-small);
-  font-weight: 600;
-  white-space: nowrap;
+.dcard[data-t='yellow'] .dcard__nums b {
+  color: #8a6a10;
 }
 
-.deck__pill em {
-  font-family: var(--font-mono);
-  font-style: normal;
-  font-variant-numeric: tabular-nums;
-}
-
-.deck__pill--a {
-  top: 2px;
-  left: -6px;
-}
-
-.deck__pill--a em {
+.dcard[data-t='coral'] .dcard__nums b {
   color: var(--pop-deep);
 }
 
-.deck__pill--b {
-  bottom: 4px;
-  right: -4px;
+.dcard__nums s {
+  display: block;
+  text-decoration: none;
+  margin-top: 1px;
+  font-size: 0.6875rem;
+  color: var(--fg-faint);
 }
 
-.deck__pill--b em {
+.dcard__go {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  padding: 18px clamp(20px, 2.2vw, 28px) 20px;
+  font-size: var(--t-small);
+  font-weight: 600;
   color: var(--brand-deep);
+}
+
+.dcard__go i {
+  font-family: var(--font-mono);
+  font-style: normal;
+  transition: transform 0.16s var(--ease);
+}
+
+.dcard__go:hover i {
+  transform: translateX(4px);
+}
+
+/* ---- 叠卡的操作条：这一版真的能用，所以摆在明面上 ---- */
+
+.deck__ctl {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.deck__arrow {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border-radius: 50%;
+  border: 1px solid var(--rule);
+  background: #fff;
+  box-shadow: var(--sh-card);
+  font-family: var(--font-mono);
+  transition:
+    border-color 0.16s var(--ease),
+    transform 0.14s var(--ease);
+}
+
+.deck__arrow:hover {
+  border-color: var(--fg);
+}
+
+.deck__arrow:active {
+  transform: translateY(1px);
+}
+
+.deck__dots {
+  display: inline-flex;
+  gap: 7px;
+}
+
+.deck__dots button {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border-radius: 50%;
+  background: #ddd8c8;
+  transition:
+    background-color 0.18s var(--ease),
+    width 0.24s var(--ease);
+}
+
+.deck__dots button[data-on] {
+  width: 22px;
+  border-radius: 4px;
+  background: var(--brand);
+}
+
+.deck__hint {
+  font-size: 0.75rem;
+  color: var(--fg-faint);
+}
+
+@media (max-width: 1080px) {
+  .deck__hint {
+    display: none;
+  }
 }
 
 @media (max-width: 900px) {
@@ -584,29 +799,29 @@ button {
   }
 
   .deck {
-    padding-inline: 0;
-  }
-
-  .deck__back[data-t='teal'] {
-    display: none;
-  }
-
-  /* 窄屏胶囊要移到卡外面去。压在卡上会正好盖掉 CASE 那一行 —— 宽屏有余量，
-     窄屏没有，卡也窄了半截。所以留出一条上边距，把胶囊抬到卡顶之上。 */
-  .deck__stack {
-    margin-top: 22px;
-  }
-
-  .deck__pill--a {
-    top: -20px;
-    left: 4px;
-  }
-
-  .deck__pill--b {
-    bottom: -16px;
-    right: 0;
+    padding-right: clamp(24px, 8vw, 44px);
   }
 }
+
+/* 窄屏收窄错位量：390px 上 54px 的横向错位会把后卡推出视口。 */
+@media (max-width: 640px) {
+  .deck {
+    padding: 0 34px 28px 0;
+  }
+
+  .dcard[data-slot='1'] {
+    transform: translate3d(11px, 9px, 0) scale(0.976) rotate(0.9deg);
+  }
+
+  .dcard[data-slot='2'] {
+    transform: translate3d(21px, 17px, 0) scale(0.951) rotate(1.8deg);
+  }
+
+  .dcard[data-slot='3'] {
+    transform: translate3d(30px, 24px, 0) scale(0.928) rotate(2.6deg);
+  }
+}
+
 
 /* ---- 彩色读数卡 ---- */
 
@@ -699,14 +914,29 @@ button {
   }
 }
 
-/* ------------------------------------------------------------------ 入场 */
+/* ============================================================================
+   入场与滚动动效
+   ----------------------------------------------------------------------------
+   用户的判词是「滑动也没有效果」。上一版只有一种动作：整块淡入 + 上移 14px。
+   一种动作用在七章上，等于没有动作。
 
-.js [data-stagger] {
+   这一版分四层，全部由 CSS transition 承担，JS 只负责在进视口时加一个 .is-in：
+     1) 章头开幕：编号浮起 → 细线从左画到右 → 章名遮片上移 → 说明淡入（四步有时序）
+     2) 遮片揭示：大号展示字用 clip-path 从下往上开，不是淡入
+     3) 数据条生长：写作章那组量表按真实比例长出来，动作本身在传达数据
+     4) 顶部进度条：滚动驱动（scroll-timeline），零 JS
+   纪律没变：默认状态永远是「已经可见」，只有挂上 .js 之后才允许藏。
+   减弱动效时全部退化为静态，不是变慢。
+   ========================================================================== */
+
+/* ---- 1) 通用揭示：淡入 + 上移 ---- */
+
+.js [data-stagger]:not([data-stagger='mask']) {
   opacity: 0;
-  transform: translateY(14px);
+  transform: translateY(16px);
 }
 
-.js [data-stagger].is-in {
+.js [data-stagger]:not([data-stagger='mask']).is-in {
   opacity: 1;
   transform: none;
   transition:
@@ -714,10 +944,150 @@ button {
     transform 0.62s var(--ease);
 }
 
+/* ---- 2) 遮片揭示：给大号展示字用 ---- */
+/*
+  clip-path 的四边都留负值：中文展示字有出头与斜度，inset(0) 会在收尾那一帧
+  把字的边缘切出一条硬边。
+*/
+.js [data-stagger='mask'] {
+  clip-path: inset(0 -8% 108% -8%);
+  transform: translateY(10px);
+}
+
+.js [data-stagger='mask'].is-in {
+  clip-path: inset(-14% -8% -14% -8%);
+  transform: none;
+  transition:
+    clip-path 0.9s var(--ease),
+    transform 0.9s var(--ease);
+}
+
+/* ---- 3) 章头开幕 ---- */
+
+.js .chap__no {
+  opacity: 0;
+  transform: translateY(14px);
+}
+
+.js .chap.is-in .chap__no {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.5s var(--ease),
+    transform 0.5s var(--ease);
+}
+
+.js .chap__label::before {
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+}
+
+.js .chap.is-in .chap__label::before {
+  transform: none;
+  transition: transform 0.9s 0.08s var(--ease);
+}
+
+.js .chap__label {
+  opacity: 0;
+}
+
+.js .chap.is-in .chap__label {
+  opacity: 1;
+  transition: opacity 0.5s 0.5s var(--ease);
+}
+
+.js .chap__title {
+  clip-path: inset(0 -8% 108% -8%);
+}
+
+.js .chap.is-in .chap__title {
+  clip-path: inset(-14% -8% -14% -8%);
+  transition: clip-path 0.85s 0.16s var(--ease);
+}
+
+.js .chap__intro {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.js .chap.is-in .chap__intro {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.6s 0.34s var(--ease),
+    transform 0.6s 0.34s var(--ease);
+}
+
+/* ---- 4) 数据条生长 ---- */
+/*
+  写作章那组标签量表：条按真实比例长出来。这里动作本身就是数据，
+  不是装饰——所以它值得单独一条规则。
+*/
+.js .bars__track i {
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+}
+
+.js .bars li.is-in .bars__track i {
+  transform: none;
+  transition: transform 0.85s 0.1s var(--ease);
+}
+
+/* ---- 5) 顶部滚动进度条 ---- */
+/*
+  滚动驱动动画（scroll-timeline），不写一行 JS，也不占主线程。
+  Chrome 115+ / Edge 支持；不支持的浏览器里这条整个不显示，
+  因此它只能是提示，不能承载信息——本站的导航不依赖它。
+*/
+.nav__prog {
+  display: none;
+  position: absolute;
+  z-index: 1;
+  inset: auto 0 -1px 0;
+  height: 2px;
+  transform-origin: 0 50%;
+  background: var(--brand);
+}
+
+@supports (animation-timeline: scroll()) {
+  .nav__prog {
+    display: block;
+    animation: nav-prog linear both;
+    animation-timeline: scroll(root block);
+  }
+}
+
+@keyframes nav-prog {
+  from {
+    transform: scaleX(0);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .js [data-stagger],
-  .js [data-stagger].is-in {
+  .js [data-stagger].is-in,
+  .js .chap__no,
+  .js .chap.is-in .chap__no,
+  .js .chap__label,
+  .js .chap.is-in .chap__label,
+  .js .chap__title,
+  .js .chap.is-in .chap__title,
+  .js .chap__intro,
+  .js .chap.is-in .chap__intro,
+  .js .bars__track i,
+  .js .bars li.is-in .bars__track i {
     opacity: 1;
+    clip-path: none;
+    transform: none;
+    transition: none;
+  }
+
+  .js .chap__label::before,
+  .js .chap.is-in .chap__label::before {
     transform: none;
     transition: none;
   }

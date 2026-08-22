@@ -2,6 +2,9 @@
  * 顶栏。站名 + 三个锚点 + GitHub，当前项一条黄色下划线从左侧展开。
  * 形态照 repair.88lin.eu.org —— 那是用户点名能看上的页面之一，
  * 品牌上也该同源。
+ *
+ * 底边那条进度条由 CSS 的 scroll-timeline 驱动（见 index.css 的 .nav__prog），
+ * 没有 JS、不占主线程；浏览器不支持就整个不显示，所以它只是提示，不承载导航。
  */
 
 import { profile } from '../content/site'
@@ -31,6 +34,7 @@ export function Nav() {
           </a>
         </nav>
       </div>
+      <i className="nav__prog" aria-hidden="true" />
     </header>
   )
 }

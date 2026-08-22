@@ -10,10 +10,17 @@
 
 import type { ReactNode } from 'react'
 import { chapters, type ChapterId } from '../content/site'
+import { useReveal } from '../lib/motion'
 
 const byId = (id: ChapterId) => chapters.find((c) => c.id === id)!
 
-/** 一整章。tone 决定地面色，两档纸色严格交替。 */
+/**
+ * 一整章。tone 决定地面色，两档纸色严格交替。
+ *
+ * 章头挂 useReveal：进视口时编号浮起、那条细线从左画到右、章名遮片上移、说明淡入。
+ * 四步的时序全在 CSS 里（.chap.is-in 的一组 transition-delay），JS 只负责加一个类。
+ * 六章共用同一段开幕动作，所以往下滚每章都有明确的入场，而不是整页一路平推。
+ */
 export function Section({
   id,
   title,
@@ -26,11 +33,14 @@ export function Section({
   children: ReactNode
 }) {
   const c = byId(id)
+  const head = useReveal<HTMLElement>()
   return (
     <section className="sec" id={id} data-tone={c.tone}>
       <div className="wrap">
-        <header className="chap">
-          <b className="chap__no">{c.no}</b>
+        <header className="chap" ref={head}>
+          <b className="chap__no" data-t={c.tint}>
+            {c.no}
+          </b>
           <span className="chap__label">{c.label}</span>
           <h2 className="chap__title">{title}</h2>
           {intro && <p className="chap__intro">{intro}</p>}
