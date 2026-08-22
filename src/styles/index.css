@@ -1019,6 +1019,95 @@ button {
 }
 
 /* ============================================================================
+   章序轨
+   ----------------------------------------------------------------------------
+   固定在左边空白里的一条编号索引。这一页七章九屏高，顶栏只放得下三个锚点，
+   读者滚到第五屏既不知道在第几章，也没有直达入口。
+
+   只出现编号与一根短横；hover 整条轨才把章名滑出来 —— 版心 1280 居中，
+   左边空白只有 130px 上下，常显章名会压到正文上，而 hover 是短暂的。
+   ≥1240px 才出现：再窄的屏幕没有空白可用，硬塞就是遮字。
+   ========================================================================== */
+
+.crail {
+  display: none;
+}
+
+@media (min-width: 1240px) {
+  .crail {
+    position: fixed;
+    z-index: 30;
+    top: 50%;
+    left: max(14px, calc((100vw - var(--wrap)) / 2 - 66px));
+    display: grid;
+    gap: 3px;
+    transform: translateY(-50%);
+  }
+
+  .crail a {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    height: 26px;
+    /* 命中区往右铺开一点，指针不必精确打在 8px 的横线上 */
+    padding-right: 40px;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.06em;
+    color: #b8b2a0;
+    transition: color 0.16s var(--ease);
+  }
+
+  /* 短横：当前章加长并染色。这是轨上唯一常显的图形。 */
+  .crail i {
+    width: 12px;
+    height: 2px;
+    flex: none;
+    border-radius: 1px;
+    background: currentcolor;
+    transition:
+      width 0.24s var(--ease),
+      background-color 0.16s var(--ease);
+  }
+
+  .crail a[data-on] {
+    color: var(--brand);
+  }
+
+  .crail a[data-on] i {
+    width: 26px;
+  }
+
+  .crail a:hover {
+    color: var(--fg);
+  }
+
+  /* 章名默认收起。用 max-width 而不是 display，才能有滑出的过渡。 */
+  .crail span {
+    max-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    opacity: 0;
+    transition:
+      max-width 0.28s var(--ease),
+      opacity 0.2s var(--ease);
+  }
+
+  .crail:hover span,
+  .crail:focus-within span {
+    max-width: 5em;
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crail i,
+  .crail span {
+    transition: none;
+  }
+}
+
+/* ============================================================================
    入场与滚动动效
    ----------------------------------------------------------------------------
    用户的判词是「滑动也没有效果」。上一版只有一种动作：整块淡入 + 上移 14px。

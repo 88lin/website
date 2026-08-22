@@ -6,6 +6,7 @@
  */
 
 import { Nav } from '../components/Nav'
+import { ChapterRail } from '../components/ChapterRail'
 import { Hero } from '../sections/Hero'
 import { Cases } from '../sections/Cases'
 import { Craft } from '../sections/Craft'
@@ -18,6 +19,7 @@ export function Home() {
   return (
     <>
       <Nav />
+      <ChapterRail />
       <main id="main">
         <Hero />
         <Cases />

@@ -262,17 +262,19 @@ try {
   await p.waitForTimeout(500)
   ok((await p.evaluate(() => window.scrollY)) > yA + 50, '横推轨 · 到头后滚动交回页面')
 
-  /* ---- 顶栏当前章 ---- */
+  /* ---- 顶栏当前章 + 左侧章序轨 ---- */
   await p.waitForTimeout(1200)
-  for (const [id, label] of [
-    ['cases', '案例'],
-    ['work', '作品'],
-    ['contact', '联系'],
+  for (const [id, label, no] of [
+    ['cases', '案例', '01'],
+    ['work', '作品', '03'],
+    ['contact', '联系', '06'],
   ]) {
     await p.$eval(`#${id}`, (e) => e.scrollIntoView({ block: 'center', behavior: 'instant' }))
     await p.waitForTimeout(700)
     const on = await p.$$eval('.nav-links a[data-on]', (els) => els.map((e) => e.textContent.trim()))
     ok(on.length === 1 && on[0] === label, `顶栏 · #${id} 高亮「${on.join(',') || '无'}」`)
+    const rail = await p.$$eval('.crail a[data-on] b', (els) => els.map((e) => e.textContent.trim()))
+    ok(rail.length === 1 && rail[0] === no, `章序轨 · #${id} 亮在 ${rail.join(',') || '无'}`)
   }
 
   /* ---- 数字出处可展开 ---- */

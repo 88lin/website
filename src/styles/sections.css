@@ -1809,7 +1809,17 @@
 
 /* ---- 页脚 ---- */
 
+/*
+  页脚排成两栏：左边署名与立场，右边等宽的源码链接与核实日期。
+  上一版是三行平铺，读起来像随手补的一段；两栏一对齐，它才是「收口」。
+  窄屏退回单栏。
+*/
 .foot {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  column-gap: clamp(24px, 4vw, 64px);
+  row-gap: 14px;
   margin-top: clamp(56px, 9vh, 104px);
   padding-top: clamp(24px, 4vh, 38px);
   border-top: 1px solid var(--rule);
@@ -1817,18 +1827,26 @@
   color: var(--fg-faint);
 }
 
+.foot > p:first-child {
+  font-weight: 600;
+  color: var(--fg-dim);
+}
+
 .foot__note {
+  grid-column: 1;
   max-width: 46em;
   margin-top: 8px;
 }
 
 .foot__meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 18px;
-  margin-top: 16px;
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  display: grid;
+  justify-items: end;
+  gap: 8px;
   font-family: var(--font-mono);
   font-size: var(--t-label);
+  text-align: right;
 }
 
 .foot__meta a {
@@ -1838,4 +1856,18 @@
 
 .foot__meta a:hover {
   text-decoration: underline;
+}
+
+@media (max-width: 720px) {
+  .foot {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .foot__meta {
+    grid-column: 1;
+    grid-row: auto;
+    justify-items: start;
+    margin-top: 6px;
+    text-align: left;
+  }
 }
