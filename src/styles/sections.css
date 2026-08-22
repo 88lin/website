@@ -626,15 +626,24 @@
 .track__head {
   display: flex;
   align-items: baseline;
-  gap: 10px;
+  gap: 12px;
   padding-bottom: 12px;
   border-bottom: 2px solid var(--rule);
 }
 
 .track__head b {
   font-family: var(--font-display);
-  font-size: 1.5rem;
+  font-size: 2rem;
   line-height: 1;
+}
+
+/* 两条线各占一个色相，连带它下面那条分隔线一起染 —— 只染条，不刷面。 */
+.track[data-side='a'] .track__head {
+  border-bottom-color: var(--pop);
+}
+
+.track[data-side='b'] .track__head {
+  border-bottom-color: var(--brand);
 }
 
 .track[data-side='a'] .track__head b {
@@ -658,13 +667,38 @@
   gap: 22px;
 }
 
+/*
+  条目前一枚小方点，颜色取本条线的色相。和规格表的交付物列表是同一枚零件，
+  所以这两块读起来是一套东西，而不是两处各自发明的样式。
+*/
 .track__list h4 {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
   margin: 0 0 6px;
   font-size: 1.0625rem;
   font-weight: 600;
 }
 
+.track__list h4::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  flex: none;
+  transform: translateY(-2px);
+  background: var(--rule);
+}
+
+.track[data-side='a'] .track__list h4::before {
+  background: var(--pop);
+}
+
+.track[data-side='b'] .track__list h4::before {
+  background: var(--brand);
+}
+
 .track__list p {
+  padding-left: 16px;
   font-size: var(--t-small);
   line-height: 1.8;
   color: var(--fg-dim);

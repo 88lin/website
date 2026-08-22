@@ -3,23 +3,34 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
 <title>页面不存在 · 茉灵智库</title>
+<link rel="icon" href="./favicon.svg?v=10" type="image/svg+xml">
 <style>
-  html{background:#fbf5eb;color:#0e1230}
-  body{margin:0;min-height:100vh;display:flex;align-items:center;
-    font:400 16px/1.7 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
-  .w{width:100%;max-width:72rem;margin:0 auto;padding:0 clamp(1.25rem,5vw,4rem)}
-  h1{font-size:clamp(3rem,12vw,8rem);line-height:.92;letter-spacing:-.04em;margin:0 0 1.5rem}
-  p{color:#5a5c74;max-width:38ch;margin:0 0 2.5rem}
-  a{display:inline-block;background:#ff3b14;color:#0e1230;padding:1rem 2rem;
-    text-decoration:none;font-weight:600}
-  a:hover{background:#e02e0a}
-  span{color:#1226e8}
+  html{background:#fdfcf8;color:#1a1a2e;-webkit-text-size-adjust:100%}
+  body{margin:0;min-height:100svh;display:flex;align-items:center;
+    font:400 17px/1.8 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+    letter-spacing:.01em}
+  .w{width:100%;max-width:80rem;margin:0 auto;padding:0 clamp(1.25rem,4vw,3.5rem)}
+  .k{font:500 .75rem/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;
+    letter-spacing:.18em;color:#6e6e80}
+  h1{font-size:clamp(2.75rem,9vw,5.5rem);line-height:1.06;letter-spacing:-.01em;
+    margin:.6rem 0 1.25rem;font-weight:700}
+  mark{background:#f4d758;color:#1a1a2e;padding:0 .12em;border-radius:5px}
+  p{color:#4a4a5a;max-width:34em;margin:0 0 2.25rem}
+  a{display:inline-flex;align-items:center;gap:.55rem;background:#2b7fd8;color:#fff;
+    padding:.9rem 1.6rem;border-radius:999px;text-decoration:none;font-weight:600;font-size:.9375rem;
+    box-shadow:0 2px 8px rgba(43,127,216,.26),0 10px 24px rgba(43,127,216,.18)}
+  a:hover{background:#1e5ba8}
+  .m{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid #e5e0d3;
+    font:400 .8125rem/1.7 ui-monospace,SFMono-Regular,Consolas,monospace;color:#6e6e80}
 </style>
 </head>
 <body><div class="w">
-  <h1>404<span>.</span></h1>
-  <p>这个地址下没有东西。可能是链接过期了，也可能是我改过结构。</p>
-  <a href="./">回首页</a>
+  <p class="k">404 · NOT FOUND</p>
+  <h1>这个地址下<mark>没有东西</mark>。</h1>
+  <p>可能是链接过期了，也可能是我改过结构。首页有全部四个案例与在线小站的入口。</p>
+  <a href="./">回首页 <span aria-hidden="true">→</span></a>
+  <p class="m">88lin.github.io/website</p>
 </div></body>
 </html>

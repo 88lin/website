@@ -29,12 +29,16 @@
       })()
     </script>
     <title>茉灵智库 · 88lin ｜ AI Agent 工程 × 创意前端</title>
+    <!-- 这两句描述里**不写数字**。带数字的那版由 prerender.mjs 从 site.ts 现算后换进来
+         （见 entry-server.tsx 的 HOME_DESC）。理由记在那里：手写一份副本就一定会过期，
+         而分享卡片和页面对不上比没有描述更糟。 -->
     <meta
       name="description"
       content="茉灵智库（88lin）个人主页与作品集。AI 研究者与 Agent 工程实践者，把前沿 AI 变成可交付、可维护的工程结果。承接 Agent 工作流落地、创意前端与 WebGL、设计系统与文档。"
     />
     <meta name="author" content="88lin · 茉灵智库" />
-    <meta name="theme-color" content="#FEFCF6" />
+    <!-- 与 body 的地面色一致（#fdfcf8）。差半档会让移动端的地址栏底色和页面接不上。 -->
+    <meta name="theme-color" content="#FDFCF8" />
     <link rel="canonical" href="https://88lin.github.io/website/" />
     <!-- v10 图标：前九版每版都换了图形，但用户始终看到旧图标。真因不是图形没变，
          是站点从来没有过 favicon.ico。浏览器在标签栏/书签/历史里会绕过下面
@@ -62,7 +66,7 @@
     <meta property="og:title" content="茉灵智库 · 88lin ｜ AI Agent 工程 × 创意前端" />
     <meta
       property="og:description"
-      content="把前沿 AI 变成可交付、可维护的工程结果。24 个原创开源仓库，累计 4,764 star，509 fork。"
+      content="把前沿 AI 变成可交付、可维护的工程结果。四个深度案例、一批还在线上跑着的小站，页面上每个数字都写了接口出处。"
     />
     <meta property="og:image" content="./og.png" />
     <meta name="twitter:card" content="summary_large_image" />

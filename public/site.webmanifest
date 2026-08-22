@@ -4,8 +4,8 @@
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "theme_color": "#FEFCF6",
-  "background_color": "#FEFCF6",
+  "theme_color": "#FDFCF8",
+  "background_color": "#FDFCF8",
   "icons": [
     {
       "src": "./icon-192.png",
@@ -18,5 +18,6 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "description": "茉灵智库（88lin）个人主页与作品集：AI Agent 工程与创意前端。"
 }

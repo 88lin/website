@@ -5,7 +5,7 @@
  *  1) LCP 元素（首屏大标题）不再等 React 下载执行——这也是「不要加载页」的前提。
  *  2) GitHub Pages 没有服务端重写，/case/lofi/ 必须真的存在一个 index.html，
  *     否则直链和爬虫都会吃 404。
- *  3) 静态板（.plateshot）也一起进了 HTML，所以首帧就已经是「页面背后有台机器」。
+ *  3) 禁用 JS 的读者拿到的是完整正文 —— 入场动效只是覆在上面的一层，不承载内容。
  */
 import { readFile, writeFile, mkdir, rm } from 'node:fs/promises'
 import path from 'node:path'
@@ -17,32 +17,16 @@ const ROOT = fileURLToPath(new URL('../', import.meta.url))
 const DIST = path.join(ROOT, 'dist')
 const shell = await readFile(path.join(DIST, 'index.html'), 'utf8')
 const ssrEntry = path.join(ROOT, 'dist-ssr/entry-server.js')
-const { render } = await import(pathToFileURL(ssrEntry).href)
-const { ROUTES } = await import(pathToFileURL(ssrEntry).href).then((m) => m)
+const { render, ROUTES, HOME_DESC, CASE_META } = await import(pathToFileURL(ssrEntry).href)
 
 const SITE = 'https://88lin.github.io/website/'
 const MARKER = '<div id="root"></div>'
 
-/** 每条路由自己的 title / description。四条路由四个 H1，audit 第 4 关会查。 */
-const META = {
-  '/': null, // 用 index.html 里已经写好的那套
-  '/case/lofi/': {
-    title: 'lofi-radio-web ｜ 把「电台」做成一个不用维护的静态页 · 茉灵智库',
-    desc: '案例拆解：89★ 的 lofi-radio-web 如何用纯静态前端 + 可切换音源，做成一个上线后基本不用维护的电台页面。',
-  },
-  '/case/repair/': {
-    title: 'computer-repair-skill ｜ 把排障经验写成 Agent 能执行的技能 · 茉灵智库',
-    desc: '案例拆解：把「电脑修不好」这类模糊求助，变成一套 Agent 可以按步骤执行、可复核的诊断技能。',
-  },
-  '/case/facetmark/': {
-    title: 'facetmark ｜ 四条索引逐维实测，赢的留、输的关 · 茉灵智库',
-    desc: '案例拆解：给书签建四条索引再用 RRF 融合，然后逐维跑对照实验——融合输给最简配置 5.4pp，输掉的维度默认关闭，负面结果写进 README。',
-  },
-  '/case/video-vip/': {
-    title: 'video_vip ｜ 4,658★ 的解析脚本怎么活过接口更替 · 茉灵智库',
-    desc: '案例拆解：18 路解析接口、22 个站点适配、35 条注入规则。接口会挂，所以整套东西按「可切换」来设计。',
-  },
-}
+/**
+ * 每条路由的 title / description 全部来自 entry-server（那里从 site.ts 与 cases.ts 现算）。
+ * 这里不再存任何散文 —— 上一版逐条手写，结果 video_vip 那条一直停在「4,658★」。
+ */
+const META = { '/': { title: null, desc: HOME_DESC }, ...CASE_META }
 
 const swap = (html, re, next) => (re.test(html) ? html.replace(re, next) : html)
 
@@ -54,28 +38,31 @@ if (!shell.includes(MARKER)) {
 let total = 0
 for (const route of ROUTES) {
   // 先把外壳（head 里的 ./assets、./favicon.svg、./og.png）按路由深度改写，
-  // 再塞入 SSR 标记 —— 标记内部的资源路径由 useAsset() 自己算，不能被这里动到，
+  // 再塞入 SSR 标记 —— 标记里的相对路径由组件自己按路由深度算，不能被这里动到，
   // 否则水合时客户端算出来的 src 和 HTML 里的对不上。
   const up = '../'.repeat(route.split('/').filter(Boolean).length)
   let html = up ? shell.replace(/(href|src|content)="\.\/(?!\/)/g, `$1="${up}`) : shell
 
   const meta = META[route]
   if (meta) {
-    const t = meta.title.replace(/&/g, '&amp;')
     const d = meta.desc.replace(/&/g, '&amp;').replace(/"/g, '&quot;')
-    html = swap(html, /<title>[\s\S]*?<\/title>/, `<title>${t}</title>`)
     html = swap(html, /<meta\s+name="description"[\s\S]*?\/>/, `<meta name="description" content="${d}" />`)
-    html = swap(html, /<meta\s+property="og:title"[\s\S]*?\/>/, `<meta property="og:title" content="${t}" />`)
     html = swap(
       html,
       /<meta\s+property="og:description"[\s\S]*?\/>/,
       `<meta property="og:description" content="${d}" />`,
     )
-    html = swap(
-      html,
-      /<link rel="canonical"[^>]*>/,
-      `<link rel="canonical" href="${SITE}${route.replace(/^\//, '')}" />`,
-    )
+    // 首页沿用 index.html 里那套 title / canonical，只有子页要换
+    if (meta.title) {
+      const t = meta.title.replace(/&/g, '&amp;')
+      html = swap(html, /<title>[\s\S]*?<\/title>/, `<title>${t}</title>`)
+      html = swap(html, /<meta\s+property="og:title"[\s\S]*?\/>/, `<meta property="og:title" content="${t}" />`)
+      html = swap(
+        html,
+        /<link rel="canonical"[^>]*>/,
+        `<link rel="canonical" href="${SITE}${route.replace(/^\//, '')}" />`,
+      )
+    }
   }
 
   html = html.replace(MARKER, `<div id="root">${render(route)}</div>`)
