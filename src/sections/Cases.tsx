@@ -21,11 +21,16 @@ import { useCallback, useRef } from 'react'
 import { Section } from '../components/Section'
 import { cases, casesIntro } from '../content/cases'
 import { Link } from '../router'
-import { useLazyScene, useStagger, type SceneApi } from '../lib/motion'
+import { useLazyScene, useMediaQuery, useStagger, type SceneApi } from '../lib/motion'
 
 export function Cases() {
   const stagger = useStagger<HTMLDivElement>(60)
   const scene = useRef<HTMLDivElement | null>(null)
+  /*
+    视差只在三列版式（>1080px）上建。窄屏时编号轨被压成一行文字，
+    编号旁边紧挨着项目名，再给它 ±22px 的纵向位移就会和名字错开，看着像排错了。
+  */
+  const wide = useMediaQuery('(min-width: 1081px)')
 
   /**
    * 排字视差：巨号编号与账目表按不同速率走，差速才读作有厚度。
@@ -41,7 +46,7 @@ export function Cases() {
     })
   }, [])
 
-  useLazyScene(scene, build)
+  useLazyScene(scene, build, wide)
 
   return (
     <Section id="cases" title={casesIntro.headline} intro={casesIntro.body}>

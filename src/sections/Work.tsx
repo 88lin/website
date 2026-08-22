@@ -165,7 +165,30 @@ export function Work() {
         </div>
       </div>
 
-      <div className="rail" id="work-rail" ref={rail} onClickCapture={swallowClick}>
+      <div
+        className="rail"
+        id="work-rail"
+        ref={rail}
+        onClickCapture={swallowClick}
+        /*
+          键盘可达。overflow 容器本身不可聚焦，所以键盘用户根本进不来 ——
+          这和「鼠标滚不动」是同一类缺陷，只是发生在另一种输入上。
+          tabIndex + 方向键接管之后，Tab 能落进来，← → 一次推一张。
+        */
+        tabIndex={0}
+        role="group"
+        aria-roledescription="横向卡轨"
+        aria-label={`${projects.length} 个作品，左右方向键横推`}
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowRight') {
+            e.preventDefault()
+            page(1)
+          } else if (e.key === 'ArrowLeft') {
+            e.preventDefault()
+            page(-1)
+          }
+        }}
+      >
         {projects.map((p, i) => (
           <article className="wcard" data-t={p.tint} key={p.slug}>
             <b className="wcard__ghost" aria-hidden="true">
@@ -218,13 +241,14 @@ export function Work() {
         <i className="rail-pad" aria-hidden="true" />
       </div>
 
+      {/*
+        自绘进度条。这里刻意不写 role="scrollbar"：那个角色要求可聚焦并自带键盘协议，
+        半套实现比没有更糟。轨道本身已经可聚焦、可用方向键推，所以这条对辅助技术
+        隐藏，只做视觉提示与鼠标快捷跳位。
+      */}
       <div
         className="rail-bar"
-        role="scrollbar"
-        aria-controls="work-rail"
-        aria-orientation="horizontal"
-        aria-valuenow={Math.round(prog * 100)}
-        tabIndex={-1}
+        aria-hidden="true"
         onPointerDown={seek}
         onPointerMove={(e) => e.buttons === 1 && seek(e)}
       >

@@ -9,6 +9,12 @@
 import type { Tint } from './site'
 
 export type CaseSection = { label: string; body: string }
+/**
+ * 一条实测。label 必须是**名词短语**，量词不要写在开头。
+ * 首页那张账目表是「标签 …… 数值」的排法（目录/发票那种），
+ * 写成「路解析接口」就会读成「路解析接口 … 18」，语序是反的。
+ * 量词省掉不丢信息：中文里「解析接口 18」本来就读得通。
+ */
 export type CaseResult = { value: string; label: string }
 export type Provenance = { value: string; from: string }
 
@@ -181,10 +187,10 @@ export const cases: CaseStudy[] = [
       },
     ],
     results: [
-      { value: '4', label: '条索引假设' },
+      { value: '4', label: '索引假设' },
       { value: '1,524', label: '测试用例' },
       { value: '5.4pp', label: '融合组实测负增益' },
-      { value: '1', label: '个 SQLite 文件' },
+      { value: '1', label: 'SQLite 文件' },
     ],
     provenance: [
       { value: '1,524 测试用例', from: 'facetmark README Tests 徽章与 tests/ 目录，2026-08-21' },
@@ -235,8 +241,8 @@ export const cases: CaseStudy[] = [
     results: [
       { value: '4,669', label: 'GitHub Star' },
       { value: '476', label: 'Fork' },
-      { value: '18', label: '路解析接口' },
-      { value: '22', label: '个站点适配器' },
+      { value: '18', label: '解析接口' },
+      { value: '22', label: '站点适配器' },
     ],
     provenance: [
       { value: '4,669 Star / 476 Fork', from: 'GitHub API：GET /repos/88lin/video_vip，2026-08-21' },

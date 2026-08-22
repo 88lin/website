@@ -566,6 +566,12 @@ button {
   cursor: grabbing;
 }
 
+/* 焦点环跟着卡的圆角走 */
+.deck__stack:focus-visible {
+  outline-offset: 6px;
+  border-radius: var(--r-lg);
+}
+
 .dcard {
   position: relative;
   grid-area: 1 / 1;

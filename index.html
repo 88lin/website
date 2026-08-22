@@ -6,6 +6,28 @@
     <!-- 本站没有深色模式。这里声明一次，CSS 里再声明一次：系统开深色时
          浏览器不许自作主张反转表单控件与滚动条的配色。 -->
     <meta name="color-scheme" content="light" />
+    <!--
+      入场动效的开关，必须在**首次绘制之前**打上。
+
+      预渲染的 HTML 里内容是可见的（这是「不要加载页」的前提）；
+      而 .js 一挂上，[data-stagger] 就被藏起来等揭示。
+      如果这个类是等 React 水合后才加的，用户会看到「先出现 → 突然消失 → 再揭示」
+      闪一下 —— 首屏大标题上尤其明显，因为它走的是 clip-path 遮片。
+      所以放在 head 里同步执行：第一帧就已经是藏好的状态。
+
+      2.5 秒兜底是给「JS 加载失败 / 报错」准备的：真到那一步就把类摘掉，
+      内容回到可见，绝不允许因为动效没跑起来而把正文永久藏住。
+      App 启动后会写 data-booted，兜底就此作废。
+    -->
+    <script>
+      ;(function () {
+        var d = document.documentElement
+        d.classList.add('js')
+        setTimeout(function () {
+          if (!d.dataset.booted) d.classList.remove('js')
+        }, 2500)
+      })()
+    </script>
     <title>茉灵智库 · 88lin ｜ AI Agent 工程 × 创意前端</title>
     <meta
       name="description"

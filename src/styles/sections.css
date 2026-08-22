@@ -571,8 +571,15 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
+  /*
+    单栏时三块必须各占一行。只把列数改成 1 而不动 grid-row 的话，
+    上面那条规则里 idx 与 say 都还钉在第 1 行，就会叠在一起 ——
+    390px 上编号轨正好压在案例论点上，实机截图里抓到过。
+  */
   .case__idx,
   .case[data-flip='1'] .case__idx {
+    grid-column: 1;
+    grid-row: 1;
     display: flex;
     align-items: baseline;
     flex-wrap: wrap;
@@ -589,10 +596,20 @@
   }
 
   .case__say,
-  .case[data-flip='1'] .case__say,
+  .case[data-flip='1'] .case__say {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
   .case__data,
   .case[data-flip='1'] .case__data {
     grid-column: 1;
+    grid-row: 3;
+  }
+
+  /* 编号在单行里不再需要那么大，它旁边就是项目名 */
+  .case__no {
+    font-size: 2.25rem;
   }
 }
 
@@ -997,6 +1014,12 @@
 
 .rail::-webkit-scrollbar {
   display: none;
+}
+
+/* 轨道可聚焦，焦点环要跟着它的圆角与出血走，不能是默认那个 4px 小圆角 */
+.rail:focus-visible {
+  outline-offset: 6px;
+  border-radius: var(--r-card);
 }
 
 @media (hover: none) {
