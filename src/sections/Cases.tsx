@@ -88,6 +88,9 @@ export function Cases() {
                   {c.results.map((r) => (
                     <li key={r.label}>
                       <span>{r.label}</span>
+                      {/* 引线。空元素在 align-items: baseline 的 flex 里，
+                          基线就是它的下边缘，所以这条点线正好落在文字基线上。 */}
+                      <i aria-hidden="true" />
                       <b>{r.value}</b>
                     </li>
                   ))}

@@ -72,14 +72,6 @@
   font-display: swap;
 }
 
-@font-face {
-  font-family: 'Caveat Web';
-  src: url('/fonts/Caveat.woff2') format('woff2');
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-
 :root {
   color-scheme: light;
 
@@ -89,7 +81,6 @@
     'Noto Sans SC Sub', 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono',
     monospace;
-  --font-hand: 'Caveat Web', cursive;
 
   --gutter: clamp(20px, 4vw, 56px);
   --wrap: 1280px;
@@ -98,7 +89,8 @@
   /* 展示字很粗，同样的视觉重量下字号可以比细体小一档。 */
   --t-hero: clamp(2.5rem, 5.6vw, 4.75rem);
   --t-h2: clamp(1.75rem, 3vw, 2.5rem);
-  --t-body: clamp(1rem, 1.02vw, 1.0625rem);
+  /* 正文比上一版大半档：中文在 16px 上偏挤，17px 才有「读物」的松弛感。 */
+  --t-body: clamp(1rem, 0.94rem + 0.22vw, 1.0938rem);
   --t-small: 0.875rem;
   --t-label: 0.75rem;
 
@@ -109,19 +101,28 @@
   --r-pill: 999px;
 
   /* 柔影用得大方，但一律染墨色，禁纯黑。
-     一条硬规矩：墨影只准落在纸面上。落到饱和色面（蓝卡、青卡）上会发脏发黑，
+     一条硬规矩：墨影只准落在纸面上。落到饱和色面（蓝卡、黄卡）上会发脏发黑，
      放大看就是一块硬边黑方块 —— 上一版首屏的「黑色四方形阴影」就是这么来的。
-     饱和面上的投影必须用那个面自己的色相，见 .contact 与 .btn--blue。 */
-  --sh-card: 0 2px 10px rgba(26, 26, 46, 0.05), 0 12px 32px rgba(26, 26, 46, 0.07);
-  --sh-pill: 0 2px 8px rgba(26, 26, 46, 0.08), 0 8px 24px rgba(26, 26, 46, 0.08);
+     饱和面上的投影必须用那个面自己的色相，见 .contact / .thesis / .btn--blue。 */
+  --sh-card: 0 1px 2px rgba(26, 26, 46, 0.04), 0 2px 10px rgba(26, 26, 46, 0.045),
+    0 12px 32px rgba(26, 26, 46, 0.06);
+  --sh-lift: 0 2px 4px rgba(26, 26, 46, 0.05), 0 8px 18px rgba(26, 26, 46, 0.07),
+    0 22px 48px rgba(26, 26, 46, 0.09);
+  --sh-pill: 0 1px 2px rgba(26, 26, 46, 0.06), 0 8px 24px rgba(26, 26, 46, 0.08);
 
-  --rule: #e7e2d6;
+  /* 分隔线两档。同一个灰度画所有线会让版面读起来「都一样重」；
+     结构线用 --rule，行内的次级分隔用 --rule-soft。 */
+  --rule: #e5e0d3;
+  --rule-soft: #efebe0;
 
   --fg: var(--ink);
   --fg-dim: #4a4a5a;
   --fg-faint: #6e6e80;
 
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* 纸纹砖。seed 写死，构建产物逐字节可复现。 */
+  --paper: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch' seed='7'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.13'/%3E%3C/svg%3E");
 }
 
 *,
@@ -141,11 +142,23 @@ html {
   }
 }
 
+/*
+  纸纹。整页底色是一张暖白纸，加一层极淡的噪点之后它才真的读作「纸」，
+  而不是「#fdfcf8 这个色值」。
+
+  做法上刻意不用 fixed 覆盖层 + mix-blend-mode：那会给整页建一个混合上下文，
+  滚动时每帧都要重新合成。这里就是 body 与白色章节各铺一张 140px 的 SVG 噪点砖，
+  浏览器只栅格化一次，之后纯平铺，滚动零成本。
+  seed 写死，所以每次构建、每台机器上的纹理完全一样。
+  强度实测：空白处灰度 stdev 1.65（239–252），这是「纸的肌理」；
+  再往上加就开始读作「屏幕脏了」。
+*/
 body {
   margin: 0;
   /* 暖调近白。比 A 组的 --cream 再干净一档：那四个页读起来是「白纸」，
      不是「米色纸」，米味一重就回到 v9–v12 那种旧感。 */
-  background: #fdfcf8;
+  background-color: #fdfcf8;
+  background-image: var(--paper);
   color: var(--fg);
   font-family: var(--font-sans);
   font-size: var(--t-body);
@@ -156,6 +169,58 @@ body {
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   overflow-x: hidden;
+}
+
+/*
+  中文正文加一点字距。PingFang / 思源黑在 17px 上默认贴得偏紧，0.01em 几乎看不出来，
+  但整段的呼吸会松一档。
+
+  刻意不写在 body 上：字距会继承到标题与数字上，而展示字（得意黑）本来就是
+  紧字距的海报体，再撑开就散了。所以只给正文级别的元素。
+*/
+p,
+li,
+summary,
+dd,
+blockquote {
+  letter-spacing: 0.01em;
+}
+
+/*
+  中西混排的标点收紧。中文全角标点自带左右空腔，紧跟拉丁或数字时会出现两倍空隙。
+  text-spacing-trim 让浏览器按 CJK 排版惯例削掉多余的那半个字宽。
+  只有新版 Chromium 认，认不了的浏览器维持原状，没有副作用。
+*/
+@supports (text-spacing-trim: space-first) {
+  body {
+    text-spacing-trim: space-first;
+  }
+}
+
+/* 滚动条也算版面的一部分。默认那条冷灰在暖纸上很显眼。 */
+html {
+  scrollbar-color: #d9d3c3 transparent;
+  scrollbar-width: thin;
+}
+
+html::-webkit-scrollbar {
+  width: 11px;
+}
+
+html::-webkit-scrollbar-track {
+  background: #f4f1e7;
+}
+
+html::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: var(--r-pill);
+  background: #d9d3c3;
+  background-clip: content-box;
+}
+
+html::-webkit-scrollbar-thumb:hover {
+  background: #c3bca8;
+  background-clip: content-box;
 }
 
 /* 段落收尾不留孤字。Chrome 117+ / Safari 17.5+ 支持，不支持的浏览器无副作用。 */
@@ -283,7 +348,8 @@ button {
   transition: color 0.16s var(--ease);
 }
 
-/* 当前项一条黄色下划线从左侧展开 —— repair 站的做法，照抄。 */
+/* 当前项一条黄色下划线从左侧展开 —— repair 站的做法，照抄。
+   当前章那一项常亮（data-on 由 useActiveSection 写入），hover 只是预览。 */
 .nav-links a::after {
   content: '';
   position: absolute;
@@ -300,8 +366,14 @@ button {
   color: var(--fg);
 }
 
-.nav-links a:hover::after {
+.nav-links a:hover::after,
+.nav-links a[data-on]::after {
   transform: none;
+}
+
+.nav-links a[data-on] {
+  color: var(--fg);
+  font-weight: 600;
 }
 
 .nav-links .gh {
@@ -336,11 +408,15 @@ button {
 .btn--blue {
   background: var(--brand);
   color: #fff;
-  box-shadow: 0 2px 8px rgba(43, 127, 216, 0.28), 0 10px 24px rgba(43, 127, 216, 0.18);
+  box-shadow: 0 1px 2px rgba(43, 127, 216, 0.2), 0 2px 8px rgba(43, 127, 216, 0.26),
+    0 10px 24px rgba(43, 127, 216, 0.18);
 }
 
 .btn--blue:hover {
   background: var(--brand-deep);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(30, 91, 168, 0.24), 0 6px 14px rgba(30, 91, 168, 0.24),
+    0 16px 34px rgba(30, 91, 168, 0.2);
 }
 
 .btn--ghost {
@@ -352,16 +428,25 @@ button {
 
 .btn--ghost:hover {
   border-color: var(--fg);
+  transform: translateY(-1px);
+  box-shadow: var(--sh-lift);
 }
 
+/* :active 排在 :hover 之后，按下时一定压得回去 */
 .btn:active {
   transform: translateY(1px);
   box-shadow: none;
 }
 
+/* 箭头随按钮一起动。一枚 8px 的位移就够读出「往前走」。 */
 .btn i {
   font-family: var(--font-mono);
   font-style: normal;
+  transition: transform 0.18s var(--ease);
+}
+
+.btn:hover i {
+  transform: translateX(4px);
 }
 
 /* ------------------------------------------------------------------ 排印零件 */
@@ -546,10 +631,10 @@ button {
 .dcard__ghost {
   position: absolute;
   z-index: 0;
-  right: -0.05em;
-  bottom: -0.24em;
+  right: -0.02em;
+  bottom: -0.34em;
   font-family: var(--font-display);
-  font-size: clamp(7rem, 13vw, 11rem);
+  font-size: clamp(6rem, 10vw, 8.5rem);
   font-weight: 400;
   line-height: 1;
   letter-spacing: -0.03em;
@@ -558,21 +643,25 @@ button {
 }
 
 .dcard[data-t='blue'] .dcard__ghost {
-  color: #e2ecfa;
+  color: #eaf1fb;
 }
 
 .dcard[data-t='yellow'] .dcard__ghost {
-  color: #faeec7;
+  color: #fbf3d8;
 }
 
 .dcard[data-t='coral'] .dcard__ghost {
-  color: #fbe3e9;
+  color: #fcecef;
 }
 
 /* 槽位 → 位置。--dx / --rot 只有最前那张非零，由 Deck.tsx 按拖拽距离写入。 */
 .dcard[data-slot='0'] {
   z-index: 4;
   transform: translate3d(var(--dx, 0px), 0, 0) rotate(var(--rot, 0deg));
+}
+
+.dcard[data-slot='0']:hover {
+  box-shadow: var(--sh-lift);
 }
 
 .dcard[data-slot='1'] {
@@ -675,7 +764,7 @@ button {
   gap: clamp(16px, 2vw, 30px);
   margin-top: clamp(18px, 2.2vw, 26px);
   padding-top: 14px;
-  border-top: 1px dashed var(--rule);
+  border-top: 1px dashed var(--rule-soft);
 }
 
 .dcard__nums b {
@@ -826,20 +915,27 @@ button {
 /* ---- 彩色读数卡 ---- */
 
 /*
-  四块彩色读数卡横排。repair 页首屏底下那三块就是这个零件：
-  淡底 + 深色大数字 + 灰标签。不做成同一个灰白卡的网格 —— 那是模板感的来源。
+  四个读数排成**一条**读数带，不是四张卡。
+  repair.88lin.eu.org 的淡底彩色读数块是这套语言里认得出的一件，所以底色留着；
+  但四块等宽卡加间隙并排，就又变成「卡片网格」——正是要避开的那个读法。
+  去掉间隙、共用一个外圆角与一层投影之后，它读作一个仪表条：一个物件，四个字段。
+  中间用 1px 白线分隔，比留空隙干净。
 */
 .stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: clamp(12px, 1.6vw, 20px);
   margin-top: clamp(38px, 6vh, 72px);
+  border-radius: var(--r-card);
+  overflow: hidden;
+  box-shadow: var(--sh-card);
 }
 
 .stat {
   padding: clamp(18px, 2vw, 26px);
-  border-radius: var(--r-card);
-  box-shadow: var(--sh-card);
+}
+
+.stat + .stat {
+  box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.9);
 }
 
 .stat b {
@@ -885,8 +981,10 @@ button {
   color: var(--pop-deep);
 }
 
+/* 读数带是一个整体，末格不能是纯白 —— 那样看起来像带子断在这儿。
+   给一档中性暖灰，色相为零但明度接住前面三格。 */
 .stat[data-t='plain'] {
-  background: #fff;
+  background: #f7f4ec;
 }
 
 .stat[data-t='plain'] b {

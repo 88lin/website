@@ -96,7 +96,7 @@ export function CasePage({ slug }: { slug: string }) {
           ))}
         </div>
 
-        <div className="cpage__flow">
+        <div className="cpage__flow" data-t={tint}>
           {c.sections.map((s, i) => (
             <section className="step" key={s.label} data-stagger>
               <p className="step__k">

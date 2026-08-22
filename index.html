@@ -28,12 +28,12 @@
     <link rel="apple-touch-icon" href="./apple-touch-icon.png?v=10" />
     <link rel="mask-icon" href="./favicon.svg?v=10" color="#2B7FD8" />
     <link rel="manifest" href="./site.webmanifest?v=10" />
-    <!-- v10 起展示字是 Fraunces（两档拉丁子集，共 21 KB），中文全部走系统黑体栈。
-         展示字**不预载**：它排的是标题，font-display: swap 会先用系统字顶上，
-         抢 LCP 带宽换那一点点换字抖动不划算。唯一预载手写体：只有 2 KB 出头，
-         但首屏那句旁批就用它，不预载就会在首屏画完之后才换字，制造全站唯一一处
-         CLS。font 预载必须带 crossorigin，同源也不例外。 -->
-    <link rel="preload" as="font" type="font/woff2" href="./fonts/Caveat.woff2" crossorigin />
+    <!-- v13 起一个字体都不预载。
+         展示字（得意黑）排的是标题，font-display: swap 会先用系统字顶上；
+         抢 LCP 带宽换那一点点换字抖动不划算。中文正文兜底（Noto Sans SC 子集）
+         排在 PingFang SC / 本地思源黑之后，装了的机器一个字节都不下。
+         v10 那份 Caveat 手写体已经删掉：它的子集里只剩十个数字，
+         而版面上早就没有手写旁批了，留着就是白付一次预载。 -->
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="zh_CN" />
     <meta property="og:site_name" content="茉灵智库" />
@@ -63,23 +63,21 @@
   </head>
   <body>
     <!--
-      v12「活字付印 Typecast」方向契约
-      THESIS: 整站是一本被精心保有、并最终付印的研究实验志，八章=八条编号实验
-      （EXP.00~07），数字=带出处的测量值；首页封面钉着图版01「铸字盘」：
-      首屏论点18个字铸成活字排在6×3字盘里，实时3D加同布局SVG降级。
-      拒绝：居中Hero+项目卡网格的模板页。
-      OWN-WORLD: 奶油坐标纸地面（两档纸色+极淡测量网格）；墨蓝唯一结构色；
-      柠檬黄只做荧光笔；珊瑚红做印章与朱笔；深色只做锚点组件。Fraunces拉丁
-      +系统黑体，活字一律衬线，等宽只给测量，Caveat只给旁批。
-      STORY: 访客3秒内建立「此人前端水准极高且大胆」的判断→滚动读实验→
-      在收口章带着邮箱离开。
-      FIRST VIEWPORT: 左=刊头+三行巨字论点（荧光笔+手绘圈+邮箱命令行+CTA），
-      右=手绘虚线框里的活字盘（视差微倾/悬停抬字/字面颜色=标题批注），
-      框角盖核实章。偏心构图，不居中。
-      FORM: 实验志的付印版，铅字是它的第一张图版。
-      FINISH: unreviewed and undocumented is unfinished; this build ends with
-      the finish review, the verdict, DESIGN.md, and every shipping raster
-      carrying its provenance.
+      v13 方向契约
+      THESIS: 一份可核验的工程档案。七章 00–06，每个数字都写了接口出处，
+      折叠起来的「数字出处」随时能展开自查。页面本身就是最重要的那件作品。
+      REJECT: 居中 Hero + 项目卡网格的模板页；千篇一律的卡片矩阵；卡里再套卡。
+      OWN-WORLD: 暖白纸地面两档交替（都近白，加一层极淡纸纹），墨蓝是唯一结构色，
+      柠檬黄只做实心重音块，珊瑚红只做编号与读数。得意黑排大标题，正文走苹果系统字
+      （非 Apple 平台才下发思源黑子集），等宽只给测量与标签。
+      LAYOUT: 每章一种构图，撞型即回炉 —— 开场是可拖的四张案例叠卡、案例是三列镜像
+      账目行、主线是双轴加规格表、作品是横推轨、标本馆是目录加 sticky 旁注、
+      写作是量表、联系是巨号邮箱。
+      MOTION: 一个 .is-in 驱动四层 —— 章头开幕四步、大字 clip-path 遮片揭示、
+      量表按真实比例生长、顶栏进度条走 CSS scroll-timeline。无循环动画。
+      STORY: 三屏内给出三个证据（前端水准 = 这一页本身 / 做过能跑的东西 = 案例
+      与在线小站 / 怎么联系），然后带着邮箱离开。
+      FINISH: 看起来能操作的东西必须真的能操作，且由脚本断言，不靠肉眼看截图。
     -->
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>

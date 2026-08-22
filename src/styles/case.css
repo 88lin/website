@@ -120,7 +120,21 @@
   font-family: var(--font-mono);
   font-size: var(--t-label);
   letter-spacing: 0.12em;
+  font-variant-numeric: tabular-nums;
   color: var(--fg-faint);
+}
+
+/* 三段的编号跟着本案例的色相走，读者一眼能把子页和首页那一行对上。 */
+.cpage__flow[data-t='blue'] .step__k b {
+  color: var(--brand);
+}
+
+.cpage__flow[data-t='yellow'] .step__k b {
+  color: #c08d0a;
+}
+
+.cpage__flow[data-t='coral'] .step__k b {
+  color: var(--pop);
 }
 
 .step__k span {
@@ -157,26 +171,27 @@
 .offs__grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
-  gap: clamp(14px, 2vw, 22px);
+  gap: clamp(22px, 3.2vw, 52px);
   margin-top: clamp(22px, 3vh, 34px);
 }
 
 /*
-  取舍卡用黄色左边：全站黄色只做「注意看这里」的重音，
-  这一块正是要读者停下来的地方。
+  取舍用黄色左边条：全站黄色只做「注意看这里」的重音，这一块正是要读者停下来的地方。
+
+  这里刻意**不做卡**。上一版是两张白卡加投影，两张一样的盒子并排就是首页那个
+  被判掉的卡片网格的翻版。去掉面与影、只留一条实心黄边之后，
+  它和全站「只染边、条与编号」的纪律对上了，读起来也更像书页里的一段批注。
 */
 .off {
-  padding: clamp(20px, 2.2vw, 28px);
-  border-radius: var(--r-card);
-  background: #fff;
+  padding-left: clamp(16px, 2vw, 26px);
   border-left: 4px solid var(--highlight);
-  box-shadow: var(--sh-card);
 }
 
 .off h3 {
   font-family: var(--font-display);
-  font-size: 1.1875rem;
+  font-size: 1.25rem;
   font-weight: 400;
+  line-height: 1.4;
 }
 
 .off p {

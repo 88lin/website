@@ -210,13 +210,8 @@ for (const j of jobs) {
 
 fs.rmSync(tmp, { recursive: true, force: true })
 
-// Caveat 是手写旁批，字表极小且不随文案变，沿用仓库里已有的那份
-const caveat = path.join(OUT, 'Caveat.woff2')
-if (fs.existsSync(caveat)) total += fs.statSync(caveat).size / 1024
-
 console.log('\n产物：')
 report.forEach((r) => console.log(r))
-console.log(`  ${'Caveat.woff2'.padEnd(22)} ${(fs.statSync(caveat).size / 1024).toFixed(1)} KB  (沿用)`)
 console.log(`\n合计 ${total.toFixed(1)} KB / 预算 200 KB`)
 
 /* 预算是硬的。超了就非零退出 —— 字体一旦失控，LCP 跟着走。 */

@@ -130,6 +130,36 @@ export function useStagger<T extends HTMLElement>(step = 55) {
   return ref as RefObject<T>
 }
 
+/**
+ * 当前章。顶栏靠它把「读者现在在哪一章」显示出来。
+ *
+ * rootMargin 上下各收 -45%，观察窗于是压成视口中间那一条窄带：
+ * 同一时刻只有跨过视口中线的那一章在相交，谁是「当前」就没有歧义，
+ * 也不需要读 scrollY 或者比较各章的可见面积。
+ *
+ * 返回 null 表示还没有任何一章跨过中线（页面刚打开、或者停在页脚）。
+ */
+export function useActiveSection(ids: string[]) {
+  const key = ids.join(',')
+  const [active, setActive] = useState<string | null>(null)
+  useEffect(() => {
+    const els = key
+      .split(',')
+      .map((id) => document.getElementById(id))
+      .filter((e): e is HTMLElement => Boolean(e))
+    if (!els.length || !('IntersectionObserver' in window)) return
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) if (e.isIntersecting) setActive(e.target.id)
+      },
+      { rootMargin: '-45% 0px -45% 0px', threshold: 0 },
+    )
+    els.forEach((e) => io.observe(e))
+    return () => io.disconnect()
+  }, [key])
+  return active
+}
+
 /* ------------------------------------------------------------ 懒建 trigger */
 
 type Ctx = { revert: () => void }
