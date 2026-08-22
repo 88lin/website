@@ -1738,12 +1738,7 @@
   display: grid;
   gap: clamp(16px, 2.4vh, 26px);
   justify-items: start;
-  /*
-    底部单独留一条 96–132px 的空带，给右下角那个巨号 @88lin。
-    不留带子的话它只能压在渠道胶囊上，会啃掉「导航站」几个字 ——
-    之前那一版就是这么撞的，所以是用留白解决，不是把字缩到看不见。
-  */
-  padding: clamp(28px, 4vw, 60px) clamp(28px, 4vw, 60px) clamp(96px, 10vw, 132px);
+  padding: clamp(28px, 4vw, 60px);
   border-radius: var(--r-lg);
   background: var(--brand);
   color: #fff;
@@ -1752,25 +1747,28 @@
 }
 
 /*
-  巨号 @88lin。这块来回过三版，结论写清楚：
-    v1 右下切边出血 → 被读成「字看不全」
-    v2 整个删掉     → 右下角一片死蓝，「更加什么都没有了」
-    v3 右侧居中描边 → 描边字不好看，位置也偏高
-  现在是 v4：**回到右下、填色、完整**。用户原话「还不如你之前放下面一点好看，
-  只要显示得全就行」—— 那就按这个来，靠上面那条底部空带保证它不压胶囊。
-  填色用低透明度的白：饱和蓝面上压深色会发脏，这条和投影那条纪律是一致的。
+  巨号 @88lin —— 它是**水印**，不是一个单独展示的元素。这块来回过四版，结论写在这里：
+    v1 右下切边出血     → 被读成「字看不全」
+    v2 整个删掉         → 右下角一片死蓝，「更加什么都没有了」
+    v3 右侧居中 + 描边  → 描边字不好看，位置偏高
+    v4 缩小 + 底部留空带 → 「导航站那一排为什么移到上面，留这么多空白干嘛」
+  v5（现在）：回到大号、填色、压在内容后面、**不为它留任何空间**。
+  用户原话「那个 @88lin 相当于水印，而不是单独显示」—— 水印的定义就是这样：
+  它跟渠道胶囊那一排在同一片区域里重叠，靠 z-index 退到后面，靠低透明度让位，
+  绝不把内容挤走。同时整个在块内，不切边（v1 的毛病只在切边）。
+  填色用低透明度的白：饱和蓝面上压深色会发脏，这条和投影那条纪律一致。
 */
 .contact__ghost {
   position: absolute;
   z-index: 0;
-  right: 26px;
-  bottom: 18px;
+  right: 24px;
+  bottom: 6px;
   font-family: var(--font-display);
-  font-size: clamp(2.75rem, 5.4vw, 4.5rem);
+  font-size: clamp(4rem, 9.6vw, 8.75rem);
   font-weight: 400;
-  line-height: 0.86;
-  letter-spacing: -0.01em;
-  color: rgba(255, 255, 255, 0.16);
+  line-height: 0.84;
+  letter-spacing: -0.02em;
+  color: rgba(255, 255, 255, 0.13);
   pointer-events: none;
   user-select: none;
 }
