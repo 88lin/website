@@ -96,7 +96,19 @@ ok(og === desc, 'og:description 与 description 一致')
   已知旧值黑名单。每一条都对应一次真实事故，删任何一条前先想清楚为什么。
   注释里也不许留 —— 会 view-source 的正是这个站的目标读者。
 */
-const STALE = ['4,764', '4,658', '24 个原创', '1,794', '2026.08.16', '2026.08.20', 'Fraunces', 'Caveat']
+const STALE = [
+  '4,764',
+  '4,791', // 08-21 那次的 Σstar
+  '4,658',
+  '4,669', // 08-21 那次的 video_vip
+  '24 个原创',
+  '1,794',
+  '2026.08.16',
+  '2026.08.20',
+  '2026.08.21',
+  'Fraunces',
+  'Caveat',
+]
 for (const s of STALE) {
   const hit = htmls.filter(([, h]) => h.includes(s)).map(([f]) => f)
   ok(hit.length === 0, `无旧值「${s}」${hit.length ? ' → ' + hit.join(', ') : ''}`)

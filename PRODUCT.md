@@ -27,10 +27,11 @@
 2. 他真的把 AI/Agent 做成过能跑的东西吗？（案例与在线小站）
 3. 怎么联系他？（邮箱 / GitHub / 渠道）
 
-## 必须讲真的事实（2026-08-21 实测）
+## 必须讲真的事实（2026-08-23 实测）
 
-- GitHub @88lin：150 followers · 25 个原创仓库（公开共 106，另有 81 个 fork）· Σstar 4,791 · Σfork 509
-- video_vip：4,669★ / 476 fork，2023 起持续维护，18 路解析接口、22 站点适配
+- GitHub @88lin：150 followers · 25 个原创仓库（公开共 106，另有 81 个 fork）· Σstar 4,821 · Σfork 513
+- video_vip：4,686★ / 477 fork，2023 起持续维护，16 路解析源、22 条站点适配（v3.1.15 源码计数）
+- 未上站的缺口：workbuddy-auto-signin 有 29★，按 star 排是第三名，但站上七个作品里没有它
 - 导航站收录 40 个在线小站（特效/工具/内容/组件四类）
 - 博客 blog.88lin.eu.org：56 篇 / 建站 1,795 天 / 27 个标签
 - 四个深度案例：lofi-radio-web、computer-repair-skill、facetmark、video_vip

@@ -84,13 +84,13 @@ export const cases: CaseStudy[] = [
       },
     ],
     results: [
-      { value: '89', label: 'GitHub Star' },
+      { value: '90', label: 'GitHub Star' },
       { value: '23', label: 'Fork' },
       { value: '21', label: '精选电台' },
       { value: '0', label: '注册步骤' },
     ],
     provenance: [
-      { value: '89 Star / 23 Fork', from: 'GitHub API：GET /repos/88lin/lofi-radio-web，2026-08-21' },
+      { value: '90 Star / 23 Fork', from: 'GitHub API：GET /repos/88lin/lofi-radio-web，2026-08-23' },
       { value: '21 精选电台', from: 'README 功能特性表：涵盖 Lofi / Chillhop / Jazz / Classical / Hip-Hop / Ambient' },
       { value: '5 个单键快捷键', from: 'README 快捷键表：Space / ← / → / M / T' },
       { value: '0 注册步骤', from: 'lofi.88lin.eu.org 无账号体系，打开即播' },
@@ -145,7 +145,7 @@ export const cases: CaseStudy[] = [
       { value: '62 专项 Playbook', from: '仓库 playbooks 目录文件数与路由索引条目数' },
       { value: '3 覆盖操作系统', from: 'README 声明的 Windows / macOS / Linux 三条排查路径' },
       { value: 'CI 结构校验', from: '仓库 GitHub Actions 工作流：路由表与 Playbook 结构校验' },
-      { value: '8 Star / 1 Fork', from: 'GitHub API：GET /repos/88lin/computer-repair-skill，2026-08-21' },
+      { value: '8 Star / 1 Fork', from: 'GitHub API：GET /repos/88lin/computer-repair-skill，2026-08-23' },
     ],
     link: 'https://repair.88lin.eu.org',
     linkLabel: '官方网站',
@@ -194,10 +194,10 @@ export const cases: CaseStudy[] = [
       { value: '1', label: 'SQLite 文件' },
     ],
     provenance: [
-      { value: '1,524 测试用例', from: 'facetmark README Tests 徽章与 tests/ 目录，2026-08-21' },
+      { value: '1,524 测试用例', from: 'facetmark README Tests 徽章与 tests/ 目录，2026-08-23' },
       { value: '融合 -5.4pp', from: 'README「What Is Actually Measured」：配置 B 对配置 A 的 W1 查询集实测' },
       { value: '4 条索引 / RRF 融合', from: 'README「How It Works」：lex_tri / lex_seg / content / intent + context' },
-      { value: '0 Star / 1 Fork', from: 'GitHub API：GET /repos/88lin/facetmark，2026-08-21' },
+      { value: '0 Star / 1 Fork', from: 'GitHub API：GET /repos/88lin/facetmark，2026-08-23' },
     ],
     link: 'https://88lin.github.io/facetmark/',
     linkLabel: '项目主页',
@@ -214,7 +214,7 @@ export const cases: CaseStudy[] = [
     role: '独立开发与长期维护',
     stackLine: 'JavaScript · 油猴脚本 · v3.1.15',
     summary:
-      '2023 年写的用户脚本，现在 4,669 star，是我维护时间最长的一个。它做的事很朴素：在视频站的播放页左上角挂一枚可拖动的悬浮按钮，点开选一路解析源，把当前播放地址交给它，换回一个能播的播放器容器，并按站点各自的规则清掉会员遮罩与弹层。',
+      '2023 年写的用户脚本，现在 4,686 star，是我维护时间最长的一个。它做的事很朴素：在视频站的播放页左上角挂一枚可拖动的悬浮按钮，点开选一路解析源，把当前播放地址交给它，换回一个能播的播放器容器，并按站点各自的规则清掉会员遮罩与弹层。',
     sections: [
       {
         label: '背景',
@@ -226,7 +226,7 @@ export const cases: CaseStudy[] = [
       },
       {
         label: '怎么解',
-        body: '解析源做成一张可切换的清单（当前 16 路），失效就换一路、跟着版本更新，不绑死一家；脚本自己不判断谁快谁好，判断权交给此刻能播的那一路。站点适配不用通用选择器，22 条各写一份自己的 container 与 displayNodes / cleanupNodes，改一个站不牵动其余。入口用 35 条 @include 同时覆盖桌面与移动端域名。按钮可以右键拖到任意位置，因为不同站点的控制条位置不一样，固定坐标注定挡住某个站。另外提供一个不装脚本也能用的网页版。README 里篇幅最长的一节不是实现，是「怎么装、为什么不生效、建议配 AdGuard」—— 一个 4,669 star 的脚本，长期成本主要花在兼容性与用户支持上，这一点写在明面上比藏起来有用。',
+        body: '解析源做成一张可切换的清单（当前 16 路），失效就换一路、跟着版本更新，不绑死一家；脚本自己不判断谁快谁好，判断权交给此刻能播的那一路。站点适配不用通用选择器，22 条各写一份自己的 container 与 displayNodes / cleanupNodes，改一个站不牵动其余。入口用 35 条 @include 同时覆盖桌面与移动端域名。按钮可以右键拖到任意位置，因为不同站点的控制条位置不一样，固定坐标注定挡住某个站。另外提供一个不装脚本也能用的网页版。README 里篇幅最长的一节不是实现，是「怎么装、为什么不生效、建议配 AdGuard」—— 一个 4,686 star 的脚本，长期成本主要花在兼容性与用户支持上，这一点写在明面上比藏起来有用。',
       },
     ],
     tradeoffs: [
@@ -240,13 +240,13 @@ export const cases: CaseStudy[] = [
       },
     ],
     results: [
-      { value: '4,669', label: 'GitHub Star' },
+      { value: '4,686', label: 'GitHub Star' },
       { value: '476', label: 'Fork' },
       { value: '16', label: '解析源' },
       { value: '22', label: '站点适配' },
     ],
     provenance: [
-      { value: '4,669 Star / 476 Fork', from: 'GitHub API：GET /repos/88lin/video_vip，2026-08-21' },
+      { value: '4,686 Star / 477 Fork', from: 'GitHub API：GET /repos/88lin/video_vip，2026-08-23' },
       { value: '16 路解析源', from: 'video_vip.user.js v3.1.15 里 ?url= 形式的解析地址计数' },
       { value: '22 条站点适配', from: '同一文件的 host 配置条目数，覆盖 13 个独立域名，含桌面与移动端' },
       { value: '35 条 @include', from: '同一文件脚本头，覆盖桌面与移动端入口' },

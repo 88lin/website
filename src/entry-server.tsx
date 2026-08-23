@@ -10,7 +10,7 @@ export { ROUTES }
  * 首页的 description / og:description。
  *
  * 由 site.ts 现算，不写死在 index.html 里 —— v12 那份写死的文案里还留着
- * 「24 个原创开源仓库，累计 4,764 star」，而页面上早就是 25 个 / 4,791 了。
+ * 「24 个原创开源仓库，累计 4,764 star」，而页面上的数早就往前走了。
  * 分享卡片和页面对不上，比没有描述更糟。prerender.mjs 会把这句换进 <head>。
  */
 export const HOME_DESC =

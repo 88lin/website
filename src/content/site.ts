@@ -1,7 +1,7 @@
 /**
  * 全站唯一数据源。
  *
- * 所有数字都能被第三方核验，核实时间 2026-08-21：
+ * 所有数字都能被第三方核验，核实时间 2026-08-23：
  *  - GitHub REST API  /users/88lin 与 /users/88lin/repos?per_page=100（star / fork / 仓库数 / followers）
  *  - blog.88lin.eu.org 首页统计条与标签云（文章数 / 建站天数 / 标签计数）
  *  - video_vip.user.js v3.1.15（解析源数 / 站点适配条数 / @include 条数，逐行数出来的）
@@ -11,7 +11,7 @@
  * 刷新方式见 README「数据刷新流程」。
  */
 
-export const AS_OF = '2026.08.21'
+export const AS_OF = '2026.08.23'
 
 /* ---------------------------------------------------------------- 章节 */
 
@@ -107,13 +107,13 @@ export const metricsIntro = {
 
 export const metrics: Metric[] = [
   {
-    value: '4,791',
+    value: '4,821',
     label: '累计 Star',
     sub: '25 个原创仓库合计',
     source: 'GET /users/88lin/repos → Σ stargazers_count (fork=false)',
   },
   {
-    value: '509',
+    value: '513',
     label: '被 Fork',
     sub: '有人真的拿去改了',
     source: 'GET /users/88lin/repos → Σ forks_count (fork=false)',
@@ -290,8 +290,8 @@ export const projects: Project[] = [
     blurb:
       '2023 年写的油猴脚本，现在是我 star 最多的仓库。在视频站播放页挂一枚可拖动的按钮，把播放地址交给第三方解析源换回能播的播放器。当前 16 路解析源可随时切换，22 条站点适配各写自己的容器与遮罩清理规则。',
     stack: ['JavaScript', '油猴脚本', '多端适配'],
-    stars: 4669,
-    forks: 476,
+    stars: 4686,
+    forks: 477,
     state: 'maintained',
     live: 'https://88lin.github.io/vip/',
     repo: 'https://github.com/88lin/video_vip',
@@ -306,7 +306,7 @@ export const projects: Project[] = [
     blurb:
       'macOS 灵动岛式播放器可拖到任意位置，21 个精选电台，打开即听，不用注册也不用下载。五个单键快捷键、专注计时、睡眠定时 15 分钟到 8 小时，支持 PWA 安装。',
     stack: ['Next.js 16', 'React', 'TypeScript', 'PWA'],
-    stars: 89,
+    stars: 90,
     forks: 23,
     state: 'live',
     live: 'https://lofi.88lin.eu.org',
