@@ -13,7 +13,9 @@
     "static": "node scripts/static.mjs",
     "verify": "node scripts/verify.mjs",
     "shots": "node scripts/shots.mjs",
-    "icons": "python scripts/mkicon.py"
+    "icons": "python scripts/mkicon.py",
+    "preview:build": "node scripts/preview-build.mjs",
+    "preview:all": "node scripts/preview-all.mjs"
   },
   "dependencies": {
     "gsap": "^3.13.0",
