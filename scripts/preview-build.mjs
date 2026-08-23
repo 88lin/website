@@ -22,6 +22,7 @@ const OUT = path.join(ROOT, '.shots/preview')
 
 /** 要对照的分支。短名同时是 URL 里的那一段。 */
 const BRANCHES = [
+  ['v18', 'v18-modern'],
   ['v13', 'v13-dualread'],
   ['v15', 'v15-ridge'],
   ['v16', 'v16-spread'],
