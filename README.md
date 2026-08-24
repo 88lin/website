@@ -3,7 +3,7 @@
 **v13** — 一份可核验的工程档案。七章 00–06，页面上每个数字都写了接口出处，折起来的「数字出处」随时能展开自查。页面本身就是最重要的那件作品。
 
 线上：https://88lin.github.io/website/
-设计决策与踩坑记录：[DESIGN.md](./DESIGN.md) ｜ 产品事实基线：[PRODUCT.md](./PRODUCT.md)
+设计决策与踩坑记录：[DESIGN.md](./DESIGN.md) ｜ 产品事实基线：[PRODUCT.md](./PRODUCT.md) ｜ **接手先读：[HANDOFF.md](./HANDOFF.md)**
 
 ---
 
