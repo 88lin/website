@@ -1,34 +1,44 @@
 #!/usr/bin/env python3
-"""v10 站点图标全套：favicon.svg / favicon.ico / PNG 各尺寸 / site.webmanifest。
+"""站点图标全套：favicon.svg / favicon.ico / PNG 各尺寸 / site.webmanifest。
 
-跑法：/opt/conda/bin/python scripts/mkicon.py（依赖 PIL）
-
-—— 为什么这次要重做整套，而不是又换一次图形 ——
-v1..v9 每一版都换了图形，但用户始终看到旧图标。真因不是图形没变，是**站点从来
-没有过 favicon.ico**：`https://88lin.github.io/favicon.ico` 与
-`.../website/favicon.ico` 都是 404。浏览器在标签栏、书签、历史记录里会绕过
-<link> 直接去要根目录的 /favicon.ico，要不到就长期吃缓存里的旧图。所以这一版的
-重点是**补齐 .ico 兜底 + 全尺寸 PNG + ?v=10 破缓存**，图形只是顺带换。
+跑法：python scripts/mkicon.py（只依赖 PIL）
 
 —— 图形 ——
-64 单位画布，rx=14 奶油圆角方（与参考站 mydesign-system 的图标同一套几何语言）。
-与参考站的区别：参考站是三条平齐竖块（60/30/10 宽），本站做**错位咬合 + 三边出血**：
-蓝主块下沉、从底边出血；黄窄条从顶边出血、左缘压进蓝块；红短块从右下角出血。
-三块各咬住一条不同的边（左下 / 上 / 右下），谁都不悬在中间。
+奶油圆角方 + 一条竖黄条 + 三条递增的圆头横条（蓝 / 深蓝 / 珊瑚）。
 
-四条约束，全是为 16px 服务的（选型时渲染了 A/B/C 三稿逐张比对，这是胜出的一稿）：
-  1) 只用三块，不用三条。16px 下 4 单位宽的竖条只剩 1px，会被亚像素抹平。
-  2) 黄块必须**压在蓝块上**，不能浮在奶油里。黄对奶油只有 1.4:1，孤立摆放在
-     浅色标签栏里等于消失；压住蓝块就永远有一条高反差边界撑住形状。
-  3) 黄块还必须**咬住顶边**。早一稿让它悬在 y=10..40，16px 下上下都是奶油，
-     那条黄就剩三个像素、糊成一团；顶边出血之后它有了一条硬边，形状立住。
-  4) 蓝块与红块之间留 6 单位（16px 下 1.5px）奶油通道，否则两块深色在小尺寸
-     会糊成一坨。
+**这枚图形是用户指定的**：直接取自他自己的 repair.88lin.eu.org
+（`assets/img/favicon.svg`），几何与配色一字不改，只把底色对齐本站的
+地面色 #FDFCF8（原图 #fefcf6，差不到一个色阶，肉眼无别，但能和
+index.html 的 theme-color 对上）。
+
+—— 之前两版错在哪（留着，别再犯）——
+· 三块抽象色块错位咬合、三边出血。判词「太难看」。
+· 柠檬黄底 + 墨色「88」（得意黑）。判词「更加难看了，超级无敌丑」。
+· 奶油底 + 珊瑚爪印（从他博客那枚「爪爪雪糕」扁平化而来）。判词「还是不好看」。
+
+三次的共同点不是审美能力，是**我一直在自己造方向**。第三次虽然素材取自他的站，
+但「扁平化成爪印」这一步仍然是我的发明。真正该做的是最省事的那件：
+**他明确说好看的东西，直接用。** 这一版就是这么来的。
+
+—— 16px ——
+左边那条竖黄条在 16px 下约 1.5px 宽，靠它和三条横条的**长度递增**认形状，
+不靠细节。三条横条与竖条之间留 6 单位（16px 下 1.5px）的奶油通道，
+否则小尺寸下会糊成一坨。
+
+—— 缓存 ——
+浏览器在标签栏/书签/历史里会绕过 <link> 直接要根目录的 /favicon.ico，
+要不到就一直吃缓存里的旧图。所以：
+  · favicon.ico 必须存在
+  · 换图标时 index.html 里的 ?v= 必须跟着涨
+  · https://88lin.github.io/favicon.ico 不在本仓库控制范围内，
+    那一份要在 88lin/88lin.github.io 里自己放
 """
 
 from __future__ import annotations
 
 import json
+import struct
+from io import BytesIO
 from pathlib import Path
 
 from PIL import Image, ImageDraw
@@ -36,64 +46,89 @@ from PIL import Image, ImageDraw
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "public"
 
-CREAM = "#FEFCF6"
-BLUE = "#2B7FD8"
+CREAM = "#FDFCF8"
 YELLOW = "#F4D758"
-RED = "#E84A5F"
+BLUE = "#2B7FD8"
+BLUE_DEEP = "#1E5BA8"
+CORAL = "#E84A5F"
 
-# 64 单位坐标系下的三块。(x, y, w, h, 颜色)，按绘制顺序 —— 黄压蓝、红压黄。
-BLOCKS = [
-    (10, 22, 26, 42, BLUE),    # 主块：下沉，底边出血
-    (30, 0, 12, 40, YELLOW),   # 窄条：顶边出血，左缘咬进蓝块
-    (42, 34, 22, 30, RED),     # 短块：右下角出血
+RADIUS = 14 / 64   # 圆角占边长的比例
+SS = 8             # 超采样倍率
+
+# 64 单位坐标系下的四条。(x, y, w, h, 圆角, 颜色)，与 repair 站那份逐字一致。
+BARS = [
+    (11, 15, 6, 34, 3, YELLOW),        # 竖条：贯穿三行
+    (23, 15, 16, 9, 4.5, BLUE),        # 横条一
+    (23, 27.5, 24, 9, 4.5, BLUE_DEEP), # 横条二
+    (23, 40, 30, 9, 4.5, CORAL),       # 横条三：最长，收在珊瑚
 ]
-RADIUS = 14  # 64 单位下的圆角
 
 
 def paint(px: int, pad: float = 0.0, rounded: bool = True) -> Image.Image:
-    """把 64 单位的构图渲染成 px×px。
+    """渲染 px×px 的图标。
 
-    pad 是安全区内缩比例（0.16 = 四周各留 16%），只给 maskable 图标用。
-    rounded=False 时不做圆角遮罩，底色铺满整个方形 —— iOS 与 Android 会自己
-    套形状遮罩，我们再套一层就会在角上留一圈奶油描边。
+    pad 是安全区内缩比例（0.18 = 四周各留 18%），只给 maskable 用。
+    rounded=False 时底色铺满方形 —— iOS 与 Android 会自己套形状遮罩，
+    我们再套一层就会在角上留一圈浅色描边。
     """
-    ss = 4  # 超采样倍率
-    n = px * ss
+    n = px * SS
     img = Image.new("RGBA", (n, n), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
-
-    inner = n * (1 - 2 * pad)
-    k = inner / 64.0          # 单位 → 像素
-    off = n * pad
-
     if rounded:
-        d.rounded_rectangle([0, 0, n - 1, n - 1], radius=int(RADIUS * (n / 64.0)), fill=CREAM)
+        d.rounded_rectangle([0, 0, n - 1, n - 1], radius=int(RADIUS * n), fill=CREAM)
     else:
         d.rectangle([0, 0, n - 1, n - 1], fill=CREAM)
 
-    # 出血块要先画到一张同尺寸的图层上，再用底形状的 alpha 做遮罩，
-    # 否则超出边界的部分会盖掉圆角。
-    layer = Image.new("RGBA", (n, n), (0, 0, 0, 0))
-    ld = ImageDraw.Draw(layer)
-    for x, y, w, h, color in BLOCKS:
-        ld.rectangle([off + x * k, off + y * k, off + (x + w) * k - 1, off + (y + h) * k - 1], fill=color)
-    img.alpha_composite(Image.composite(layer, Image.new("RGBA", (n, n), (0, 0, 0, 0)),
-                                        img.getchannel("A")))
-
+    inner = n * (1 - 2 * pad)
+    k = inner / 64.0
+    off = n * pad
+    for x, y, w, h, r, color in BARS:
+        d.rounded_rectangle(
+            [off + x * k, off + y * k, off + (x + w) * k - 1, off + (y + h) * k - 1],
+            radius=r * k,
+            fill=color,
+        )
     return img.resize((px, px), Image.LANCZOS)
 
 
-SVG = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="88lin">
+def write_ico(path: Path, frames: list[Image.Image]) -> None:
+    """PNG-in-ICO。6 字节 ICONDIR + 每帧 16 字节 ICONDIRENTRY + 各帧数据。
+
+    宽高字段 0 表示 256。Vista 起的 Windows 与所有现代浏览器都认 PNG 帧。
+    自己写而不用 PIL 的 save(sizes=[...])，是为了每帧独立可控 ——
+    万一哪天 16px 要换一张简化版，改这里就行。
+    """
+    blobs = []
+    for im in frames:
+        buf = BytesIO()
+        im.save(buf, format="PNG", optimize=True)
+        blobs.append(buf.getvalue())
+
+    offset = 6 + 16 * len(frames)
+    out = bytearray(struct.pack("<HHH", 0, 1, len(frames)))
+    for im, blob in zip(frames, blobs):
+        w = 0 if im.width >= 256 else im.width
+        h = 0 if im.height >= 256 else im.height
+        out += struct.pack("<BBBBHHII", w, h, 0, 0, 1, 32, len(blob), offset)
+        offset += len(blob)
+    for blob in blobs:
+        out += blob
+    path.write_bytes(bytes(out))
+
+
+def build_svg() -> str:
+    bars = "\n".join(
+        f'  <rect x="{x:g}" y="{y:g}" width="{w:g}" height="{h:g}" rx="{r:g}" fill="{c}"/>'
+        for x, y, w, h, r, c in BARS
+    )
+    return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="茉灵智库 88lin">
   <title>茉灵智库 · 88lin</title>
-  <defs><clipPath id="c"><rect width="64" height="64" rx="{RADIUS}"/></clipPath></defs>
-  <g clip-path="url(#c)">
-    <rect width="64" height="64" fill="{CREAM}"/>
-""" + "".join(
-    f'    <rect x="{x}" y="{y}" width="{w}" height="{h}" fill="{c}"/>\n'
-    for x, y, w, h, c in BLOCKS
-) + """  </g>
+  <!-- 取自 repair.88lin.eu.org 的 assets/img/favicon.svg，几何与配色不改。 -->
+  <rect width="64" height="64" rx="{RADIUS * 64:g}" fill="{CREAM}"/>
+{bars}
 </svg>
 """
+
 
 MANIFEST = {
     "name": "茉灵智库 · 88lin",
@@ -101,6 +136,7 @@ MANIFEST = {
     "start_url": "./",
     "scope": "./",
     "display": "standalone",
+    # 主题色跟着页面地面色，不是图标色 —— 它染的是移动端地址栏，要和页面接得上。
     "theme_color": CREAM,
     "background_color": CREAM,
     "icons": [
@@ -114,38 +150,52 @@ def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     made: list[tuple[str, int]] = []
 
-    (OUT / "favicon.svg").write_text(SVG, encoding="utf-8")
-    made.append(("favicon.svg", (OUT / "favicon.svg").stat().st_size))
+    def note(name: str) -> None:
+        made.append((name, (OUT / name).stat().st_size))
 
-    # .ico：交给 PIL 生成 16/32/48 三帧。源图给 96 —— 96÷2=48、96÷3=32、96÷6=16，
-    # 三档全是整数倍下采样，不会在小尺寸上糊边。
-    ico_src = paint(96)
-    ico_src.save(OUT / "favicon.ico", format="ICO", sizes=[(16, 16), (32, 32), (48, 48)])
-    made.append(("favicon.ico", (OUT / "favicon.ico").stat().st_size))
+    (OUT / "favicon.svg").write_text(build_svg(), encoding="utf-8")
+    note("favicon.svg")
+
+    write_ico(OUT / "favicon.ico", [paint(16), paint(32), paint(48)])
+    note("favicon.ico")
 
     for px, name in [(16, "favicon-16.png"), (32, "favicon-32.png"), (192, "icon-192.png")]:
         paint(px).save(OUT / name, optimize=True)
-        made.append((name, (OUT / name).stat().st_size))
+        note(name)
 
     # apple-touch-icon：**不留透明角**。iOS 会自己套圆角遮罩，底下透明的话
     # 主屏上会露出一圈黑边。所以底色铺满方形。
     paint(180, rounded=False).save(OUT / "apple-touch-icon.png", optimize=True)
-    made.append(("apple-touch-icon.png", (OUT / "apple-touch-icon.png").stat().st_size))
+    note("apple-touch-icon.png")
 
-    # maskable：Android 会把图标裁成圆/水滴/方角等各种形状，只保证中间 80% 的
-    # 内切圆不被裁。所以这一档四周内缩 18%，且同样不做圆角。
+    # maskable：Android 会把图标裁成圆 / 水滴 / 方角等各种形状，只保证中间 80%
+    # 的内切圆不被裁。所以这一档四周内缩 18%，且同样不做圆角。
     paint(512, pad=0.18, rounded=False).save(OUT / "icon-512.png", optimize=True)
-    made.append(("icon-512.png", (OUT / "icon-512.png").stat().st_size))
+    note("icon-512.png")
 
     (OUT / "site.webmanifest").write_text(
         json.dumps(MANIFEST, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
-    made.append(("site.webmanifest", (OUT / "site.webmanifest").stat().st_size))
+    note("site.webmanifest")
+
+    # 自检：.ico 三帧齐全；16px 那帧四种颜色都还在（说明没被降采样吃掉）
+    with Image.open(OUT / "favicon.ico") as ico:
+        sizes = sorted(ico.info["sizes"])
+        assert sizes == [(16, 16), (32, 32), (48, 48)], sizes
+
+    px16 = paint(16).convert("RGB")
+    def near(p, hexs, tol=60):
+        want = tuple(int(hexs[i:i + 2], 16) for i in (1, 3, 5))
+        return sum(abs(a - b) for a, b in zip(p, want)) < tol
+    for name, hexs in [("黄", YELLOW), ("蓝", BLUE), ("深蓝", BLUE_DEEP), ("珊瑚", CORAL)]:
+        hit = sum(1 for p in px16.getdata() if near(p, hexs))
+        assert hit >= 2, f"16px 帧里找不到{name}条（只有 {hit} 个像素）"
 
     w = max(len(n) for n, _ in made)
     for name, size in made:
         print(f"{name:<{w}}  {size:>7,} B")
     print(f"{'合计':<{w}}  {sum(s for _, s in made):>7,} B")
+    print(f"\n.ico 三帧 {sizes}；16px 帧四条颜色齐全。")
 
 
 if __name__ == "__main__":
