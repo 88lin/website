@@ -1,41 +1,11 @@
-/* ============================================================================
-   茉灵智库 v13 · 全站视觉系统
-   ----------------------------------------------------------------------------
-   这一版的审美基准不是我挑的，是从用户点名「能看上」的四个页面里量出来的：
-   repair.88lin.eu.org、blog.88lin.eu.org/book、mydesign-system 的
-   components-preview 与 demo-readme-tutorial。四个页共有的语言：
-
-   1) 暖调近白的底（不是冷灰紫），白卡 + 圆角 + 柔影，用得大方
-   2) 超粗展示字排中文大标题，紧字距；不是细字重
-   3) 实心圆角**黄块**压在一两个关键字上 —— 是块，不是细细一道荧光笔
-   4) 小号灰色大写拉丁 kicker，宽字距
-   5) 蓝色一行小标题 + 手绘虚线下划线
-   6) 蓝色实心胶囊 + 白色描边胶囊，两个一组
-   7) 彩色数字（蓝 / 黄 / 珊瑚）配灰标签
-   8) 右侧一个有内容有颜色的视觉主体，周围挂白色悬浮胶囊标签
-
-   前两次返工的教训写在这里，别再犯：
-   - 细字重 + 发丝线 + 无影的平面版式 → 读作「寡淡」，不是「干净」
-   - 冷灰紫底 + 我自己发明的抽象 3D 形体 → 和这套语言没有血缘关系
-   - 强调色要够实。淡淡一道黄压在浅底上等于没画
-
-   继续生效：颜色只从 palettes.css 的语义令牌取；禁 color-mix()；
-   正文 ≥ 4.5:1；无 bounce / 无限循环动画。
-   ========================================================================== */
+/* 令牌、复位、顶栏、按钮、排印零件、00 开场、动效。
+   视觉基准与各条规矩的来由见 DESIGN.md。 */
 
 @import './palettes.css';
 @import './sections.css';
 @import './case.css';
 
 /* ------------------------------------------------------------------ 字体 */
-/*
-   展示字：得意黑 SmileySans（OFL，atelier-anchor）。只排大标题与章节标题，
-   按站内实际用字子集化，235 字 25.9 KB。它本身是带倾斜的海报体，
-   不做反向纠正 —— 那个斜度就是它的性格。
-
-   正文与 UI：苹果系统字，不下发任何文件。Apple 设备零字体请求，
-   非 Apple 平台按栈回落（Noto Sans SC 排在系统黑体之前，它就是思源黑）。
-*/
 
 @font-face {
   font-family: 'Smiley Display';
@@ -45,17 +15,8 @@
   font-display: swap;
 }
 
-/*
-  正文兜底字体。两档定轴子集（wght 400 / 600），由 scripts/fonts.mjs 采真实
-  用字后生成，零缺字校验过。
-
-  摆放位置是有讲究的：它排在 'PingFang SC' 与 'Noto Sans SC' **之后**。
-   · Apple 设备 → PingFang SC 命中，这两个文件一个字节都不下载
-   · Windows/Linux 装了思源黑（Noto Sans SC）→ 用本地那份，也不下载
-   · 都没有 → 才下发这里的子集
-  于是「Windows 上看着和 Mac 一致」这件事成立，代价只落在真正需要的机器上。
-  一律 swap，不预加载：预加载上百 KB 的 CJK 会直接把 LCP 拖过 2.5s。
-*/
+/* 正文兜底。刻意排在 PingFang SC / Noto Sans SC 之后：装了本地中文字的机器
+   一个字节都不下。子集由 scripts/fonts.mjs 生成，改文案要重跑。 */
 @font-face {
   font-family: 'Noto Sans SC Sub';
   src: url('/fonts/NotoSansSC-400.woff2') format('woff2');
@@ -105,10 +66,8 @@
   --r-lg: 20px;
   --r-pill: 999px;
 
-  /* 柔影用得大方，但一律染墨色，禁纯黑。
-     一条硬规矩：墨影只准落在纸面上。落到饱和色面（蓝卡、黄卡）上会发脏发黑，
-     放大看就是一块硬边黑方块 —— 上一版首屏的「黑色四方形阴影」就是这么来的。
-     饱和面上的投影必须用那个面自己的色相，见 .contact / .thesis / .btn--blue。 */
+  /* 墨影只准落在纸面上。饱和色面上的投影必须用那个面自己的色相
+     （见 .contact / .thesis / .btn--blue），否则会发脏发黑。 */
   --sh-card: 0 1px 2px rgba(26, 26, 46, 0.04), 0 2px 10px rgba(26, 26, 46, 0.045),
     0 12px 32px rgba(26, 26, 46, 0.06);
   --sh-lift: 0 2px 4px rgba(26, 26, 46, 0.05), 0 8px 18px rgba(26, 26, 46, 0.07),
@@ -120,15 +79,8 @@
   --rule: #e5e0d3;
   --rule-soft: #efebe0;
 
-  /*
-    材质。白卡摆在暖白纸上，如果只有一条边框加一层投影，它读起来是
-    「一个白矩形」而不是「一张纸」。补两样就够：
-      --lit   上缘一道 1px 的纯白高光 + 下缘一道极淡的暗线，模拟从上方来的光
-      --face  竖向 0.6% 的明度落差，让面本身有一点弧度
-    两样都极淡（高光 100% 白但只有 1px，渐变落差不到两个色阶），
-    放大看几乎看不见，但整页的「薄」就是这么补起来的。
-    刻意不用大面积渐变：那会立刻变成 v9 被判掉的那种「渐变底」。
-  */
+  /* --lit 上缘高光 + 下缘暗线（光从上方来），--face 竖向 0.6% 明度落差。
+     两样都极淡，但白卡少了它们就读作「一个白矩形」而不是「一张纸」。 */
   --lit: inset 0 1px 0 #fff, inset 0 -1px 0 rgba(26, 26, 46, 0.035);
   --face: linear-gradient(#fff, #fcfbf6);
 
@@ -159,17 +111,8 @@ html {
   }
 }
 
-/*
-  纸纹。整页底色是一张暖白纸，加一层极淡的噪点之后它才真的读作「纸」，
-  而不是「#fdfcf8 这个色值」。
-
-  做法上刻意不用 fixed 覆盖层 + mix-blend-mode：那会给整页建一个混合上下文，
-  滚动时每帧都要重新合成。这里就是 body 与白色章节各铺一张 140px 的 SVG 噪点砖，
-  浏览器只栅格化一次，之后纯平铺，滚动零成本。
-  seed 写死，所以每次构建、每台机器上的纹理完全一样。
-  强度实测：空白处灰度 stdev 1.65（239–252），这是「纸的肌理」；
-  再往上加就开始读作「屏幕脏了」。
-*/
+/* 纸纹用平铺的 SVG 噪点砖，**不用** fixed 覆盖层 + mix-blend-mode ——
+   后者会给整页建混合上下文，滚动每帧重新合成。 */
 body {
   margin: 0;
   /* 暖调近白。比 A 组的 --cream 再干净一档：那四个页读起来是「白纸」，
@@ -188,13 +131,8 @@ body {
   overflow-x: hidden;
 }
 
-/*
-  中文正文加一点字距。PingFang / 思源黑在 17px 上默认贴得偏紧，0.01em 几乎看不出来，
-  但整段的呼吸会松一档。
-
-  刻意不写在 body 上：字距会继承到标题与数字上，而展示字（得意黑）本来就是
-  紧字距的海报体，再撑开就散了。所以只给正文级别的元素。
-*/
+/* 字距只给正文级元素，**不写在 body 上** —— 会继承到展示字标题上，
+   那本来就是紧字距的海报体，撑开就散了。 */
 p,
 li,
 summary,
@@ -203,11 +141,7 @@ blockquote {
   letter-spacing: 0.01em;
 }
 
-/*
-  中西混排的标点收紧。中文全角标点自带左右空腔，紧跟拉丁或数字时会出现两倍空隙。
-  text-spacing-trim 让浏览器按 CJK 排版惯例削掉多余的那半个字宽。
-  只有新版 Chromium 认，认不了的浏览器维持原状，没有副作用。
-*/
+/* 中西混排时削掉全角标点多出来的那半个字宽。认不了的浏览器维持原状。 */
 @supports (text-spacing-trim: space-first) {
   body {
     text-spacing-trim: space-first;
@@ -317,11 +251,7 @@ button {
   background: rgba(253, 252, 248, 0.92);
   border-bottom: 1px solid var(--rule);
   backdrop-filter: saturate(180%) blur(8px);
-  /*
-    页面滚起来之后顶栏落一道极淡的影，它才真的「浮在」内容上面。
-    只有一条 1px 边线时，顶栏和下面的内容是同一个平面，滚动时会糊在一起。
-    animation-timeline 的可用性与进度条那条一样：不支持就没有，不影响功能。
-  */
+  /* 页面滚起来之后顶栏落一道极淡的影，它才真的「浮在」内容上面。 */
   box-shadow: 0 0 0 rgba(26, 26, 46, 0);
 }
 
@@ -424,9 +354,58 @@ button {
   font-weight: 600;
 }
 
-@media (max-width: 720px) {
-  .nav-links a:not(.gh) {
+/* 顶栏常驻的下单入口。
+   每条都写成 `.nav-links .nav-cta`：`.nav-links a` 的特指度 (0,1,1) 比
+   `.nav-cta` (0,1,0) 高，只写后者的话静止态会是墨灰字压在底色上。 */
+.nav-links .nav-cta {
+  padding: 9px 18px;
+  border-radius: var(--r-pill);
+  background: var(--highlight);
+  color: var(--ink);
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(196, 160, 30, 0.3), 0 6px 16px rgba(196, 160, 30, 0.26);
+  transition:
+    background-color 0.18s var(--ease),
+    transform 0.16s var(--ease),
+    box-shadow 0.18s var(--ease);
+}
+
+.nav-links .nav-cta::after {
+  content: none;
+}
+
+.nav-links .nav-cta:hover {
+  background: #f8e07e;
+  color: var(--ink);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(196, 160, 30, 0.34), 0 10px 22px rgba(196, 160, 30, 0.3);
+}
+
+.nav-links .nav-cta:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+.nav-links .nav-cta:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+/* 窄屏让位顺序：先撤章节锚点，再撤 GitHub。下单入口任何宽度都留着。 */
+@media (max-width: 860px) {
+  .nav-links a:not(.gh):not(.nav-cta) {
     display: none;
+  }
+}
+
+@media (max-width: 460px) {
+  .nav-links .gh {
+    display: none;
+  }
+
+  .nav-in {
+    gap: 14px;
   }
 }
 
@@ -440,11 +419,7 @@ button {
   border-radius: var(--r-pill);
   font-size: 0.9375rem;
   font-weight: 600;
-  /*
-    --mx / --my 由 useMagnet 写入（指针靠近时朝指针偏几个像素）。
-    没挂钩子的按钮这两个变量取 0，表达式退化成纯 hover 位移，所以这里
-    不需要为「有磁吸」和「没磁吸」写两套规则。
-  */
+  /* --mx / --my 由 useMagnet 写入（指针靠近时朝指针偏几个像素）。 */
   transform: translate(var(--mx, 0px), var(--my, 0px));
   transition:
     transform 0.22s var(--ease),
@@ -582,7 +557,6 @@ button {
   margin-top: clamp(24px, 3.2vh, 36px);
 }
 
-
 /* ============================================================================
    00 开场 · 右栏：案例叠卡
    ----------------------------------------------------------------------------
@@ -600,10 +574,7 @@ button {
   padding: 0 clamp(34px, 4vw, 58px) clamp(30px, 3.4vw, 46px) 0;
 }
 
-/*
-  perspective 挂在容器上而不是卡上：这样四张卡共享同一个消失点，
-  倾斜时整叠像一个物件在动，而不是四张各自转。
-*/
+/* perspective 挂在容器上而不是卡上：这样四张卡共享同一个消失点， 倾斜时整叠像一个物件在动，而不是四张各自转。 */
 .deck__stack {
   display: grid;
   perspective: 1400px;
@@ -664,14 +635,7 @@ button {
   background: #fdeef1;
 }
 
-/*
-  巨号编号衬底。位置钉在卡的右下角，**整个在卡内**，右边与下边各留 18px 余量 ——
-  它有过一次切边出血的版本，被读成「字显示不全」。出血是问题，衬底不是：
-  它是这张卡上唯一的图形重量，删掉之后卡面就空了。
-
-  色相取本卡那一档最淡的调，落在正文之下（z-index: 0，.dcard__say 是 1）。
-  不用 opacity 压：opacity 会让它连带纸色一起变浅，直接给足够淡的实色更干净。
-*/
+/* 巨号编号衬底。 */
 .dcard__ghost {
   position: absolute;
   z-index: 0;
@@ -715,13 +679,7 @@ button {
   writing-mode: vertical-rl;
   text-orientation: mixed;
   color: var(--fg-faint);
-}/*
-  槽位 → 位置。--dx / --rot 由 Deck.tsx 按拖拽距离写入（只有最前那张非零）；
-  --px / --py 由 useTilt 写入指针在整叠里的相对位置（-1 ~ 1）。
-
-  倾斜幅度只有 ±5° / ±3.5°，比常见的「卡片 3D hover」小一档 ——
-  那种一动就翻 15° 的做法在真用的时候很晃眼，尤其这张卡上还有正文要读。
-*/
+}/* 槽位 → 位置。 */
 .dcard[data-slot='0'] {
   z-index: 4;
   transform: translate3d(var(--dx, 0px), 0, 0) rotate(var(--rot, 0deg))
@@ -768,11 +726,7 @@ button {
 
 /* 倾斜的回正过渡跟位移共用一条 transition（见 .dcard），松手自然回位 */
 
-/*
-  压在后面的卡蒙一层**页面底色**，不用 opacity 也不用 brightness()：
-  opacity 会让后卡透出前卡的字，brightness 会把纸压成脏灰（等于偷偷做深色模式）。
-  盖纸色读起来就是「沉回背景」。
-*/
+/* 压在后面的卡蒙一层**页面底色**，不用 opacity 也不用 brightness()： opacity 会让后卡透出前卡的字，brightness 会把纸压成脏灰（等于偷偷做深色模式）。 */
 .dcard:not([data-slot='0']) {
   pointer-events: none;
   box-shadow: var(--lit), 0 2px 6px rgba(26, 26, 46, 0.04), 0 10px 24px rgba(26, 26, 46, 0.07);
@@ -832,6 +786,15 @@ button {
   font-size: clamp(1.3125rem, 2vw, 1.75rem);
   font-weight: 400;
   line-height: 1.34;
+}
+
+/* 项目卡没有子页，一句话交代不清它是什么。行高比正文紧半档：
+   所有卡共用一个 grid 单元格，高度取最高那张，松了会把整叠撑破。 */
+.dcard__blurb {
+  margin-top: 10px;
+  font-size: var(--t-label);
+  line-height: 1.75;
+  color: var(--fg-dim);
 }
 
 .dcard__stack {
@@ -995,16 +958,9 @@ button {
   }
 }
 
-
 /* ---- 彩色读数卡 ---- */
 
-/*
-  四个读数排成**一条**读数带，不是四张卡。
-  repair.88lin.eu.org 的淡底彩色读数块是这套语言里认得出的一件，所以底色留着；
-  但四块等宽卡加间隙并排，就又变成「卡片网格」——正是要避开的那个读法。
-  去掉间隙、共用一个外圆角与一层投影之后，它读作一个仪表条：一个物件，四个字段。
-  中间用 1px 白线分隔，比留空隙干净。
-*/
+/* 四个读数排成**一条**读数带，不是四张卡。 */
 .stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1216,14 +1172,7 @@ button {
 }
 
 /* ---- 2a) 首屏大标题：逐字揭示 ---- */
-/*
-  每个字自己从下方浮起并回正，28ms 一个，三行首尾相接连成一句。
-  上一版是整行遮片上移 —— 那个动作太整齐，读者只会觉得「有东西淡入了」；
-  逐字才读得出「这句话正在被印上去」。
-
-  幅度用 em 而不是 px：字号是 clamp 出来的，用 px 在窄屏上会显得过冲。
-  轻微的 rotate 是关键，纯垂直位移会像在滚百叶窗。
-*/
+/* 每个字自己从下方浮起并回正，28ms 一个，三行首尾相接连成一句。 */
 .js .hero__h1 .ch {
   display: inline-block;
   opacity: 0;
@@ -1254,10 +1203,7 @@ button {
 }
 
 /* ---- 2) 遮片揭示：给大号展示字用 ---- */
-/*
-  clip-path 的四边都留负值：中文展示字有出头与斜度，inset(0) 会在收尾那一帧
-  把字的边缘切出一条硬边。
-*/
+/* clip-path 的四边都留负值：中文展示字有出头与斜度，inset(0) 会在收尾那一帧 把字的边缘切出一条硬边。 */
 .js [data-stagger='mask'] {
   clip-path: inset(0 -8% 108% -8%);
   transform: translateY(10px);
@@ -1328,10 +1274,7 @@ button {
 }
 
 /* ---- 4) 数据条生长 ---- */
-/*
-  写作章那组标签量表：条按真实比例长出来。这里动作本身就是数据，
-  不是装饰——所以它值得单独一条规则。
-*/
+/* 写作章那组标签量表：条按真实比例长出来。 */
 .js .bars__track i {
   transform: scaleX(0);
   transform-origin: 0 50%;
@@ -1343,11 +1286,7 @@ button {
 }
 
 /* ---- 5) 顶部滚动进度条 ---- */
-/*
-  滚动驱动动画（scroll-timeline），不写一行 JS，也不占主线程。
-  Chrome 115+ / Edge 支持；不支持的浏览器里这条整个不显示，
-  因此它只能是提示，不能承载信息——本站的导航不依赖它。
-*/
+/* 滚动驱动动画（scroll-timeline），不写一行 JS，也不占主线程。 */
 .nav__prog {
   display: none;
   position: absolute;

@@ -1,17 +1,12 @@
-/**
- * 首页。七章：开场 / 案例 / 主线 / 作品 / 标本馆 / 写作 / 联系。
- *
- * 章序把案例提到第 01 —— 招聘方与客户最想看的就是它，
- * 不该让人先滚过三章读数与主线。每章一种构图，撞型即回炉。
- */
+/** 首页七章：开场 / 服务 / 案例 / 作品 / 主线 / 写作 / 联系。 */
 
 import { Nav } from '../components/Nav'
 import { ChapterRail } from '../components/ChapterRail'
 import { Hero } from '../sections/Hero'
+import { Services } from '../sections/Services'
 import { Cases } from '../sections/Cases'
-import { Craft } from '../sections/Craft'
 import { Work } from '../sections/Work'
-import { Garden } from '../sections/Garden'
+import { Craft } from '../sections/Craft'
 import { Notes } from '../sections/Notes'
 import { Contact } from '../sections/Contact'
 
@@ -22,10 +17,10 @@ export function Home() {
       <ChapterRail />
       <main id="main">
         <Hero />
+        <Services />
         <Cases />
-        <Craft />
         <Work />
-        <Garden />
+        <Craft />
         <Notes />
         <Contact />
       </main>

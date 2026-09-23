@@ -1,64 +1,58 @@
 /**
- * 首屏案例叠卡：四张，真的能翻。
+ * 首屏项目叠卡。名单 = projects 里 star ≥ DECK_MIN_STARS 的，按 star 降序。
  *
- * 上一版这里是纯装饰——三张死的彩色卡垫在蓝卡后面，看着像能翻其实没有任何交互，
- * 用户第一句话就是「为啥不能滑动到下一张」。看起来能操作的东西必须真的能操作，
- * 这条没有余地。
- *
- * 实现：不做 DOM 重排，只算「槽位」。第 i 张卡的槽位 = (i - index + n) % n，
- * 槽位决定 transform，换 index 时靠 CSS transition 走位。四张卡的 DOM 节点从不移动，
- * React 不必重排，动画也不会因为重挂载而断。
- *
- * 四种输入都通：拖、点箭头、点圆点、左右方向键。
- * 手感：不拖的时候整叠跟指针微倾（±5°，CSS 里换算），拖动时倾斜让位给位移，
- * 松手回正。倾斜幅度刻意压得比常见的「卡片 3D hover」小一档 —— 那种一动就翻 15°
- * 的做法在真用的时候很晃眼。
- *
- * 卡面右下角压一个巨号编号衬底。它有过一次来回：先做成切边出血（海报做法），
- * 被读成「字显示不全」；我又整个删掉，结果卡面更空。
- * 定论是**留着但必须完整**：出血才是问题，衬底本身是这张卡上唯一的图形重量。
- * 所以现在它整个在卡内，四边都留出余量，只靠淡到极致的色相退到文字后面。
+ * 不做 DOM 重排，只算槽位：第 i 张的槽位 = (i - index + n) % n，槽位决定 transform。
+ * 拖 / 箭头 / 圆点 / 方向键四种输入都能翻。
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { cases } from '../content/cases'
+import { DECK_MIN_STARS, projects } from '../content/site'
 import { Link } from '../router'
 import { useTilt } from '../lib/motion'
 
-/** 拖过这个距离才算翻页，低于它松手就弹回；也用来判断这一下是拖还是点。 */
+/** 拖过这个距离才算翻页；也用来判断这一下是拖还是点。 */
 const THRESHOLD = 56
 const CLICK_SLOP = 6
 
+const STATE: Record<string, string> = {
+  live: '在线',
+  maintained: '长期维护',
+  archived: '已归档',
+}
+
+const deckItems = projects
+  .filter((p) => p.stars >= DECK_MIN_STARS)
+  .slice()
+  .sort((a, b) => b.stars - a.stars)
+
+const caseBySlugRepo = new Map(cases.map((c) => [c.repo, c.slug]))
+
 export function Deck() {
-  const n = cases.length
+  const n = deckItems.length
   const [index, setIndex] = useState(0)
   const [drag, setDrag] = useState(0)
   const [dragging, setDragging] = useState(false)
   const startX = useRef(0)
   const moved = useRef(0)
   const host = useRef<HTMLDivElement | null>(null)
-  /* 指针微倾：钩子只写 --px / --py，转成多少度交给 CSS（见 index.css .dcard） */
   const tilt = useTilt<HTMLDivElement>()
 
   const go = useCallback((d: number) => setIndex((i) => (i + d + n) % n), [n])
 
   const onDown = (e: React.PointerEvent) => {
-    // 右键与中键不参与拖拽，交回浏览器
-    if (e.button !== 0) return
+    if (e.button !== 0) return // 右键中键交回浏览器
     setDragging(true)
     startX.current = e.clientX
     moved.current = 0
-    // 这里**不能**抢指针。Chrome 在指针被捕获时会把兼容鼠标事件（含 click）
-    // 一并重定向到捕获元素上，于是 click 落在 .deck__stack 而不是卡里的链接上，
-    //「看完整案例」永远点不动 —— 用户报的就是这个。改成越过阈值才抢（见 onMove）。
+    // 别在这里 setPointerCapture：Chrome 会把 click 一并重定向到捕获元素上，
+    // 卡里的链接就永远点不动了。越过阈值才抢，见 onMove。
   }
 
   const onMove = (e: React.PointerEvent) => {
     if (!dragging) return
     const d = e.clientX - startX.current
     moved.current = Math.max(moved.current, Math.abs(d))
-    // 真的在拖了才接管指针：低于阈值时这一下还可能是普通点击，
-    // 抢了就会把 click 从链接身上夺走。
     if (moved.current > CLICK_SLOP && !e.currentTarget.hasPointerCapture(e.pointerId)) {
       e.currentTarget.setPointerCapture(e.pointerId)
     }
@@ -70,12 +64,10 @@ export function Deck() {
     setDragging(false)
     const d = drag
     setDrag(0)
-    // 往左拖看下一张，往右拖看上一张——和翻实体卡片的方向一致
     if (d < -THRESHOLD) go(1)
     else if (d > THRESHOLD) go(-1)
   }
 
-  /* 键盘：左右方向键翻页。整块是 role=group 且可聚焦，Tab 能落进来。 */
   useEffect(() => {
     const el = host.current
     if (!el) return
@@ -92,7 +84,7 @@ export function Deck() {
     return () => el.removeEventListener('keydown', onKey)
   }, [go])
 
-  const cur = cases[index]
+  const cur = deckItems[index]
 
   return (
     <div className="deck">
@@ -105,22 +97,22 @@ export function Deck() {
         tabIndex={0}
         role="group"
         aria-roledescription="卡组"
-        aria-label={`四个案例，当前第 ${index + 1} 张：${cur.name}。左右方向键翻页`}
+        aria-label={`star 最多的 ${n} 个项目，当前第 ${index + 1} 张：${cur.name}。左右方向键翻页`}
         data-dragging={dragging ? '1' : undefined}
         onPointerDown={onDown}
         onPointerMove={onMove}
         onPointerUp={onUp}
         onPointerCancel={onUp}
       >
-        {cases.map((c, i) => {
+        {deckItems.map((p, i) => {
           const slot = (i - index + n) % n
           const front = slot === 0
           return (
             <article
               className="dcard"
-              key={c.slug}
+              key={p.slug}
               data-slot={slot}
-              data-t={c.tint}
+              data-t={p.tint}
               aria-hidden={!front}
               style={
                 {
@@ -130,75 +122,107 @@ export function Deck() {
               }
             >
               <b className="dcard__ghost" aria-hidden="true">
-                {c.no}
+                {String(i + 1).padStart(2, '0')}
               </b>
 
               <p className="dcard__spine" aria-hidden="true">
-                {c.name}
+                {p.name}
               </p>
 
               <div className="dcard__say">
+                {/* kind 与 state 偶尔会撞，撞了只出一个 */}
                 <p className="dcard__meta">
-                  CASE {c.no}
+                  {p.kind}
                   <s />
-                  {c.year}
-                  <s />
-                  {c.role}
+                  {p.year}
+                  {STATE[p.state] !== p.kind && (
+                    <>
+                      <s />
+                      {STATE[p.state]}
+                    </>
+                  )}
                 </p>
 
-                <h3 className="dcard__claim">{c.claim}</h3>
+                <h3 className="dcard__claim">{p.cn}</h3>
 
-                <p className="dcard__stack">{c.stackLine}</p>
+                <p className="dcard__blurb">{p.blurb}</p>
 
-                <div className="dcard__nums">
-                  {c.results.slice(0, 3).map((r) => (
-                    <span key={r.label}>
-                      <b>{r.value}</b>
-                      <s>{r.label}</s>
-                    </span>
-                  ))}
-                </div>
+                <p className="dcard__stack">{p.stack.join(' · ')}</p>
+
+                {(p.stars > 0 || p.forks > 0) && (
+                  <div className="dcard__nums">
+                    {/* data-k 给闸门区分 star / fork，两者长得一样 */}
+                    {p.stars > 0 && (
+                      <span data-k="star">
+                        <b>{p.stars.toLocaleString('en-US')}</b>
+                        <s>GitHub Star</s>
+                      </span>
+                    )}
+                    {p.forks > 0 && (
+                      <span data-k="fork">
+                        <b>{p.forks}</b>
+                        <s>Fork</s>
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
 
-              {front && (
-                <Link
-                  className="dcard__go"
-                  to={`/case/${c.slug}/`}
-                  onClick={(e) => {
-                    // 刚才那一下是拖不是点，别顺手把人带走
-                    if (moved.current > CLICK_SLOP) e.preventDefault()
-                  }}
-                >
-                  看完整案例
-                  <i aria-hidden="true">→</i>
-                </Link>
-              )}
+              {front &&
+                (() => {
+                  const caseSlug = caseBySlugRepo.get(p.repo)
+                  return caseSlug ? (
+                    <Link
+                      className="dcard__go"
+                      to={`/case/${caseSlug}/`}
+                      onClick={(e) => {
+                        if (moved.current > CLICK_SLOP) e.preventDefault() // 刚才是拖不是点
+                      }}
+                    >
+                      看完整案例
+                      <i aria-hidden="true">→</i>
+                    </Link>
+                  ) : (
+                    <a
+                      className="dcard__go"
+                      href={p.live ?? p.repo}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={(e) => {
+                        if (moved.current > CLICK_SLOP) e.preventDefault()
+                      }}
+                    >
+                      {p.live ? '打开看看' : '看源码'}
+                      <i aria-hidden="true">↗</i>
+                    </a>
+                  )
+                })()}
             </article>
           )
         })}
       </div>
 
       <div className="deck__ctl">
-        <button type="button" className="deck__arrow" onClick={() => go(-1)} aria-label="上一个案例">
+        <button type="button" className="deck__arrow" onClick={() => go(-1)} aria-label="上一个项目">
           ←
         </button>
-        <span className="deck__dots" role="tablist" aria-label="选择案例">
-          {cases.map((c, i) => (
+        <span className="deck__dots" role="tablist" aria-label="选择项目">
+          {deckItems.map((p, i) => (
             <button
               type="button"
-              key={c.slug}
+              key={p.slug}
               role="tab"
               aria-selected={i === index}
-              aria-label={c.name}
+              aria-label={p.name}
               data-on={i === index ? '1' : undefined}
               onClick={() => setIndex(i)}
             />
           ))}
         </span>
-        <button type="button" className="deck__arrow" onClick={() => go(1)} aria-label="下一个案例">
+        <button type="button" className="deck__arrow" onClick={() => go(1)} aria-label="下一个项目">
           →
         </button>
-        <span className="deck__hint">拖卡片，或按 ← → 翻 {n} 个案例</span>
+        <span className="deck__hint">star 最多的 {n} 个 · 卡片可以直接拖</span>
       </div>
     </div>
   )

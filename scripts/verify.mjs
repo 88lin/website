@@ -1,9 +1,10 @@
 /**
- * v13 验收：一条命令，三段闸门。跑法：npm run verify（要先 npm run build）
+ * 验收：一条命令，四段闸门。跑法：npm run verify（要先 npm run build）
  *
  *   A 事实   —— 产物里的数字必须等于 site.ts / cases.ts 里的当前值，旧值一个不剩
  *   B 交互   —— 看起来能操作的东西必须真的能操作，四种输入逐个验
  *   C 结构   —— 三档宽度下无横向溢出、无控制台报错、包体在预算内
+ *   D 纪律   —— 被判掉过的那批 CSS 一个都不许回来
  *
  * 为什么必须是脚本而不是人眼看截图：上一轮被用户点名的三条 bug
  * （叠卡不能翻、横推轨滚不动、墨影落在饱和面上）全都「看起来是对的」。
@@ -63,8 +64,9 @@ const grab = (src, re, what) => {
 const asOf = grab(site, /AS_OF\s*=\s*'([\d.]+)'/, ' AS_OF')
 const stars = grab(site, /value:\s*'([\d,]+)',\s*label:\s*'累计 Star'/, '累计 Star')
 const repos = grab(site, /value:\s*'(\d+)',\s*label:\s*'原创仓库'/, '原创仓库')
-/* video_vip 的 star 在 site.ts 的 projects 里（那是作品轨的数据源） */
-const vipStars = grab(site, /slug:\s*'video_vip'[\s\S]{0,700}?stars:\s*(\d+)/, 'video_vip star')
+/* video_vip 的 star 在 site.ts 的 projects 里（那是作品轨的数据源）。
+   窗口放到 900 是因为 blurb 会随文案增删，700 曾经刚好卡在边界上。 */
+const vipStars = grab(site, /slug:\s*'video_vip'[\s\S]{0,900}?stars:\s*(\d+)/, 'video_vip star')
 const vipPretty = Number(vipStars).toLocaleString('en-US')
 
 const htmls = []
@@ -92,20 +94,27 @@ const og = (home.match(/property="og:description" content="([^"]+)"/) || [])[1] 
 ok(desc.includes(stars) && desc.includes(asOf), '首页 description 由 site.ts 现算（含当前数字与日期）')
 ok(og === desc, 'og:description 与 description 一致')
 
-/*
-  已知旧值黑名单。每一条都对应一次真实事故，删任何一条前先想清楚为什么。
-  注释里也不许留 —— 会 view-source 的正是这个站的目标读者。
-*/
+/* 已知旧值黑名单。 */
 const STALE = [
   '4,764',
   '4,791', // 08-21 那次的 Σstar
+  '4,821', // 08-23 那次的 Σstar
+  '5,772', // 09-20 那次的 Σstar
   '4,658',
   '4,669', // 08-21 那次的 video_vip
+  '4,686', // 08-23 那次的 video_vip
+  '4,956', // 09-20 那次的 video_vip
   '24 个原创',
+  '25 个原创', // 08-23 那次的原创仓库数
   '1,794',
+  '1,795', // 博客那个会倒退的「建站天数」，整个不收录
+  '62 个 Playbook', // repair skill 08-23 的 playbook 数
+  'v3.1.15', // video_vip 08-23 的版本号
   '2026.08.16',
   '2026.08.20',
   '2026.08.21',
+  '2026.08.23',
+  '2026.09.20',
   'Fraunces',
   'Caveat',
 ]
@@ -158,11 +167,7 @@ ok(font / 1024 <= 200, `字体 ${(font / 1024).toFixed(1)} KB ≤ 200 KB（硬�
 /* ══════════════════════════════════════════════ D 设计纪律 */
 head('D 设计纪律')
 
-/*
-  D1 禁用令牌扫描。这些不是品味问题，是这个项目一路被判掉的具体东西：
-  玻璃拟态、渐变文字、neon 光效、无限循环动画、bounce/elastic 回弹、纯黑。
-  扫的是构建后的 CSS —— 源码里再怎么写注释，发出去的那份才算数。
-*/
+/* D1 禁用令牌扫描。 */
 const cssFiles = (await readdir(assets)).filter((f) => f.endsWith('.css'))
 let cssAll = ''
 for (const f of cssFiles) cssAll += await readFile(path.join(assets, f), 'utf8')
@@ -212,15 +217,18 @@ try {
   const c1 = await front()
   ok(c0 !== c1, `叠卡 · 箭头翻页 ${c0.slice(0, 7)} → ${c1.slice(0, 7)}`)
 
+  const spine = () => p.$eval('.dcard[data-slot="0"] .dcard__spine', (e) => e.textContent.trim())
   await p.click('.deck__dots button >> nth=3')
   await p.waitForTimeout(650)
-  ok((await front()).includes('04'), '叠卡 · 圆点直达第 4 张')
+  const dotTarget = await p.$eval('.deck__dots button >> nth=3', (e) => e.getAttribute('aria-label'))
+  ok((await spine()) === dotTarget, `叠卡 · 圆点直达「${dotTarget}」`)
 
   await p.click('.deck__stack')
   await p.keyboard.press('ArrowLeft')
   await p.waitForTimeout(650)
-  const c3 = await front()
-  ok(c3.includes('03'), '叠卡 · ← 键回上一张')
+  const c3 = await spine()
+  const prevTarget = await p.$eval('.deck__dots button >> nth=2', (e) => e.getAttribute('aria-label'))
+  ok(c3 === prevTarget, `叠卡 · ← 键回上一张（${c3}）`)
 
   const box = await p.$eval('.deck__stack', (e) => {
     const r = e.getBoundingClientRect()
@@ -231,26 +239,57 @@ try {
   for (let i = 1; i <= 7; i++) await p.mouse.move(box.x - i * 20, box.y)
   await p.mouse.up()
   await p.waitForTimeout(700)
-  ok((await front()) !== c3, '叠卡 · 拖拽翻页')
+  ok((await spine()) !== c3, '叠卡 · 拖拽翻页')
 
   /*
-    ---- 叠卡「看完整案例」必须真的跳转 ----
+    ---- 叠卡最前那张的链接必须真的能点 ----
     这条是用户报的 bug：原来 pointerdown 就 setPointerCapture，而 Chrome 在指针被捕获时
     会把兼容鼠标事件（含 click）一并重定向到捕获元素上，于是 click 落在 .deck__stack
     而不是卡里的链接上，链接永远点不动。改成越过阈值才抢指针。
+
+    叠卡放的是 star 最多的几个项目：有案例页的指向站内案例页（→），
+    没有的指向线上页或仓库、新标签打开（↗）。两种都要认。
+    **不真的跳出去**：外链那条要联网，会把闸门变成靠网络的。
+    量的是那次 click 到底落在谁身上 —— 这才是当初出 bug 的地方。
   */
   await p.goto(url, { waitUntil: 'networkidle' })
-  const slug = await p.$eval('.dcard[data-slot="0"] .dcard__go', (e) => e.getAttribute('href'))
-  await p.click('.dcard[data-slot="0"] .dcard__go')
-  await p.waitForTimeout(500)
-  const landed = await p.evaluate(() => location.pathname)
-  ok(
-    slug !== null && landed.endsWith(slug.replace(/^\.\//, '')),
-    `叠卡 · 点「看完整案例」跳到了 ${landed}`,
-  )
-  ok((await p.$$eval('h1', (e) => e.length)) === 1, '叠卡 · 跳过去之后是案例子页（单个 H1）')
-  await p.goBack({ waitUntil: 'networkidle' })
-  await p.waitForTimeout(300)
+  const go = await p.$eval('.dcard[data-slot="0"] .dcard__go', (e) => ({
+    href: e.getAttribute('href'),
+    target: e.getAttribute('target'),
+    text: e.textContent.trim(),
+  }))
+  const internal = /\/case\/[a-z0-9-]+\/$/.test(go.href || '')
+  const external = /^https:\/\/(88lin\.github\.io|github\.com\/88lin)/.test(go.href || '') && go.target === '_blank'
+  ok(internal || external, `叠卡 · 最前那张的链接可达（${internal ? '站内案例页' : '外链新标签'}：${go.href}）`)
+
+  const hit = await p.evaluate(async () => {
+    let landed = null
+    const onClick = (e) => {
+      landed = e.target.closest('.dcard__go') ? 'link' : e.target.className || e.target.tagName
+      e.preventDefault() // 只验命中，不真的跳走 / 不开新标签
+    }
+    document.addEventListener('click', onClick, true)
+    document.querySelector('.dcard[data-slot="0"] .dcard__go').click()
+    document.removeEventListener('click', onClick, true)
+    return landed
+  })
+  ok(hit === 'link', `叠卡 · 点击落在链接上而不是拖拽面（落点：${hit}）`)
+
+  /* ---- 叠卡名单：门槛必须真的生效 ---- */
+  {
+    const minStars = Number(grab(site, /DECK_MIN_STARS\s*=\s*(\d+)/, ' DECK_MIN_STARS'))
+    const shown = await p.$$eval('.dcard', (els) => els.length)
+    /* 只取 star 那一格。star 与 fork 的数字长得一样，不按 data-k 区分就会
+       把 fork 当 star 判 —— 第一版这条断言就是这么误报的（agentrouter 33★ / 3 fork）。 */
+    const stars = await p.$$eval('.dcard__nums span[data-k="star"] b', (els) =>
+      els.map((e) => Number(e.textContent.replace(/,/g, ''))),
+    )
+    ok(shown >= 5 && shown <= 6, `叠卡 · ${shown} 张（要求 5–6 张）`)
+    ok(
+      stars.length === shown && Math.min(...stars) >= minStars,
+      `叠卡 · ${stars.length}/${shown} 张都标了 star 且最低 ${Math.min(...stars)} ≥ ${minStars}`,
+    )
+  }
 
   /* ---- 横推轨自己一直在滚，悬停即停，移开接着走 ---- */
   /*
@@ -336,12 +375,14 @@ try {
   /* ---- 顶栏当前章 + 左侧章序轨 ---- */
   await p.waitForTimeout(1200)
   for (const [id, label, no] of [
-    ['cases', '案例', '01'],
+    ['services', '服务', '01'],
+    ['cases', '案例', '02'],
     ['work', '作品', '03'],
     ['contact', '联系', '06'],
   ]) {
     await p.$eval(`#${id}`, (e) => e.scrollIntoView({ block: 'center', behavior: 'instant' }))
     await p.waitForTimeout(700)
+    /* 顶栏里还有 GitHub 与那枚下单按钮，它们不是锚点也不带 data-on，所以不参与计数 */
     const on = await p.$$eval('.nav-links a[data-on]', (els) => els.map((e) => e.textContent.trim()))
     ok(on.length === 1 && on[0] === label, `顶栏 · #${id} 高亮「${on.join(',') || '无'}」`)
     const rail = await p.$$eval('.crail a[data-on] b', (els) => els.map((e) => e.textContent.trim()))
@@ -355,11 +396,7 @@ try {
   ok((await p.$$eval('.prov[open] .prow', (e) => e.length)) > 0, '数字出处 · 点开能看到逐条出处')
 
   /* ---- 章头开幕：像真人那样一路滚下去，六章都要被点着 ---- */
-  /*
-    不能靠 scrollIntoView 逐章跳：把一个 2000px 高的章「居中」时，它的章头
-    早就跑到视口上方去了，IntersectionObserver 当然不开火 —— 这是测法的问题，
-    不是代码的问题。所以按 400px 一步连续滚一遍，这才是读者真实的路径。
-  */
+  /* 不能靠 scrollIntoView 逐章跳：把一个 2000px 高的章「居中」时，它的章头 早就跑到视口上方去了，IntersectionObserver 当然不开火 —— 这是测法的问题， 不是代码的问题。 */
   await p.evaluate(async () => {
     const step = 400
     for (let y = 0; y < document.documentElement.scrollHeight; y += step) {
@@ -416,12 +453,7 @@ try {
   }
 
   /* ---- 配色配额：颜色只做重音，不做铺面 ---- */
-  /*
-    整页截一张长图，按色相分桶数像素。这条闸门管的是「彩色不铺满面」那条纪律：
-    v9 整章刷饱和底被判「屎黄色」，之后的定论是地面只用两档近白纸色，
-    品牌蓝 / 柠檬黄 / 珊瑚红只出现在边、条、编号、读数与两块重音面上。
-    阈值不是拍的，是量出来当前值之后留出余量写下的 —— 它防的是「某天顺手刷了一整章」。
-  */
+  /* 整页截一张长图，按色相分桶数像素。 */
   {
     const c = await browser.newContext({ viewport: { width: 1440, height: 900 } })
     const q = await c.newPage()
@@ -434,15 +466,7 @@ try {
     const shot = await q.screenshot({ fullPage: true })
     await c.close()
 
-    /*
-      分桶用**彩度（max-min）**而不是 HSL 的饱和度。
-      HSL 的 s 在接近白的地方分母趋零、数值会炸：#fdfcf8 算出来 s=0.55，
-      按饱和度分桶时它既进不了「纸」也进不了「彩色」，量出来「近白」只剩四成 ——
-      那是公式的问题，不是版面的问题。彩度是绝对差值，近白就是近白。
-        纸    彩度 < 0.06
-        淡底  0.06 – 0.18（读数带那四格、胶囊底、编号衬底）
-        重音  > 0.18 且不是墨字那一档亮度
-    */
+    /* 分桶用**彩度（max-min）**而不是 HSL 的饱和度。 */
     const { data, info } = await sharp(shot).raw().toBuffer({ resolveWithObject: true })
     const stride = 3
     let n = 0
@@ -471,7 +495,7 @@ try {
     ok(accentPct <= 8, `彩色只做重音：饱和像素占 ${accentPct.toFixed(1)}% ≤ 8%`)
   }
 
-  /* ---- 四条案例子页都能直链打开 ---- */
+  /* ---- 每条案例子页都能直链打开 ---- */
   for (const r of routes.filter((x) => x !== '/')) {
     const c = await browser.newContext({ viewport: { width: 1280, height: 900 } })
     const q = await c.newPage()
@@ -491,6 +515,15 @@ try {
     const txt = await q.evaluate(() => document.body.innerText.length)
     const h1 = await q.$eval('h1', (e) => e.innerText.trim())
     ok(txt > 3000 && h1.length > 6, `禁用 JS 时正文完整（${txt} 字，H1「${h1.replace(/\s+/g, '')}」）`)
+
+    /* 读数必须是**看得见的文字**，不能只躺在 aria-label 里。 */
+    const shown = await q.evaluate(() =>
+      Array.from(document.querySelectorAll('.stat b')).map((e) => e.innerText.trim()),
+    )
+    ok(
+      shown.includes(stars) && !shown.includes('0'),
+      `禁用 JS 时读数带印的是真值（${shown.join(' / ')}）`,
+    )
     await c.close()
   }
 } finally {

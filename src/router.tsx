@@ -1,13 +1,4 @@
-/**
- * 手写路由，约 90 行，不引 react-router。
- *
- * 全站只有两类地址：`/` 与 `/case/:slug/`。为这个引一个路由库不划算，
- * 而且路由库的 basename 和 GitHub Pages 子路径部署总要额外配一遍。
- *
- * 部署基路径在运行时反推：线上是 `88lin.github.io/website/`，本地预览是 `/`，
- * 构建期预渲染又是 file 协议。与其配三份，不如从当前 pathname 里把已知的
- * 路由后缀削掉，剩下的就是 base。
- */
+/* 手写路由，只有 `/` 与 `/case/:slug/` 两类地址。 */
 
 import {
   createContext,
@@ -128,4 +119,12 @@ export function Link({
 }
 
 /** 预渲染时用得到：站点所有路由。 */
-export const ROUTES: RoutePath[] = ['/', '/case/lofi/', '/case/repair/', '/case/facetmark/', '/case/video-vip/']
+export const ROUTES: RoutePath[] = [
+  '/',
+  '/case/video-vip/',
+  '/case/workbuddy/',
+  '/case/repair/',
+  '/case/lofi/',
+  '/case/geo-book/',
+  '/case/facetmark/',
+]

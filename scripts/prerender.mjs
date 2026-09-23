@@ -1,12 +1,4 @@
-/**
- * 构建期预渲染：把每条路由的首屏 DOM 渲成字符串，写进各自的 index.html。
- *
- * 为什么全站四条路由都要预渲染：
- *  1) LCP 元素（首屏大标题）不再等 React 下载执行——这也是「不要加载页」的前提。
- *  2) GitHub Pages 没有服务端重写，/case/lofi/ 必须真的存在一个 index.html，
- *     否则直链和爬虫都会吃 404。
- *  3) 禁用 JS 的读者拿到的是完整正文 —— 入场动效只是覆在上面的一层，不承载内容。
- */
+/* 构建期预渲染：把每条路由的首屏 DOM 渲成字符串，写进各自的 index.html。 */
 import { readFile, writeFile, mkdir, rm } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -22,10 +14,7 @@ const { render, ROUTES, HOME_DESC, CASE_META } = await import(pathToFileURL(ssrE
 const SITE = 'https://88lin.github.io/website/'
 const MARKER = '<div id="root"></div>'
 
-/**
- * 每条路由的 title / description 全部来自 entry-server（那里从 site.ts 与 cases.ts 现算）。
- * 这里不再存任何散文 —— 上一版逐条手写，结果 video_vip 那条一直停在「4,658★」。
- */
+/* 每条路由的 title / description 全部来自 entry-server（那里从 site.ts 与 cases.ts 现算）。 */
 const META = { '/': { title: null, desc: HOME_DESC }, ...CASE_META }
 
 const swap = (html, re, next) => (re.test(html) ? html.replace(re, next) : html)

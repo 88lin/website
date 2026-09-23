@@ -1,32 +1,10 @@
-/**
- * 03 作品。七个还在线上跑着的东西，横着推。
- *
- * 上一版这里是个真 bug：容器确实可以横向滚（scrollWidth 2136 / clientWidth 1168），
- * 但**鼠标滚轮滚不动横向容器**，而我又把滚动条藏了——于是鼠标用户既没有可用输入，
- * 也没有任何提示。我在旧注释里写「原生滚动天生支持滚轮横滑」，那句话只对触控板成立，
- * 对滚轮是错的。用户的原话是「横向滑动 · 7 个它自己为什么不能滚动？」，问得对。
- *
- * 这一版四种输入都通，且都有可见提示：
- *  1) 滚轮 —— 竖向滚轮转成横移，推到头再把滚动交回页面（不劫持整页）
- *  2) 拖拽 —— 按住就能拖，拖动超过阈值时吃掉那一次 click，不误点开链接
- *  3) 箭头 —— 到头即置灰，提示是真的而不是装饰
- *  4) 进度条 —— 藏起来的滚动条用一条自绘的替回来，可点可拖
- * 触摸与键盘走原生 overflow 行为，不需要额外代码。
- *
- * 轨道**自己一直在滚**（用户点名要的）。做法与纪律：
- *  · rAF 驱动 scrollLeft，约 26px/s —— 慢到能读完一张卡的标题
- *  · 到头不跳回，改向往回走（乒乓），两端各停 900ms。复制一份内容做无缝循环
- *    会让进度条失去意义，也会让屏幕阅读器读到两遍
- *  · 只在本章进入视口时跑；离开视口就停，不空转
- *  · 指针悬停、聚焦、拖拽、滚轮、点箭头全部暂停；最后一次动手 2.5s 后自动接着走
- *  · prefers-reduced-motion 完全不启动
- * 这一层替掉了上一版的「随页面滚动推进」：两套机制同时抢 scrollLeft 只会打架。
- */
+/* 03 作品：十个仓库的横推轨。 */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Section } from '../components/Section'
-import { projects, worksIntro } from '../content/site'
+import { hub, projects, worksIntro } from '../content/site'
 import { prefersReducedMotion } from '../lib/caps'
+import { useReveal } from '../lib/motion'
 
 const STATE: Record<string, string> = {
   live: '在线',
@@ -40,6 +18,8 @@ export function Work() {
   /** 手动输入调它：暂停自动滚，2.5s 后自动接着走。由下面那个 effect 填实现。 */
   const pause = useRef<() => void>(() => {})
   const scene = useRef<HTMLDivElement | null>(null)
+  // 这一章没有 useStagger 容器，所以章尾那条自己揭示
+  const hubRef = useReveal<HTMLElement>()
 
   /** 进度（0–1）、可视比例（缩略条的宽度）、两头是否到底 */
   const [prog, setProg] = useState(0)
@@ -145,10 +125,7 @@ export function Work() {
     }
   }, [sync])
 
-  /*
-    自动横滚。速度、两端停顿、暂停与恢复都在这一个 effect 里，
-    对外只有一个 pause() —— 手动输入统一调它，不必各自记状态。
-  */
+  /* 自动横滚。 */
   useEffect(() => {
     const el = rail.current
     const root = scene.current
@@ -274,11 +251,7 @@ export function Work() {
         id="work-rail"
         ref={rail}
         onClickCapture={swallowClick}
-        /*
-          键盘可达。overflow 容器本身不可聚焦，所以键盘用户根本进不来 ——
-          这和「鼠标滚不动」是同一类缺陷，只是发生在另一种输入上。
-          tabIndex + 方向键接管之后，Tab 能落进来，← → 一次推一张。
-        */
+        /* 键盘可达。 */
         tabIndex={0}
         role="group"
         aria-roledescription="横向卡轨"
@@ -345,11 +318,7 @@ export function Work() {
         <i className="rail-pad" aria-hidden="true" />
       </div>
 
-      {/*
-        自绘进度条。这里刻意不写 role="scrollbar"：那个角色要求可聚焦并自带键盘协议，
-        半套实现比没有更糟。轨道本身已经可聚焦、可用方向键推，所以这条对辅助技术
-        隐藏，只做视觉提示与鼠标快捷跳位。
-      */}
+      {/* 自绘进度条。 */}
       <div
         className="rail-bar"
         aria-hidden="true"
@@ -358,6 +327,17 @@ export function Work() {
       >
         <i style={{ width: `${thumb}%`, left: `calc((100% - ${thumb}%) * ${prog})` }} />
       </div>
+
+      <aside className="hub" ref={hubRef}>
+        <p className="hub__t">
+          <b>{hub.title}</b>
+          <span>{hub.blurb}</span>
+        </p>
+        <a className="btn btn--ghost" href={hub.href} target="_blank" rel="noreferrer">
+          {hub.label}
+          <i aria-hidden="true">↗</i>
+        </a>
+      </aside>
       </div>
     </Section>
   )

@@ -34,39 +34,43 @@
          而分享卡片和页面对不上比没有描述更糟。 -->
     <meta
       name="description"
-      content="茉灵智库（88lin）个人主页与作品集。AI 研究者与 Agent 工程实践者，把前沿 AI 变成可交付、可维护的工程结果。承接 Agent 工作流落地、创意前端与 WebGL、设计系统与文档。"
+      content="茉灵智库（88lin）个人主页。AI Agent 工程实践者与独立开发者，把前沿 AI 变成可交付、可维护的工程结果。承接 GitHub 项目跑通与二次开发、开源贡献协助、把一本书蒸馏成 AI Skill、Agent 工作流与自动化、网站开发与创意前端、程序定制与疑难杂症。"
     />
     <meta name="author" content="88lin · 茉灵智库" />
     <!-- 与 body 的地面色一致（#fdfcf8）。差半档会让移动端的地址栏底色和页面接不上。 -->
     <meta name="theme-color" content="#FDFCF8" />
     <link rel="canonical" href="https://88lin.github.io/website/" />
-    <!-- v10 图标：前九版每版都换了图形，但用户始终看到旧图标。真因不是图形没变，
-         是站点从来没有过 favicon.ico。浏览器在标签栏/书签/历史里会绕过下面
-         这些 <link> 直接去要根目录的 /favicon.ico，要不到就一直吃缓存里的旧图。
-         所以这一版补齐 .ico 兜底 + 全尺寸 PNG + webmanifest，并全部挂 ?v=10 破缓存。
+    <!-- 图标：奶油圆角方 + 竖黄条 + 三条递增的圆头横条。
+         直接取自 repair.88lin.eu.org 那枚（用户指定），几何与配色不改。
+         生成见 scripts/mkicon.py。
+
+         浏览器在标签栏/书签/历史里会绕过下面这些 <link> 直接去要根目录的
+         /favicon.ico，要不到就一直吃缓存里的旧图。所以 .ico 必须存在，
+         且换图标时 ?v= 必须跟着涨 —— 现在是 ?v=15。
          .ico 必须排在 svg 前面：老浏览器按出现顺序取第一个能认的。
-         注意：https://88lin.github.io/favicon.ico（用户主页仓库根目录）不在本仓库
-         控制范围内，那一份要在 88lin/88lin.github.io 里自己放。 -->
-    <link rel="icon" href="./favicon.ico?v=10" sizes="48x48" />
-    <link rel="icon" type="image/svg+xml" href="./favicon.svg?v=10" />
-    <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png?v=10" />
-    <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16.png?v=10" />
-    <link rel="apple-touch-icon" href="./apple-touch-icon.png?v=10" />
-    <link rel="mask-icon" href="./favicon.svg?v=10" color="#2B7FD8" />
-    <link rel="manifest" href="./site.webmanifest?v=10" />
-    <!-- v13 起一个字体都不预载。
+         注意：https://88lin.github.io/favicon.ico（主页仓库根目录）不在本仓库
+         控制范围内，那一份要自己放过去。
+
+         没有 mask-icon：它是 Safari 固定标签页用的，只取形状、颜色由 color 给，
+         而 favicon.svg 是一整块实心底，挂上去会渲成一个纯色方块。 -->
+    <link rel="icon" href="./favicon.ico?v=15" sizes="48x48" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg?v=15" />
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png?v=15" />
+    <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16.png?v=15" />
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png?v=15" />
+    <link rel="manifest" href="./site.webmanifest?v=15" />
+    <!-- 一个字体都不预载。
          展示字（得意黑）排的是标题，font-display: swap 会先用系统字顶上；
          抢 LCP 带宽换那一点点换字抖动不划算。中文正文兜底（Noto Sans SC 子集）
          排在 PingFang SC / 本地思源黑之后，装了的机器一个字节都不下。
-         v10 那份手写体也已经删掉：它的子集里只剩十个数字，
-         而版面上早就没有手写旁批了，留着就是白付一次预载。 -->
+         手写体那一档已经删掉：版面上没有手写旁批，留着就是白付一次预载。 -->
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="zh_CN" />
     <meta property="og:site_name" content="茉灵智库" />
     <meta property="og:title" content="茉灵智库 · 88lin ｜ AI Agent 工程 × 创意前端" />
     <meta
       property="og:description"
-      content="把前沿 AI 变成可交付、可维护的工程结果。四个深度案例、一批还在线上跑着的小站，页面上每个数字都写了接口出处。"
+      content="把前沿 AI 变成可交付、可维护的工程结果。六件可以直接开工的活、六个深度案例、十个还在维护的开源仓库，页面上每个数字都写了接口出处。"
     />
     <meta property="og:image" content="./og.png" />
     <meta name="twitter:card" content="summary_large_image" />
@@ -76,33 +80,54 @@
         "@type": "Person",
         "name": "88lin",
         "alternateName": "茉灵智库",
-        "jobTitle": "AI 研究者与 Agent 工程实践者",
-        "url": "https://blog.88lin.eu.org",
+        "jobTitle": "AI Agent 工程实践者 · 独立开发者",
+        "url": "https://88lin.github.io/website/",
         "email": "mailto:431761794@qq.com",
+        "address": { "@type": "PostalAddress", "addressRegion": "浙江", "addressCountry": "CN" },
+        "knowsAbout": [
+          "AI Agent 工程",
+          "MCP 工具链",
+          "RAG 知识库",
+          "开源项目维护",
+          "创意前端与 WebGL",
+          "设计系统",
+          "自动化脚本"
+        ],
         "sameAs": [
           "https://github.com/88lin",
           "https://blog.88lin.eu.org",
+          "https://go.88lin.eu.org/",
           "https://space.bilibili.com/1412014683"
+        ],
+        "makesOffer": [
+          { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "GitHub 项目跑通与二次开发" } },
+          { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "开源贡献协助（Issue / PR）" } },
+          { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "把一本书蒸馏成 AI Skill" } },
+          { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Agent 工作流与自动化" } },
+          { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "网站开发与创意前端" } },
+          { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "程序定制与疑难杂症" } }
         ]
       }
     </script>
   </head>
   <body>
     <!--
-      v13 方向契约
-      THESIS: 一份可核验的工程档案。七章 00–06，每个数字都写了接口出处，
+      方向契约
+      THESIS: 一份可核验的接单档案。七章 00–06，每个数字都写了接口出处，
       折叠起来的「数字出处」随时能展开自查。页面本身就是最重要的那件作品。
-      REJECT: 居中 Hero + 项目卡网格的模板页；千篇一律的卡片矩阵；卡里再套卡。
+      REJECT: 居中 Hero + 项目卡网格的模板页；千篇一律的卡片矩阵；卡里再套卡；
+      标价；会倒退的数。
       OWN-WORLD: 暖白纸地面两档交替（都近白，加一层极淡纸纹），墨蓝是唯一结构色，
       柠檬黄只做实心重音块，珊瑚红只做编号与读数。得意黑排大标题，正文走苹果系统字
       （非 Apple 平台才下发思源黑子集），等宽只给测量与标签。
-      LAYOUT: 每章一种构图，撞型即回炉 —— 开场是可拖的四张案例叠卡、案例是三列镜像
-      账目行、主线是双轴加规格表、作品是横推轨、标本馆是目录加 sticky 旁注、
-      写作是量表、联系是巨号邮箱。
+      LAYOUT: 每章一种构图，撞型即回炉 —— 开场是可拖的四张案例叠卡、服务是两栏
+      分栏清单、案例是三列镜像账目行、作品是横推轨、主线是双轴加词表、
+      写作是量表、联系是巨号邮箱压蓝块。
       MOTION: 一个 .is-in 驱动四层 —— 章头开幕四步、大字 clip-path 遮片揭示、
-      量表按真实比例生长、顶栏进度条走 CSS scroll-timeline。无循环动画。
-      STORY: 三屏内给出三个证据（前端水准 = 这一页本身 / 做过能跑的东西 = 案例
-      与在线小站 / 怎么联系），然后带着邮箱离开。
+      量表按真实比例生长、顶栏进度条走 CSS scroll-timeline。无循环动画
+      （作品轨的自动横滚是唯一例外，有暂停有边界，见 DESIGN §3.2）。
+      STORY: 01 先回答「他能替我解决什么」，02/03 用案例与仓库兑现，
+      06 给出邮箱、微信码与三步流程。带着一封写得出来的邮件离开。
       FINISH: 看起来能操作的东西必须真的能操作，且由脚本断言，不靠肉眼看截图。
     -->
     <div id="root"></div>

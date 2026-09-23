@@ -1,7 +1,7 @@
 {
   "name": "moling-website",
   "private": true,
-  "version": "9.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -14,8 +14,7 @@
     "verify": "node scripts/verify.mjs",
     "shots": "node scripts/shots.mjs",
     "icons": "python scripts/mkicon.py",
-    "preview:build": "node scripts/preview-build.mjs",
-    "preview:all": "node scripts/preview-all.mjs"
+    "qr": "node scripts/qr.mjs"
   },
   "dependencies": {
     "gsap": "^3.13.0",

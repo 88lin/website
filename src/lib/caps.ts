@@ -1,10 +1,4 @@
-/**
- * 设备能力门禁。整站只有这一处决定「跑不跑实时 3D」。
- *
- * 明确的产品决定：手机不跑 WebGL，改用构建期从同一个真实场景截出来的
- * 静态图版。手机上的实时渲染要么烫手要么掉帧，两种都比一张好图版差。
- * 留了一个 `?gl=1` 的口子，将来想在高端手机上放开只改这里。
- */
+/** 能力探测：减弱动效、精确指针、WebGL 之类。 */
 
 export type Tier = 'high' | 'mid' | 'static'
 
@@ -27,12 +21,7 @@ const hasWebGL2 = () => {
   }
 }
 
-/**
- * 返回这台机器该跑哪一档。
- *  high   — 65,536 粒子（256²）、色散折射全开、dpr ≤ 1.75
- *  mid    — 16,384 粒子（128²）、折射降采样、dpr ≤ 1.25
- *  static — 不创建 canvas，用图版
- */
+/* 返回这台机器该跑哪一档。 */
 export const detectTier = (): Tier => {
   if (isSSR) return 'static'
   if (prefersReducedMotion()) return 'static'

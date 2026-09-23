@@ -1,35 +1,19 @@
-/**
- * 00 开场。
- *
- * 版式基准来自用户点名认可的四个自有页面（repair / book / components-preview /
- * demo-readme-tutorial）：灰色大写 kicker、得意黑超粗大标题（关键字压实心黄块）、
- * 蓝色一行小标题带虚线下划线、灰正文、蓝实心 + 白描边两枚胶囊，底部四块彩色读数。
- *
- * 这一版把首屏的「手感」补上，三件都不靠图也不靠 3D：
- *  1) 大标题**逐字**揭示（不是整块淡入）：每个字自己从下方浮起并回正，28ms 一个
- *  2) 四个读数从 0 滚到真值（components/Count.tsx）
- *  3) 叠卡跟指针微倾，松手回正（components/Deck.tsx）
- * 上一版这三处都是静态的，判词是「没有特效，没有手感」——判得对。
- */
+/** 00 开场：逐字揭示的大标题 + 项目叠卡 + 一条读数带。 */
 
 import { Deck } from '../components/Deck'
 import { Count } from '../components/Count'
-import { AS_OF, CONTACT_HREF, garden, hero, metrics, profile } from '../content/site'
+import { AS_OF, CONTACT_HREF, hero, metric, profile } from '../content/site'
 import { useMagnet, useReveal, useStagger } from '../lib/motion'
 
-/** 四块读数卡。全部从唯一数据源派生；小站数量取 garden 长度，不写死。 */
+/* 四块读数卡。 */
 const STATS = [
-  { t: 'blue', v: metrics[0].value, l: metrics[0].label, src: metrics[0].sub },
-  { t: 'yellow', v: metrics[2].value, l: metrics[2].label, src: metrics[2].sub },
-  { t: 'coral', v: String(garden.length), l: '在线小站', src: '特效 / 工具 / 内容 / 组件四类' },
-  { t: 'plain', v: metrics[4].value, l: metrics[4].label, src: metrics[4].sub },
+  { t: 'blue', m: 'stars' },
+  { t: 'yellow', m: 'repos' },
+  { t: 'coral', m: 'forks' },
+  { t: 'plain', m: 'followers' },
 ] as const
 
-/**
- * 把一行字拆成逐字的 span，并把序号写进 --i 供 CSS 算延迟。
- * `from` 是这一行在整句里的起始序号，三行连着排，读起来才是一句话被逐字印上去，
- * 而不是三行各自从头再来。空格不包 span：包了会被 inline-block 折掉。
- */
+/* 把一行字拆成逐字的 span，并把序号写进 --i 供 CSS 算延迟。 */
 function chars(text: string, from: number) {
   return Array.from(text).map((c, i) =>
     c === ' ' ? (
@@ -86,7 +70,7 @@ export function Hero() {
               {hero.primaryCta}
               <i aria-hidden="true">→</i>
             </a>
-            <a className="btn btn--ghost" href="#cases">
+            <a className="btn btn--ghost" href="#services">
               {hero.secondaryCta}
             </a>
           </div>
@@ -98,15 +82,18 @@ export function Hero() {
       </div>
 
       <div className="stats" data-stagger>
-        {STATS.map((s) => (
-          <div className="stat" data-t={s.t} key={s.l}>
-            <b>
-              <Count value={s.v} />
-            </b>
-            <s>{s.l}</s>
-            <span className="stat__src">{s.src}</span>
-          </div>
-        ))}
+        {STATS.map((s) => {
+          const m = metric(s.m)
+          return (
+            <div className="stat" data-t={s.t} key={m.id}>
+              <b>
+                <Count value={m.value} />
+              </b>
+              <s>{m.label}</s>
+              <span className="stat__src">{m.sub}</span>
+            </div>
+          )
+        })}
       </div>
 
       <p className="kicker" style={{ marginTop: '18px' }} data-stagger>

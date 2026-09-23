@@ -1,23 +1,12 @@
-/**
- * 案例子页 /case/:slug/。
- *
- * 首页那一章只放论点与实测；这里才铺全文：背景 / 卡在哪 / 怎么解 三段，
- * 加「关键取舍」与「数字出处」。
- *
- * 取舍单独成块是有意的：写清楚**放弃了什么**比罗列做了什么更能说明判断力，
- * 挑剔的读者只看这一块。数字出处也单独成块，一行一条，可以自己去核。
- *
- * 版式沿用全站语言：彩色读数卡、编号竖轴的分段、虚线数据面板、胶囊按钮。
- * 不为子页新造形状。
- */
+/** 案例子页 `/case/:slug/`：三段全文 + 关键取舍 + 数字出处。 */
 
 import { caseBySlug, cases } from '../content/cases'
-import { CONTACT_HREF, AS_OF, footer, profile } from '../content/site'
+import { CONTACT_HREF, CTA_LABEL, AS_OF, footer, profile } from '../content/site'
 import { Panel, Row } from '../components/Section'
 import { Link } from '../router'
 import { useStagger } from '../lib/motion'
 
-/** 子页顶栏：站名回首页 + 一枚联系入口。锚点导航在子页上没有意义，所以不放。 */
+/** 子页顶栏：站名回首页 + 下单入口。锚点导航在子页上没意义。 */
 function CaseNav() {
   return (
     <header className="nav">
@@ -27,8 +16,8 @@ function CaseNav() {
           <s>@88LIN</s>
         </Link>
         <nav className="nav-links" aria-label="导航">
-          <a className="gh" href={CONTACT_HREF}>
-            聊聊合作
+          <a className="nav-cta" href={CONTACT_HREF}>
+            {CTA_LABEL}
           </a>
         </nav>
       </div>
@@ -42,7 +31,6 @@ const TINT_CLASS: Record<string, 'blue' | 'yellow' | 'coral'> = {
   coral: 'coral',
 }
 
-/** 读数卡的配色按顺序轮，和首页那四块同一个零件。 */
 const STAT_TINTS = ['blue', 'yellow', 'coral', 'plain'] as const
 
 export function CasePage({ slug }: { slug: string }) {
@@ -55,7 +43,7 @@ export function CasePage({ slug }: { slug: string }) {
         <CaseNav />
         <main className="wrap cpage" id="main">
           <p className="cpage__miss">
-            没有这个案例。回<Link to="/">首页</Link>看四个案例。
+            没有这个案例。回<Link to="/">首页</Link>看全部案例。
           </p>
         </main>
       </>
@@ -141,7 +129,7 @@ export function CasePage({ slug }: { slug: string }) {
             源码 ↗
           </a>
           <a className="btn btn--ghost" href={CONTACT_HREF}>
-            聊聊合作
+            {CTA_LABEL}
           </a>
         </div>
 
@@ -165,9 +153,6 @@ export function CasePage({ slug }: { slug: string }) {
         <footer className="foot">
           <p>{footer.copyright}</p>
           <p className="foot__meta">
-            <a href={footer.source} target="_blank" rel="noreferrer">
-              本站源码 ↗
-            </a>
             <span>数字核实于 {AS_OF}</span>
           </p>
         </footer>

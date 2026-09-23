@@ -1,21 +1,4 @@
-/**
- * 01 案例。四个深度案例，一行一个。
- *
- * 首页只放论点 + 摘要 + 实测数字；背景 / 卡在哪 / 怎么解 / 取舍留在案例子页。
- * 这个分工从 v12 起没变，理由也没变：四段全文铺在首页没人看得完。
- *
- * 版式换掉了。上一版是「四行 × 同一张虚线数据面板」，被判「模板化、越往下越普通」
- * ——判得对：同一个盒子连排四遍，第二遍起就没有信息了，只剩节奏。
- *
- * 这一版整章**一个盒子都没有**：
- *  · 每条案例是一条账目行，靠 1px 细线分隔，不靠卡片分隔
- *  · 左侧一条编号轨：巨号编号 + 项目名，编号在行内 sticky，跟着读者走
- *  · 右侧实测数字排成带虚线引线的账目表（目录/发票的排法），不是又一个卡
- *  · 数字出处收进 <details>，想核的人点开，一行一条
- *  · 奇偶行左右互换，节奏是交替的而不是重复的
- *
- * 数字出处没有删，只是折起来了。可核验是这个站的底线。
- */
+/* 02 案例：六条账目行，奇偶行整行镜像。 */
 
 import { useCallback, useRef } from 'react'
 import { Section } from '../components/Section'
@@ -26,16 +9,10 @@ import { useLazyScene, useMediaQuery, useStagger, type SceneApi } from '../lib/m
 export function Cases() {
   const stagger = useStagger<HTMLDivElement>(60)
   const scene = useRef<HTMLDivElement | null>(null)
-  /*
-    视差只在三列版式（>1080px）上建。窄屏时编号轨被压成一行文字，
-    编号旁边紧挨着项目名，再给它 ±22px 的纵向位移就会和名字错开，看着像排错了。
-  */
+  /* 视差只在三列版式（>1080px）上建。 */
   const wide = useMediaQuery('(min-width: 1081px)')
 
-  /**
-   * 排字视差：巨号编号与账目表按不同速率走，差速才读作有厚度。
-   * 幅度压在 ±22px / ∓14px——再大就开始像 PPT 转场。
-   */
+  /* 排字视差：巨号编号与账目表按不同速率走，差速才读作有厚度。 */
   const build = useCallback(({ gsap, root }: SceneApi) => {
     root.querySelectorAll<HTMLElement>('.case').forEach((row) => {
       const st = { trigger: row, start: 'top bottom', end: 'bottom top', scrub: 0.9 }

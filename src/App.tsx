@@ -1,10 +1,4 @@
-/**
- * 应用外壳。三件事：装路由、接上平滑滚动与指针、分发页面。
- *
- * v6 在这里挂了一个全屏常驻的 3D 舞台层，八章共用一条织带。
- * v7 把 3D 收回到 hero 内部一处：整页环境层没有救回构图，只是让每一章
- * 都变成同一块底。签名时刻应该只有一个。
- */
+/** 应用外壳：装路由、接平滑滚动与指针、分发页面。 */
 
 import { useEffect } from 'react'
 import { Router, useRouter, type RoutePath } from './router'

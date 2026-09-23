@@ -1,16 +1,4 @@
-/**
- * 05 写作。博客那一摊。
- *
- * 版式：左边标签计数做成横条量表（名字 + 数量 + 按比例的条），
- * 右边最近六篇带永久链接。左边那组条是这一章独有的形状。
- *
- * 文案里必须写「标签」不是「分类」—— 首页那 27 个词是标签，
- * 一篇文章可以挂多个，所以合计比文章数大，这一点在正文里说清楚。
- * v9 的教训：每篇必须带链接，只有标题和日期就是六行点不开的死字。
- *
- * 三个数字排到 3.25rem 并从 0 滚起（components/Count.tsx）：这一章原来通篇是
- * 小字与细条，没有一处图形重量，扫过去等于没看见。
- */
+/** 05 写作：左边标签量表，右边最近六篇（每篇带永久链接）。 */
 
 import { Section } from '../components/Section'
 import { Count } from '../components/Count'
@@ -36,9 +24,9 @@ export function Notes() {
             </span>
             <span>
               <b>
-                <Count value={writing.days.toLocaleString('en-US')} />
+                <Count value={String(writing.years)} />
               </b>
-              <s>天没断过</s>
+              <s>年一直在写</s>
             </span>
             <span>
               <b>

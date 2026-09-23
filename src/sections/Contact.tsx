@@ -1,15 +1,4 @@
-/**
- * 06 联系。收口。
- *
- * 邮箱是这一页真正的出口，所以把它排成整章最大的一行等宽字，点了就是 mailto。
- * 渠道做成一排胶囊。页脚写清「每个数字都来自公开接口、源码开源」与核实日期 ——
- * 这不是免责声明，是这一页的立场。
- *
- * 蓝块右下角压一个巨号 @88lin。它同样来回过一次：先切边出血被读成「字看不全」，
- * 又被我整个删掉、结果右下角是一大片死蓝。
- * 现在整个在块内、四边留余量，并且改成**白色描边**而不是填色 ——
- * 描边字一眼就是图形，不会被误读成一段没渲染完的正文。
- */
+/** 06 联系：巨号邮箱 + 渠道胶囊 + 微信二维码，压在一块蓝面上。 */
 
 import { Section } from '../components/Section'
 import { AS_OF, CONTACT_EMAIL, CONTACT_HREF, contact, footer, profile } from '../content/site'
@@ -25,35 +14,49 @@ export function Contact() {
           @{profile.handle}
         </b>
 
-        <p className="contact__k" data-stagger>
-          写信到
-        </p>
+        <div className="contact__main">
+          <p className="contact__k" data-stagger>
+            写信到
+          </p>
 
-        <a className="mailto" href={CONTACT_HREF} data-stagger>
-          {CONTACT_EMAIL}
-          <i aria-hidden="true">→</i>
-        </a>
+          <a className="mailto" href={CONTACT_HREF} data-stagger>
+            {CONTACT_EMAIL}
+            <i aria-hidden="true">→</i>
+          </a>
 
-        <ul className="chans" data-stagger>
-          {contact.channels.map((c) => (
-            <li key={c.id}>
-              <a href={c.href} target="_blank" rel="noreferrer">
-                <b>{c.label}</b>
-                <span>{c.value}</span>
-                <i aria-hidden="true">↗</i>
-              </a>
-            </li>
-          ))}
-        </ul>
+          <ul className="chans" data-stagger>
+            {contact.channels.map((c) => (
+              <li key={c.id}>
+                <a href={c.href} target="_blank" rel="noreferrer">
+                  <b>{c.label}</b>
+                  <span>{c.value}</span>
+                  <i aria-hidden="true">↗</i>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <figure className="qr" data-stagger>
+          <img
+            src={contact.wechat.src}
+            width={168}
+            height={168}
+            alt={`${profile.name} 的微信二维码`}
+            loading="lazy"
+            decoding="async"
+          />
+          <figcaption>
+            <b>{contact.wechat.label}</b>
+            <span>{contact.wechat.hint}</span>
+          </figcaption>
+        </figure>
       </div>
 
       <footer className="foot">
         <p>{footer.copyright}</p>
         <p className="foot__note">{footer.note}</p>
         <p className="foot__meta">
-          <a href={footer.source} target="_blank" rel="noreferrer">
-            本站源码 ↗
-          </a>
           <span>数字核实于 {AS_OF}</span>
         </p>
       </footer>

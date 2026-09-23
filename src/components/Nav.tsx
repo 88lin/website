@@ -1,24 +1,17 @@
-/**
- * 顶栏。站名 + 三个锚点 + GitHub。
- * 形态照 repair.88lin.eu.org —— 那是用户点名能看上的页面之一，品牌上也该同源。
- *
- * 当前章那一项的黄色下划线**常亮**（useActiveSection 量的是谁跨过了视口中线）。
- * 上一版这条线只在 hover 时出现，于是顶栏一路滚下来毫无变化，读者不知道自己在哪。
- * 底边那条进度条由 CSS 的 scroll-timeline 驱动（见 index.css 的 .nav__prog），
- * 没有 JS、不占主线程；浏览器不支持就整个不显示，所以它只是提示，不承载导航。
- */
+/** 顶栏：站名 + 章节锚点 + GitHub + 下单入口。当前章那项常亮。 */
 
-import { profile } from '../content/site'
+import { CONTACT_HREF, CTA_LABEL, profile } from '../content/site'
 import { useActiveSection } from '../lib/motion'
 
 const LINKS = [
+  { id: 'services', label: '服务' },
   { id: 'cases', label: '案例' },
   { id: 'work', label: '作品' },
   { id: 'contact', label: '联系' },
 ]
 
-/** 观察全部七章，但只有三章在顶栏里有对应项；其余章滚过去时三项都不亮。 */
-const WATCH = ['hero', 'cases', 'craft', 'work', 'garden', 'notes', 'contact']
+/** 观察全部七章，但只有四章在顶栏里有对应项；其余章滚过去时四项都不亮。 */
+const WATCH = ['hero', 'services', 'cases', 'work', 'craft', 'notes', 'contact']
 
 export function Nav() {
   const active = useActiveSection(WATCH)
@@ -43,6 +36,11 @@ export function Nav() {
           ))}
           <a className="gh" href="https://github.com/88lin" target="_blank" rel="noreferrer">
             GitHub ↗
+          </a>
+          {/* 顶栏常驻的下单入口。接单站，读者滚到任何一章都该够得着出口，不必先滚回顶部或一路滚到底。
+              窄屏优先保它，先让章节锚点、再让 GitHub 让位。 */}
+          <a className="nav-cta" href={CONTACT_HREF}>
+            {CTA_LABEL}
           </a>
         </nav>
       </div>

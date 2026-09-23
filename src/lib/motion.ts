@@ -1,15 +1,4 @@
-/**
- * 动效编排。
- *
- * 三条纪律：
- *  1) 默认状态永远是「已经可见」。只有挂上 .js 之后才允许把元素藏起来，
- *     所以禁用 JS、减弱动效、预渲染快照三种情况下内容都是完整的。
- *  2) 不写 window.addEventListener('scroll')。滚动位置只有两个读法：
- *     ScrollTrigger，或者一个 rAF 循环。
- *  3) 每个 ScrollTrigger 都装在 gsap.context() 里，且**按区块懒建**：
- *     区块进入视口前 1.5 屏才建，离开 2 屏后 revert()。首屏因此只建两章，
- *     这是移动端 TBT 的主要来源。
- */
+/* 动效编排。 */
 
 import { useEffect, useRef, useState, type RefObject } from 'react'
 import { setPointer } from './bus'
@@ -101,16 +90,7 @@ export function useReveal<T extends Element>(rootMargin = '-12% 0px -8% 0px') {
 
 /* ------------------------------------------------------------ 手感 */
 
-/**
- * 磁吸。指针靠近时元素朝指针方向偏一点，离开就回位。
- *
- * 幅度只有几个像素，但它把「静态的一块」变成「会回应你的一块」。
- * 关键是**不要跟得太紧**：位移取指针到中心距离的一个小比例，并且
- * 出了元素范围就立刻归零 —— 跟太紧会变成粘手，读者反而想躲。
- *
- * 只在有精确指针的设备上挂（触屏没有 hover 这个状态），
- * 减弱动效时整个不挂。
- */
+/* 磁吸。 */
 export function useMagnet<T extends HTMLElement>(strength = 6) {
   const ref = useRef<T | null>(null)
   useEffect(() => {
@@ -141,11 +121,7 @@ export function useMagnet<T extends HTMLElement>(strength = 6) {
   return ref as RefObject<T>
 }
 
-/**
- * 指针微倾。把指针在元素内的相对位置写成 --px / --py（-1 ~ 1），
- * 具体转成什么角度交给 CSS —— 这样同一个钩子既能做卡片倾斜，也能做别的。
- * 松开/离开时回零，回零的过渡也在 CSS 里。
- */
+/* 指针微倾。 */
 export function useTilt<T extends HTMLElement>() {
   const ref = useRef<T | null>(null)
   // 返回可写的 ref：调用方常常要把同一个节点同时交给别的 ref（叠卡就是这样），
@@ -209,15 +185,7 @@ export function useStagger<T extends HTMLElement>(step = 55) {
   return ref as RefObject<T>
 }
 
-/**
- * 当前章。顶栏靠它把「读者现在在哪一章」显示出来。
- *
- * rootMargin 上下各收 -45%，观察窗于是压成视口中间那一条窄带：
- * 同一时刻只有跨过视口中线的那一章在相交，谁是「当前」就没有歧义，
- * 也不需要读 scrollY 或者比较各章的可见面积。
- *
- * 返回 null 表示还没有任何一章跨过中线（页面刚打开、或者停在页脚）。
- */
+/* 当前章。 */
 export function useActiveSection(ids: string[]) {
   const key = ids.join(',')
   const [active, setActive] = useState<string | null>(null)
@@ -243,27 +211,15 @@ export function useActiveSection(ids: string[]) {
 
 type Ctx = { revert: () => void }
 
-/**
- * 交给 build 回调的东西。组件侧用它给 useCallback 标类型——不导出这个别名的话，
- * 每个用到懒建的组件都要重抄一遍 `typeof import('gsap')`。
- */
+/* 交给 build 回调的东西。 */
 export type SceneApi = {
   gsap: typeof import('gsap').gsap
   ScrollTrigger: typeof import('gsap/ScrollTrigger').ScrollTrigger
   root: HTMLElement
 }
 
-/**
- * 区块级懒装配。进入视口前 1.5 屏才 import gsap 并建 trigger，
- * 离开 2 屏后 revert()。首屏因此不为下面六章付任何解析与建表成本。
- *
- * build 拿到的是一个已经 registerPlugin 过的 gsap 与 ScrollTrigger，
- * 返回值交给 gsap.context() 管理，卸载时一次性回收。
- */
-/**
- * 媒体查询开关。SSR 与首帧一律 false —— 预渲染快照里不该出现任何只有宽屏才成立
- * 的接管态；水合之后再按真实视口切。用它给「只在宽屏才建的场景」把门。
- */
+/* 区块级懒装配。 */
+/* 媒体查询开关。 */
 export function useMediaQuery(query: string) {
   const [on, setOn] = useState(false)
   useEffect(() => {
@@ -278,11 +234,7 @@ export function useMediaQuery(query: string) {
 
 export function useLazyScene(
   ref: RefObject<HTMLElement | null>,
-  /**
-   * 返回值会被 gsap.context 当作卸载钩子调用。凡是 build 里手写过的内联样式
-   * 与 classList，都必须在这里还原 —— context.revert() 只认它自己 tween 过的属性，
-   * 手写的 `el.style.height` 它一概不管，v8 的移动端空白就是这么来的。
-   */
+  /* 返回值会被 gsap.context 当作卸载钩子调用。 */
   build: (api: SceneApi) => void | (() => void),
   enabled = true,
 ) {
@@ -373,11 +325,7 @@ export function caseStack(
 
 /* ------------------------------------------------------------ 作品横推 */
 
-/**
- * 横向推进。跑道（rail）的高度就是行程：一屏 + 需要横移的距离。
- * sticky 把内容钉在视口，scrub 把 x 从 0 拉到 -distance。
- * invalidateOnRefresh 让缩放窗口后距离重算，不会推过头或推不到底。
- */
+/* 横向推进。 */
 export function worksPan(
   gsap: typeof import('gsap').gsap,
   rail: HTMLElement,
@@ -407,13 +355,7 @@ export function worksPan(
     },
   })
 
-  /**
-   * 卸载钩子。上面那句 `rail.style.height = ...` 是手写的内联样式，
-   * gsap 的 context.revert() 不会碰它 —— 这正是 v8 移动端「空白占满一页」的成因：
-   * 视口一旦宽过断点（手机横屏就够了）跑道被钉成两千多像素高，
-   * 转回竖屏时 CSS 已经切成竖排，那句内联高度却还在，于是留下一大截死白。
-   * 这里连同 pan 态的 class 一起还原。
-   */
+  /* 卸载钩子。 */
   return () => {
     rail.style.removeProperty('height')
     track.style.removeProperty('transform')

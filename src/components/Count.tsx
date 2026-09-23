@@ -1,31 +1,14 @@
-/**
- * 数字滚动。读数从 0 滚到真值。
- *
- * 为什么值得单独做一个组件：这一页的论点就是「每个数字都能核」，
- * 那么数字本身就该是主角。静态摆着的一个四位数和滚上去的同一个数，
- * 读者对前者只是「看到」，对后者是「看着它长出来」——后者才会记住。
- *
- * 三条纪律：
- *  1) 只在进视口时跑一次，不重播，不循环。
- *  2) 原样保留千分位与后缀：带逗号的滚完还带逗号，'5.4pp' 不动它。
- *  3) prefers-reduced-motion 直接给终值，不是放慢 —— 减弱动效不是「慢动作」。
- */
+/* 数字滚动：进视口时从 0 滚到真值，只跑一次。 */
 
 import { useEffect, useRef, useState } from 'react'
 import { prefersReducedMotion } from '../lib/caps'
 
-/** 滚多久。1.1s 是「看得见在长」与「不耽误读」的交点。 */
 const DURATION = 1100
 
-/** 缓出。起步快、收尾慢，最后几十毫秒几乎停住，读数因此落得稳。 */
 const ease = (t: number) => 1 - Math.pow(1 - t, 3)
 
 type Parsed = { n: number; prefix: string; suffix: string; grouped: boolean; decimals: number }
 
-/**
- * 把 '4,821' / '5.4pp' / 'CI' 这类值拆成能滚的部分。
- * 拆不出数字（'CI'）就返回 null，交给调用方原样渲染 —— 不是每个读数都是数。
- */
 function parse(raw: string): Parsed | null {
   const m = raw.match(/^([^\d-]*)(-?[\d,]+(?:\.\d+)?)(.*)$/)
   if (!m) return null
@@ -53,7 +36,9 @@ const format = (v: number, p: Parsed) => {
 export function Count({ value, className }: { value: string; className?: string }) {
   const parsed = parse(value)
   const ref = useRef<HTMLSpanElement | null>(null)
-  const [text, setText] = useState(() => (parsed ? format(0, parsed) : value))
+  // 初始值必须是终值：写成 0 的话预渲染产物里印的就是「0 累计 Star」，
+  // 禁用 JS 的读者和爬虫看到的就是 0。归零发生在 step 的第一帧。
+  const [text, setText] = useState(value)
 
   useEffect(() => {
     if (!parsed) return
@@ -89,14 +74,13 @@ export function Count({ value, className }: { value: string; className?: string 
       io.disconnect()
       cancelAnimationFrame(raf)
     }
-    // value 变了就重来；parsed 由 value 派生，不必单列
   }, [value]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <span
       ref={ref}
       className={className}
-      /* 滚动中位数会变，等宽数字保证宽度不跳；aria 只播终值，不念中间过程 */
+      /* 等宽数字：滚动中位数会变，宽度不能跳 */
       style={{ fontVariantNumeric: 'tabular-nums' }}
       aria-label={value}
     >

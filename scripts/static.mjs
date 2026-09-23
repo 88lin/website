@@ -1,21 +1,4 @@
-/**
- * 生成 robots / sitemap / 404 / OG 图。
- *
- * 跑法：npm run static（要先 npm run build，OG 图是从构建产物里取景的）
- *
- * 两条纪律：
- *
- * 1) 图标不在这里生成。favicon 全套（svg / ico / 三档 png / apple-touch /
- *    webmanifest）由 scripts/mkicon.py 生成，那份有完整的 16px 可读性推导。
- *    v12 的 static.mjs 里还留着一份 v4 配色的 favicon 覆写，会把好图标写坏。
- *
- * 2) OG 图**从真页面取景**，不另抄一份文案与数字。
- *    上一版是在这个脚本里手写 SVG：标题是「前沿 AI，落地成看得见的工程。」，
- *    而站上早就换成了「把前沿 AI 变成可交付、可维护的工程结果。」；
- *    数字也停在 4,764。分享卡片和页面对不上，比没有分享卡片更糟。
- *    现在的做法是打开 dist/index.html，把真实的大标题、读数带、站名节点
- *    搬进一块 1200×630 的板子上截图 —— 页面改了，OG 自动跟着改。
- */
+/* 生成 robots / sitemap / 404 / OG 图。 */
 
 import { chromium } from 'playwright'
 import { readFile, writeFile } from 'node:fs/promises'
@@ -27,7 +10,7 @@ const PUB = path.join(ROOT, 'public')
 const DIST = path.join(ROOT, 'dist')
 const SITE = 'https://88lin.github.io/website/'
 
-/* v13 的 A 组语义色，与 src/styles/palettes.css 一致 */
+/* A 组语义色，与 src/styles/palettes.css 一致 */
 const PAPER = '#fdfcf8'
 const INK = '#1a1a2e'
 const BRAND = '#2b7fd8'
@@ -36,10 +19,7 @@ const DIM = '#4a4a5a'
 
 /* ---------------------------------------------------------------- 路由与日期 */
 
-/**
- * 路由表与核实日期都从源码里取，不在这里重抄一份。
- * v12 的 sitemap 少了 facetmark 那条子页 —— 因为它是手写的数组，加了案例没同步。
- */
+/* 路由表与核实日期都从源码里取，不在这里重抄一份。 */
 const routerSrc = await readFile(path.join(ROOT, 'src/router.tsx'), 'utf8')
 const routesLine = routerSrc.match(/export const ROUTES[^=]*=\s*\[([^\]]+)\]/)
 if (!routesLine) {
@@ -56,6 +36,19 @@ if (!asOf) {
 }
 const lastmod = `${asOf[1]}-${asOf[2]}-${asOf[3]}`
 
+/*
+  图标的破缓存版本号也从 index.html 现读。
+  这里原来硬写着 `?v=10`，而 index.html 换图标时已经涨到 `?v=14` ——
+  于是 404 页引的是一份浏览器眼里「另一个」图标，白付一次请求。
+  和 sitemap 的 lastmod 一样：能算出来的就别抄。
+*/
+const shellHtml = await readFile(path.join(ROOT, 'index.html'), 'utf8')
+const iconV = (shellHtml.match(/favicon\.ico\?v=(\d+)/) || [])[1]
+if (!iconV) {
+  console.error('static: 没在 index.html 里找到 favicon.ico?v= 版本号')
+  process.exit(1)
+}
+
 /* ---------------------------------------------------------------- robots / sitemap */
 
 await writeFile(path.join(PUB, 'robots.txt'), `User-agent: *\nAllow: /\n\nSitemap: ${SITE}sitemap.xml\n`)
@@ -70,14 +63,11 @@ await writeFile(
   path.join(PUB, 'sitemap.xml'),
   `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`,
 )
-console.log(`static: sitemap ${ROUTES.length} 条路由，lastmod ${lastmod}`)
+console.log(`static: sitemap ${ROUTES.length} 条路由，lastmod ${lastmod}；404 图标 ?v=${iconV}`)
 
 /* ---------------------------------------------------------------- 404 */
 
-/*
-  404 必须独立成页：它可能在构建产物的 CSS 都没上的情况下被 GitHub Pages 直接吐出来，
-  所以样式全内联，不引外部文件、不依赖字体下载。
-*/
+/* 404 必须独立成页：它可能在构建产物的 CSS 都没上的情况下被 GitHub Pages 直接吐出来， 所以样式全内联，不引外部文件、不依赖字体下载。 */
 await writeFile(
   path.join(PUB, '404.html'),
   `<!doctype html>
@@ -87,7 +77,7 @@ await writeFile(
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light">
 <title>页面不存在 · 茉灵智库</title>
-<link rel="icon" href="./favicon.svg?v=10" type="image/svg+xml">
+<link rel="icon" href="./favicon.svg?v=${iconV}" type="image/svg+xml">
 <style>
   html{background:${PAPER};color:${INK};-webkit-text-size-adjust:100%}
   body{margin:0;min-height:100svh;display:flex;align-items:center;
@@ -111,7 +101,7 @@ await writeFile(
 <body><div class="w">
   <p class="k">404 · NOT FOUND</p>
   <h1>这个地址下<mark>没有东西</mark>。</h1>
-  <p>可能是链接过期了，也可能是我改过结构。首页有全部四个案例与在线小站的入口。</p>
+  <p>可能是链接过期了，也可能是我改过结构。首页有全部案例与作品的入口。</p>
   <a href="./">回首页 <span aria-hidden="true">→</span></a>
   <p class="m">88lin.github.io/website</p>
 </div></body>
@@ -138,10 +128,7 @@ const page = await ctx.newPage()
 await page.goto(pathToFileURL(shell).href, { waitUntil: 'load' })
 await page.evaluate(() => document.fonts?.ready).catch(() => {})
 
-/*
-  把真页面的节点搬到一块 1200×630 的板子上。搬的是 DOM，不是文案的副本，
-  所以标题、四个读数、核实日期永远和线上一致。
-*/
+/* 把真页面的节点搬到一块 1200×630 的板子上。 */
 await page.evaluate(
   ({ paper, ink }) => {
     const pick = (s) => document.querySelector(s)

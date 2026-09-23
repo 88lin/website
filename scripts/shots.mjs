@@ -1,13 +1,4 @@
-/**
- * 取景器：把产物按屏切片截图，供人眼过一遍。
- *
- * 跑法：npm run shots [-- --mobile]（要先 npm run build）
- * 出图：.shots/d0.png…（桌面 1440×900）或 .shots/m0.png…（移动 390×844）
- *
- * 这个脚本只负责「让人能看」。能不能用、数字对不对、有没有溢出，
- * 全部由 npm run verify 断言 —— 截图看得出丑，看不出不能用。
- * 上一轮被点名的三条 bug 都是「截图上完全正常」的，教训写在这里。
- */
+/* 取景器：把产物按屏切片截图，供人眼过一遍。 */
 
 import { chromium } from 'playwright'
 import { mkdir } from 'node:fs/promises'
