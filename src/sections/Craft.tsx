@@ -39,7 +39,9 @@ export function Craft() {
       </div>
 
       <p className="thesis" data-stagger="mask" ref={thesis}>
-        {tracksIntro.thesis}
+        {tracksIntro.thesis.before}
+        <span className="mark">{tracksIntro.thesis.mark}</span>
+        {tracksIntro.thesis.after}
       </p>
 
       <div className="svc-head">

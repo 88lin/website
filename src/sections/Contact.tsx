@@ -1,4 +1,4 @@
-/** 06 联系：巨号邮箱 + 渠道胶囊 + 微信二维码，压在一块蓝面上。 */
+/** 06 联系：巨号邮箱 + 渠道胶囊 + 微信二维码，压在一块淡紫面上。 */
 
 import { Section } from '../components/Section'
 import { AS_OF, CONTACT_EMAIL, CONTACT_HREF, contact, footer, profile } from '../content/site'

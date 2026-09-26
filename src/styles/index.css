@@ -49,7 +49,11 @@
 
   /* 展示字很粗，同样的视觉重量下字号可以比细体小一档。 */
   --t-hero: clamp(2.5rem, 5.6vw, 4.75rem);
-  --t-h2: clamp(1.75rem, 3vw, 2.5rem);
+  /* 章名比上一版大一档。旧值 40px 压不住首屏那个 76px 的大标题，
+     一路滚下来每章开头都像「又一段正文」，这是「越往下越平」的一半原因。 */
+  --t-h2: clamp(1.875rem, 3.4vw, 2.875rem);
+  /* 卡片/分块标题。之前各处各写一个 clamp，层级对不齐。 */
+  --t-h3: clamp(1.1875rem, 1.6vw, 1.375rem);
   /* 正文比上一版大半档：中文在 16px 上偏挤，17px 才有「读物」的松弛感。 */
   --t-body: clamp(1rem, 0.94rem + 0.22vw, 1.0938rem);
   --t-small: 0.875rem;
@@ -65,6 +69,9 @@
   --r-card: 16px;
   --r-lg: 20px;
   --r-pill: 999px;
+  /* 柔彩卡专用。参照站所有卡一律 20px，比站内白卡的 16px 松一档 ——
+     淡底大面积的圆角必须更大，16px 压在 380px 宽的面上会显得「方」。 */
+  --r-tint: 20px;
 
   /* 墨影只准落在纸面上。饱和色面上的投影必须用那个面自己的色相
      （见 .contact / .thesis / .btn--blue），否则会发脏发黑。 */
@@ -360,11 +367,16 @@ button {
 .nav-links .nav-cta {
   padding: 9px 18px;
   border-radius: var(--r-pill);
-  background: var(--highlight);
-  color: var(--ink);
+  /* 参照站顶栏那枚「博客 ↗」量出来就是 #6941B0，与站内 lav 族的 --tint-ink 同值。
+     原来是实心柠檬黄 —— 黄是这套语言里的**重音**（.mark 那块），
+     拿它做常驻顶栏按钮，等于整页最亮的一块一直钉在右上角，
+     谁也压不住它。紫药丸白字 7:1，比黄底墨字更稳。
+     投影照 DESIGN.md §5：饱和面上的影必须用那个面自己的色相。 */
+  background: #6941b0;
+  color: #fff;
   font-weight: 600;
   white-space: nowrap;
-  box-shadow: 0 1px 2px rgba(196, 160, 30, 0.3), 0 6px 16px rgba(196, 160, 30, 0.26);
+  box-shadow: 0 1px 2px rgba(105, 65, 176, 0.28), 0 6px 16px rgba(105, 65, 176, 0.24);
   transition:
     background-color 0.18s var(--ease),
     transform 0.16s var(--ease),
@@ -376,10 +388,10 @@ button {
 }
 
 .nav-links .nav-cta:hover {
-  background: #f8e07e;
-  color: var(--ink);
+  background: #7c4dd8;
+  color: #fff;
   transform: translateY(-1px);
-  box-shadow: 0 2px 5px rgba(196, 160, 30, 0.34), 0 10px 22px rgba(196, 160, 30, 0.3);
+  box-shadow: 0 2px 5px rgba(105, 65, 176, 0.32), 0 10px 22px rgba(105, 65, 176, 0.28);
 }
 
 .nav-links .nav-cta:active {
@@ -489,6 +501,21 @@ button {
   inset: 30% -0.1em 10%;
   background: var(--highlight);
   border-radius: 5px;
+}
+
+/* 柔彩面。取自 go.88lin.eu.org/2：淡底 + 同色系 1px 边，**一张投影都没有**。
+   参照站看着干净全靠那条边 —— 补上投影就回到旧版「一叠白盒子浮在纸上」的观感。
+   配色三件套由 [data-t] 下发（见 palettes.css），这里只管形。 */
+.tinted {
+  border: 1px solid var(--line, var(--rule));
+  border-radius: var(--r-tint);
+  background: var(--fill, #fff);
+}
+
+/* 同色系标题：这套语言最容易被漏掉的一半。墨色标题压在淡底上，
+   卡就只是「有颜色的白卡」，读不出族群。 */
+.tinted-ink {
+  color: var(--tint-ink, var(--fg));
 }
 
 /* 小号灰色大写拉丁 kicker */
@@ -620,19 +647,7 @@ button {
   inset: 0 auto 0 0;
   width: 46px;
   border-right: 1px solid var(--rule);
-  background: #fbfaf4;
-}
-
-.dcard[data-t='blue']::before {
-  background: #eaf2fc;
-}
-
-.dcard[data-t='yellow']::before {
-  background: #fdf5da;
-}
-
-.dcard[data-t='coral']::before {
-  background: #fdeef1;
+  background: var(--fill, #fbfaf4);
 }
 
 /* 巨号编号衬底。 */
@@ -646,21 +661,9 @@ button {
   font-weight: 400;
   line-height: 0.82;
   letter-spacing: -0.03em;
-  color: #f1efe6;
+  color: var(--fill, #f1efe6);
   pointer-events: none;
   user-select: none;
-}
-
-.dcard[data-t='blue'] .dcard__ghost {
-  color: #e7effb;
-}
-
-.dcard[data-t='yellow'] .dcard__ghost {
-  color: #faf1d3;
-}
-
-.dcard[data-t='coral'] .dcard__ghost {
-  color: #fbe8ec;
 }
 
 /* 项目名竖排在窄轨上。等宽 + 宽字距，读起来像标本瓶上的标签。 */
@@ -822,17 +825,6 @@ button {
   line-height: 1.12;
 }
 
-.dcard[data-t='blue'] .dcard__nums b {
-  color: var(--brand-deep);
-}
-
-.dcard[data-t='yellow'] .dcard__nums b {
-  color: #8a6a10;
-}
-
-.dcard[data-t='coral'] .dcard__nums b {
-  color: var(--pop-deep);
-}
 
 .dcard__nums s {
   display: block;
@@ -972,6 +964,7 @@ button {
 
 .stat {
   padding: clamp(18px, 2vw, 26px);
+  background: var(--fill, transparent);
 }
 
 .stat + .stat {
@@ -987,6 +980,7 @@ button {
   font-weight: 400;
   letter-spacing: 0.005em;
   line-height: 1.1;
+  color: var(--tint-ink, var(--fg));
 }
 
 .stat s {
@@ -997,29 +991,6 @@ button {
   color: var(--fg-dim);
 }
 
-.stat[data-t='blue'] {
-  background: #eaf2fc;
-}
-
-.stat[data-t='blue'] b {
-  color: var(--brand-deep);
-}
-
-.stat[data-t='yellow'] {
-  background: #fdf5da;
-}
-
-.stat[data-t='yellow'] b {
-  color: #8a6a10;
-}
-
-.stat[data-t='coral'] {
-  background: #fdeef1;
-}
-
-.stat[data-t='coral'] b {
-  color: var(--pop-deep);
-}
 
 /* 读数带是一个整体，末格不能是纯白 —— 那样看起来像带子断在这儿。
    给一档中性暖灰，色相为零但明度接住前面三格。 */

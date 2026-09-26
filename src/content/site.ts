@@ -5,19 +5,22 @@ export const AS_OF = '2026.09.21'
 /* ---------------------------------------------------------------- 章节 */
 
 export type Tone = 'paper' | 'alt'
-export type Tint = 'blue' | 'yellow' | 'coral'
+/* 七族柔彩，量自 go.88lin.eu.org/2。blue/yellow/coral/teal 是旧名，
+   在 palettes.css 里与 blue/cream/rose/sage 同义，留着是为了不动案例数据。
+   分配规矩只有一条：**同屏相邻的两块不许同族**（含两栏网格的左右与上下邻居）。 */
+export type Tint = 'blue' | 'lav' | 'rose' | 'sage' | 'cream' | 'peach' | 'aqua' | 'yellow' | 'coral'
 export type ChapterId = 'hero' | 'services' | 'cases' | 'work' | 'craft' | 'notes' | 'contact'
 export type Chapter = { id: ChapterId; label: string; tone: Tone; no: string; tint: Tint | 'teal' }
 
-/** 地面色两档交替；tint 只染章头那个巨号编号，相邻不重复。 */
+/** 地面色两档交替；tint 染章头那个巨号编号与章名药丸，七章七族、一族不重。 */
 export const chapters: Chapter[] = [
   { id: 'hero', label: '开场', tone: 'paper', no: '00', tint: 'blue' },
-  { id: 'services', label: '服务', tone: 'alt', no: '01', tint: 'coral' },
-  { id: 'cases', label: '案例', tone: 'paper', no: '02', tint: 'blue' },
-  { id: 'work', label: '作品', tone: 'alt', no: '03', tint: 'yellow' },
-  { id: 'craft', label: '主线', tone: 'paper', no: '04', tint: 'teal' },
-  { id: 'notes', label: '写作', tone: 'alt', no: '05', tint: 'coral' },
-  { id: 'contact', label: '联系', tone: 'paper', no: '06', tint: 'blue' },
+  { id: 'services', label: '服务', tone: 'alt', no: '01', tint: 'rose' },
+  { id: 'cases', label: '案例', tone: 'paper', no: '02', tint: 'lav' },
+  { id: 'work', label: '作品', tone: 'alt', no: '03', tint: 'cream' },
+  { id: 'craft', label: '主线', tone: 'paper', no: '04', tint: 'sage' },
+  { id: 'notes', label: '写作', tone: 'alt', no: '05', tint: 'peach' },
+  { id: 'contact', label: '联系', tone: 'paper', no: '06', tint: 'aqua' },
 ]
 
 /* ---------------------------------------------------------------- 身份 */
@@ -150,7 +153,7 @@ export const services: Service[] = [
     does: ['代码复现', '环境部署', '依赖报错', 'Git 冲突', '二次开发', '前端美化', 'Bug 排查', '功能修改'],
     deliver: '能跑起来的环境、一份从零开始的复现步骤、改动说明',
     fit: '手上有 repo 但装不起来，或者需要在别人的代码上继续改的人',
-    tint: 'coral',
+    tint: 'lav',
   },
   {
     id: 'oss',
@@ -170,7 +173,7 @@ export const services: Service[] = [
     does: ['书籍蒸馏', '方法论建卡', 'Skill 打包', '多宿主适配', '教程编写', '流水线自检'],
     deliver: '可导入的 Skill 目录、使用教程、一条自己会报错的校验流水线',
     fit: '想把知识变成随时能调用的能力，而不是又一个收藏夹的人',
-    tint: 'yellow',
+    tint: 'cream',
   },
   {
     id: 'agent',
@@ -180,7 +183,7 @@ export const services: Service[] = [
     does: ['Agent Skill', 'MCP 工具接入', '知识库与 RAG', '定时任务', '网页采集', '接口对接', '批量处理'],
     deliver: '能跑的工作流、部署方式、出错时该看哪里',
     fit: '已经在用 AI，但一直停在「问答」这一步的团队和个人',
-    tint: 'blue',
+    tint: 'sage',
   },
   {
     id: 'front',
@@ -190,7 +193,7 @@ export const services: Service[] = [
     does: ['整站设计与开发', 'Three.js / WebGL', '滚动编排', '设计系统与令牌', '性能与可访问性', '旧站改版'],
     deliver: '可维护的代码、一套自己能改下去的设计令牌与文档、性能预算达标',
     fit: '已经有内容、但页面撑不起内容的项目',
-    tint: 'coral',
+    tint: 'aqua',
   },
   {
     id: 'fix',
@@ -200,7 +203,7 @@ export const services: Service[] = [
     does: ['脚本与小工具', 'Bug 修复', '性能优化', '数据处理', 'Windows / macOS / Linux', '服务器与部署', '电脑维修'],
     deliver: '能用的东西、源码、以及怎么自己继续改',
     fit: '需求不大没人愿意接，或者已经被别人做砸了的活',
-    tint: 'yellow',
+    tint: 'rose',
   },
 ]
 
@@ -230,7 +233,9 @@ export type Track = { id: string; title: string; body: string }
 export const tracksIntro = {
   headline: '两条主线，一个交点',
   body: '上面那些活都长在这两条线上。左边这条负责让 AI 真的能改到线上，右边这条负责让人愿意看、看得懂、用得下去。',
-  thesis: '交点是同一件事：把不确定的能力，接进确定的工程约束里。',
+  /* 拆三段是为了给中间那截压一枚实心黄块（.mark）——
+     参照站的大句子都是这个读法：墨字 + 一块黄，不是整块黄底。 */
+  thesis: { before: '交点是同一件事：把不确定的能力，接进', mark: '确定的工程约束', after: '里。' },
 }
 
 export const trackA = {
@@ -350,7 +355,7 @@ export const projects: Project[] = [
     state: 'maintained',
     live: 'https://88lin.github.io/vip/',
     repo: 'https://github.com/88lin/video_vip',
-    tint: 'coral',
+    tint: 'lav',
   },
   {
     slug: 'workbuddy-auto-signin',
@@ -381,7 +386,7 @@ export const projects: Project[] = [
     state: 'live',
     live: 'https://repair.88lin.eu.org',
     repo: 'https://github.com/88lin/computer-repair-skill',
-    tint: 'yellow',
+    tint: 'rose',
   },
   {
     slug: 'lofi-radio-web',
@@ -397,7 +402,7 @@ export const projects: Project[] = [
     state: 'live',
     live: 'https://lofi.88lin.eu.org',
     repo: 'https://github.com/88lin/lofi-radio-web',
-    tint: 'blue',
+    tint: 'sage',
   },
   {
     slug: 'agentrouter-auto-signin',
@@ -412,7 +417,7 @@ export const projects: Project[] = [
     forks: 3,
     state: 'maintained',
     repo: 'https://github.com/88lin/agentrouter-auto-signin',
-    tint: 'coral',
+    tint: 'cream',
   },
   {
     slug: 'react-ai-orb',
@@ -428,7 +433,7 @@ export const projects: Project[] = [
     state: 'live',
     live: 'https://88lin.github.io/react-ai-orb',
     repo: 'https://github.com/88lin/react-ai-orb',
-    tint: 'yellow',
+    tint: 'peach',
   },
   {
     slug: 'facetmark',
@@ -444,7 +449,7 @@ export const projects: Project[] = [
     state: 'live',
     live: 'https://88lin.github.io/facetmark/',
     repo: 'https://github.com/88lin/facetmark',
-    tint: 'coral',
+    tint: 'aqua',
   },
   {
     slug: 'textmark',
@@ -460,7 +465,7 @@ export const projects: Project[] = [
     state: 'live',
     live: 'https://88lin.github.io/textmark/',
     repo: 'https://github.com/88lin/textmark',
-    tint: 'blue',
+    tint: 'lav',
   },
   {
     slug: 'geo-book-skill',
@@ -475,7 +480,7 @@ export const projects: Project[] = [
     forks: 0,
     state: 'maintained',
     repo: 'https://github.com/88lin/geo-book-skill',
-    tint: 'yellow',
+    tint: 'blue',
   },
   {
     slug: 'gzh-design-skill',
@@ -491,7 +496,7 @@ export const projects: Project[] = [
     state: 'live',
     live: 'https://88lin.github.io/gzh-design-skill/docs/gallery/index.html',
     repo: 'https://github.com/88lin/gzh-design-skill',
-    tint: 'coral',
+    tint: 'rose',
   },
 ]
 

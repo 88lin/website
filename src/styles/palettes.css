@@ -86,6 +86,76 @@
   --pop-surface: #D43A50;
 }
 
+/* ---------------------------------------------------------------- 柔彩族群
+
+   七族淡底，量自 go.88lin.eu.org/2 —— 站主自己认可的那个页面。
+   每族四个值：fill 面、line 同色系 1px 边、mid 装饰件（巨号编号一类）、
+   ink 同色系标题字。三条规矩，破了就回到旧版那种「白纸压近白底」的寡淡：
+
+   1) 卡面用 fill，**不用投影**。参照站的卡一张影都没有，干净全靠那条同色边。
+   2) 标题用 ink，不用墨色。同色系标题是这套语言最容易被漏掉的一半。
+   3) 彩度全部 < 0.18，在 verify D 段里算「淡底」不算「饱和」—— 铺满一章也不违配额。
+
+   ink 对 fill 实测均 ≥ 5.3:1，正文级可用。 */
+[data-t='blue'] {
+  --fill: #ebf4ff;
+  --line: #d5e6ff;
+  --tint-ink: #2455a4;
+  --tint-mid: #8fb4e4;
+}
+
+[data-t='lav'] {
+  --fill: #f0eafe;
+  --line: #dccefc;
+  --tint-ink: #6941b0;
+  --tint-mid: #ab8ae0;
+}
+
+/* 旧名 coral 继续可用：站内内容文件里还按 blue/yellow/coral 三档分配。 */
+[data-t='rose'],
+[data-t='coral'] {
+  --fill: #ffe3f1;
+  --line: #fbc7e0;
+  --tint-ink: #a82262;
+  --tint-mid: #e089b4;
+}
+
+[data-t='sage'],
+[data-t='teal'] {
+  --fill: #e0f6ef;
+  --line: #b7ead9;
+  --tint-ink: #236952;
+  --tint-mid: #79c4aa;
+}
+
+/* 这两族的 ink 原来取的是同色系深档（橄榄 #796020 / 深棕 #9a4e18）。
+   判词是「发土」，成因不是选色随手：**暖底上要过 4.5:1 就得压深，
+   而深 + 暖必然落进棕/橄榄那一带**。所以对比度得换个色相去拿 ——
+   往冷里拐到莓紫与珊瑚玫瑰，暖底保持不动，冷暖对撞反而更亮。
+   实测 6.5:1 与 4.9:1，都够正文级。 */
+[data-t='cream'],
+[data-t='yellow'] {
+  --fill: #fff4d6;
+  --line: #f0deaa;
+  --tint-ink: #8b3a72;
+  --tint-mid: #c98fa8;
+}
+
+/* 底也一起从杏色推到蜜桃粉：橘底配玫红字是两个暖色在打架，粉底才接得住。 */
+[data-t='peach'] {
+  --fill: #ffeae6;
+  --line: #ffd6ce;
+  --tint-ink: #b83654;
+  --tint-mid: #ee9aa6;
+}
+
+[data-t='aqua'] {
+  --fill: #dff6f9;
+  --line: #b4e9f2;
+  --tint-ink: #15667a;
+  --tint-mid: #6fc0d2;
+}
+
 ::selection {
   background: var(--highlight);
   color: var(--on-highlight);

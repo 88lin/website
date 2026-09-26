@@ -27,7 +27,9 @@ export function Section({
           <b className="chap__no" data-t={c.tint}>
             {c.no}
           </b>
-          <span className="chap__label">{c.label}</span>
+          <span className="chap__label" data-t={c.tint}>
+            <span>{c.label}</span>
+          </span>
           <h2 className="chap__title">{title}</h2>
           {intro && <p className="chap__intro">{intro}</p>}
         </header>

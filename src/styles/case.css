@@ -51,18 +51,7 @@
   font-family: var(--font-display);
   font-size: 2rem;
   line-height: 1;
-}
-
-.cpage__hd[data-t='blue'] .cpage__no {
-  color: var(--brand);
-}
-
-.cpage__hd[data-t='yellow'] .cpage__no {
-  color: #b8890c;
-}
-
-.cpage__hd[data-t='coral'] .cpage__no {
-  color: var(--pop);
+  color: var(--tint-ink, var(--brand));
 }
 
 .cpage__name {
@@ -124,16 +113,8 @@
 }
 
 /* 三段的编号跟着本案例的色相走，读者一眼能把子页和首页那一行对上。 */
-.cpage__flow[data-t='blue'] .step__k b {
-  color: var(--brand);
-}
-
-.cpage__flow[data-t='yellow'] .step__k b {
-  color: #c08d0a;
-}
-
-.cpage__flow[data-t='coral'] .step__k b {
-  color: var(--pop);
+.cpage__flow .step__k b {
+  color: var(--tint-ink, var(--brand));
 }
 
 .step__k span {

@@ -6,16 +6,20 @@
 
 /* ------------------------------------------------------------------ 章骨架 */
 
-/* 地面色两档严格交替（v9「整章刷饱和底没有任何排版能救」之后的定论）： paper = 页面底 #fdfcf8，alt = 纯白。 */
+/* 地面色两档严格交替（v9「整章刷饱和底没有任何排版能救」之后的定论）：
+   paper = 页面底 #fdfcf8，alt = 极淡的紫白。
+   alt 原来是纯白，而纸底本身就近白 —— 两档之间几乎没有落差，
+   一路滚下来读作「一张纸到底」。参照站走的是 奶油 ↔ 淡紫白，色相拐一下，
+   章与章的边界才立得住。彩度 0.02，仍在 verify D 段的「纸」桶里。 */
 .sec {
   padding-block: var(--s-section);
 }
 
 .sec[data-tone='alt'] {
-  background-color: #fff;
+  background-color: #f6f5fc;
   /* 白章也铺同一张纸纹砖，否则两档地面一张有肌理一张没有，交界处会露馅 */
   background-image: var(--paper);
-  border-block: 1px solid var(--rule);
+  border-block: 1px solid #e8e6f4;
 }
 
 /* 章头 = 刊头。 */
@@ -27,6 +31,8 @@
   margin-bottom: clamp(34px, 5vh, 64px);
 }
 
+/* 编号与章名药丸同色系，色相由 [data-t] 下发。原来是三条 data-t 硬写颜色，
+   加一族就要补一条；改成读 --tint-ink 之后，七族自动跟上。 */
 .chap__no {
   grid-column: 1;
   grid-row: 1 / 3;
@@ -36,21 +42,12 @@
   /* 0.78 让数字的底缘正好落在章名标题的基线上 */
   line-height: 0.78;
   letter-spacing: -0.02em;
-  color: var(--brand);
+  color: var(--tint-ink, var(--brand));
 }
 
-.chap__no[data-t='coral'] {
-  color: var(--pop);
-}
-
-.chap__no[data-t='yellow'] {
-  color: #c08d0a;
-}
-
-.chap__no[data-t='teal'] {
-  color: #2f9c95;
-}
-
+/* 章名做成等宽小药丸，取自参照站的 `✦ 01 · ls works/`。
+   原来是一行宽字距灰字 + 一条横线，形状太弱，章头全靠那个巨号数字撑 ——
+   数字一走神就找不到章的边界。药丸是个「形状」，扫得到。 */
 .chap__label {
   grid-column: 2;
   grid-row: 1;
@@ -62,6 +59,17 @@
   font-size: var(--t-label);
   letter-spacing: 0.14em;
   color: var(--fg-faint);
+}
+
+.chap__label > span {
+  padding: 5px 14px 5px 12px;
+  border: 1px solid var(--line, var(--rule));
+  border-radius: var(--r-pill);
+  background: var(--fill, transparent);
+  color: var(--tint-ink, var(--fg-faint));
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
 }
 
 .chap__label::after {
@@ -116,6 +124,7 @@
   padding: 13px 18px;
   border-bottom: 1px solid var(--rule);
   background: #fcfbf7;
+  box-shadow: inset 0 3px 0 var(--tint-mid, var(--brand));
 }
 
 .panel__dots {
@@ -158,21 +167,6 @@
   background: var(--rule);
 }
 
-.panel[data-t='blue'] .panel__bar {
-  box-shadow: inset 0 3px 0 var(--brand);
-}
-
-.panel[data-t='yellow'] .panel__bar {
-  box-shadow: inset 0 3px 0 var(--highlight);
-}
-
-.panel[data-t='coral'] .panel__bar {
-  box-shadow: inset 0 3px 0 var(--pop);
-}
-
-.panel[data-t='teal'] .panel__bar {
-  box-shadow: inset 0 3px 0 #2f9c95;
-}
 
 .pnums {
   display: flex;
@@ -236,10 +230,10 @@
   align-items: baseline;
   gap: 6px 12px;
   margin-bottom: clamp(22px, 3vh, 34px);
-  padding: 13px 18px;
-  border-radius: var(--r-md);
-  background: var(--highlight-soft);
-  box-shadow: inset 4px 0 0 var(--highlight);
+  padding: 14px 20px;
+  border: 1px solid #f0deaa;
+  border-radius: var(--r-tint);
+  background: #fff4d6;
   font-size: var(--t-small);
   color: var(--fg-dim);
 }
@@ -248,54 +242,48 @@
   font-family: var(--font-display);
   font-size: 1.125rem;
   font-weight: 400;
-  color: var(--ink);
+  color: #8b3a72;
 }
 
+/* 六张柔彩卡，两栏。
+   上一版是「两栏分栏清单」—— 一个盒子都没有，全靠栏间竖线 + 条间横线立版式。
+   那个排法本身没错，错在**整章没有一块有颜色的面**：六条内容压在近白纸上，
+   跟前后章的地面色差不到一档，滚过去只剩一片灰。站主的判词是
+   「下滑后面的就不太好看」，这一章是最重的一处。
+
+   改成参照站那套：淡底 + 同色系边 + 白药丸词条，六件活六个族，
+   两栏网格里左右与上下邻居都不同族（分配见 site.ts）。
+   和 03 作品那条横推轨不撞型：那边是会动的轨，这边是站定的网格。 */
 .svc {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: clamp(30px, 4.4vw, 76px);
-  border-top: 2px solid var(--fg);
+  gap: clamp(16px, 1.8vw, 24px);
 }
 
 .svc__item {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   column-gap: clamp(12px, 1.6vw, 22px);
-  padding-block: clamp(24px, 3.4vh, 38px);
-  border-bottom: 1px solid var(--rule);
+  padding: clamp(22px, 2.6vw, 32px) clamp(20px, 2.4vw, 30px);
+  border: 1px solid var(--line);
+  border-radius: var(--r-tint);
+  background: var(--fill);
 }
 
-.svc__item:nth-child(2n) {
-  padding-left: clamp(30px, 4.4vw, 76px);
-  margin-left: calc(-1 * clamp(30px, 4.4vw, 76px) / 2);
-  border-left: 1px solid var(--rule);
-}
-
+/* 编号走 --tint-mid：--line 那一档压在同族卡面上几乎看不见（实测 #dccefc 压
+   #f0eafe），--tint-ink 又会和标题抢。中间这一档才读得出「锚」的分量。 */
 .svc__no {
   font-family: var(--font-display);
   font-size: clamp(2.25rem, 3.4vw, 3.25rem);
   font-weight: 400;
   line-height: 0.86;
   letter-spacing: -0.02em;
-  color: var(--rule);
-}
-
-.svc__item[data-t='blue'] .svc__no {
-  color: #a9cbef;
-}
-
-.svc__item[data-t='yellow'] .svc__no {
-  color: #e6c95f;
-}
-
-.svc__item[data-t='coral'] .svc__no {
-  color: #f0a3af;
+  color: var(--tint-mid);
 }
 
 .svc__t {
   font-family: var(--font-display);
-  font-size: clamp(1.25rem, 1.9vw, 1.5rem);
+  font-size: var(--t-h3);
   font-weight: 400;
   line-height: 1.32;
 }
@@ -307,7 +295,8 @@
   color: var(--fg-dim);
 }
 
-/* 这一排是整章的转化面：读者在扫形状，不是读句子。 */
+/* 这一排是整章的转化面：读者在扫形状，不是读句子。
+   淡底卡上用同族淡色药丸等于没画，所以反过来走白面 + 同色系字。 */
 .svc__does {
   list-style: none;
   margin: 16px 0 0;
@@ -319,26 +308,13 @@
 
 .svc__does li {
   padding: 5px 11px;
+  border: 1px solid var(--line);
   border-radius: var(--r-pill);
-  background: #f3f2ec;
+  background: #fff;
   font-size: var(--t-label);
   line-height: 1.5;
-  color: var(--fg-dim);
-}
-
-.svc__item[data-t='blue'] .svc__does li {
-  background: #eaf2fc;
-  color: var(--brand-deep);
-}
-
-.svc__item[data-t='yellow'] .svc__does li {
-  background: #fdf5da;
-  color: #7a5c08;
-}
-
-.svc__item[data-t='coral'] .svc__does li {
-  background: #fdeef1;
-  color: var(--pop-deep);
+  font-weight: 500;
+  color: var(--tint-ink);
 }
 
 .svc__meta {
@@ -347,7 +323,7 @@
   gap: 4px 12px;
   margin: 16px 0 0;
   padding-top: 14px;
-  border-top: 1px dashed var(--rule-soft);
+  border-top: 1px solid var(--line);
 }
 
 .svc__meta dt {
@@ -355,7 +331,7 @@
   font-size: var(--t-mini);
   letter-spacing: 0.08em;
   line-height: 1.85;
-  color: var(--fg-faint);
+  color: var(--tint-ink);
 }
 
 .svc__meta dd {
@@ -368,13 +344,6 @@
 @media (max-width: 860px) {
   .svc {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  /* 单栏时那条竖线没意义，负外边距也要撤，否则整条往左戳出版心 */
-  .svc__item:nth-child(2n) {
-    padding-left: 0;
-    margin-left: 0;
-    border-left: 0;
   }
 }
 
@@ -391,15 +360,20 @@
 
 /* ---- 三步流程 ---- */
 
+/* 三步流程做成一块白面板，压在六张柔彩卡下面。
+   原来只有一条 2px 墨线分隔 —— 卡片化之后那条硬线成了整章最重的一笔，
+   比六张卡还抢眼。白面在一片柔彩里反而是「让位」的那一档。 */
 .flow {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: end;
   column-gap: clamp(20px, 3vw, 44px);
   row-gap: clamp(20px, 3vh, 30px);
-  margin-top: clamp(34px, 5vh, 60px);
-  padding-top: clamp(24px, 3.4vh, 36px);
-  border-top: 2px solid var(--fg);
+  margin-top: clamp(26px, 3.6vh, 40px);
+  padding: clamp(24px, 3vw, 34px) clamp(22px, 2.8vw, 32px);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-tint);
+  background: #fff;
 }
 
 .flow__h {
@@ -533,9 +507,17 @@
   grid-row: 1;
 }
 
+/* 实测表落在一块同族淡面上。整章原来一个盒子都没有 —— 账目行那套排法本身立得住，
+   但六行全铺在近白纸上，一章两千多像素高只有细线，读下来是空的。
+   给右侧这一列一块淡底，行与行之间就有了「一块一块」的节奏，
+   而左侧编号轨与中间正文仍然裸在纸上，不至于变成又一叠卡片。 */
 .case__data {
   grid-column: 3;
   grid-row: 1;
+  padding: clamp(16px, 1.8vw, 22px) clamp(16px, 1.8vw, 20px);
+  border: 1px solid var(--line);
+  border-radius: var(--r-tint);
+  background: var(--fill);
 }
 
 /* 奇数行整行镜像。三列宽度也要跟着倒过来，否则文本会被塞进窄列。 */
@@ -566,18 +548,7 @@
   font-weight: 400;
   line-height: 0.82;
   letter-spacing: -0.02em;
-}
-
-.case[data-t='blue'] .case__no {
-  color: var(--brand);
-}
-
-.case[data-t='yellow'] .case__no {
-  color: #c08d0a;
-}
-
-.case[data-t='coral'] .case__no {
-  color: var(--pop);
+  color: var(--tint-ink);
 }
 
 .case__name {
@@ -645,21 +616,10 @@
 .case__dh {
   display: inline-block;
   padding-bottom: 7px;
-  border-bottom: 2px solid var(--rule);
+  border-bottom: 2px solid var(--tint-mid);
   font-family: var(--font-display);
   font-size: 1.0625rem;
-}
-
-.case[data-t='blue'] .case__dh {
-  border-bottom-color: var(--brand);
-}
-
-.case[data-t='yellow'] .case__dh {
-  border-bottom-color: var(--highlight);
-}
-
-.case[data-t='coral'] .case__dh {
-  border-bottom-color: var(--pop);
+  color: var(--tint-ink);
 }
 
 /* 账目行。 */
@@ -714,18 +674,7 @@
   font-variant-numeric: tabular-nums;
   letter-spacing: normal;
   white-space: nowrap;
-}
-
-.case[data-t='blue'] .ledger b {
-  color: var(--brand-deep);
-}
-
-.case[data-t='yellow'] .ledger b {
-  color: #8a6a10;
-}
-
-.case[data-t='coral'] .ledger b {
-  color: var(--pop-deep);
+  color: var(--tint-ink);
 }
 
 /* ---- 数字出处：折起来，但一定留着 ---- */
@@ -886,12 +835,33 @@
   gap: clamp(20px, 3vw, 46px);
 }
 
+/* 两条线各占一块淡面。原来「只染条不刷面」—— 那是整页还没有柔彩卡时的判断，
+   现在前后左右都是淡底，这一章裸在纸上反而成了全页唯一的空档。 */
+.track {
+  padding: clamp(20px, 2.4vw, 28px);
+  border: 1px solid var(--line);
+  border-radius: var(--r-tint);
+  background: var(--fill);
+}
+
+.track[data-side='a'] {
+  --fill: #ffe3f1;
+  --line: #fbc7e0;
+  --tint-ink: #a82262;
+}
+
+.track[data-side='b'] {
+  --fill: #ebf4ff;
+  --line: #d5e6ff;
+  --tint-ink: #2455a4;
+}
+
 .track__head {
   display: flex;
   align-items: baseline;
   gap: 12px;
   padding-bottom: 12px;
-  border-bottom: 2px solid var(--rule);
+  border-bottom: 2px solid var(--line);
 }
 
 .track__head b {
@@ -900,21 +870,8 @@
   line-height: 1;
 }
 
-/* 两条线各占一个色相，连带它下面那条分隔线一起染 —— 只染条，不刷面。 */
-.track[data-side='a'] .track__head {
-  border-bottom-color: var(--pop);
-}
-
-.track[data-side='b'] .track__head {
-  border-bottom-color: var(--brand);
-}
-
-.track[data-side='a'] .track__head b {
-  color: var(--pop);
-}
-
-.track[data-side='b'] .track__head b {
-  color: var(--brand);
+.track__head b {
+  color: var(--tint-ink);
 }
 
 .track__head span {
@@ -946,15 +903,7 @@
   height: 7px;
   flex: none;
   transform: translateY(-2px);
-  background: var(--rule);
-}
-
-.track[data-side='a'] .track__list h4::before {
-  background: var(--pop);
-}
-
-.track[data-side='b'] .track__list h4::before {
-  background: var(--brand);
+  background: var(--tint-ink);
 }
 
 .track__list p {
@@ -1004,24 +953,25 @@
 /* ---- 中段论点：整页唯一的中段大色面 ---- */
 
 /*
-  这一块的存在理由是节奏，不是装饰：整页从上到下只有末尾联系那一块有大色面，
-  中段全是白纸压近白底，一路读下来会「寡淡」。这块实心黄把页面切成两半，
-  也把「交点」那句从灰色说明里拎出来当论点用。
+  这一块的存在理由是节奏：整页中段全是柔彩卡，需要一处「一句话」把章切开。
 
-  投影用黄，不用墨 —— 墨影落在饱和色面上会发脏发黑，这是上一版被抓到的那个缺陷。
+  上一版是整块饱和黄实底。**黄底本身不是问题，面积是** —— 1170×130 的饱和面
+  在一页近白纸上是全页最亮的一块，读者的眼睛先落在这儿，再回去找标题。
+  参照站的同类句子全走「墨字 + 一块黄压在关键词上」：黄还在，只压住五个字。
+
+  面改成奶油淡底，黄让给 .mark。投影整个撤掉 —— 淡底不需要浮起来。
 */
 .thesis {
   margin-top: clamp(34px, 5vh, 64px);
   padding: clamp(24px, 3.2vw, 42px) clamp(24px, 3.6vw, 50px);
-  border-radius: var(--r-lg);
-  background: var(--highlight);
+  border: 1px solid #f0deaa;
+  border-radius: var(--r-tint);
+  background: #fff4d6;
   color: var(--ink);
   font-family: var(--font-display);
   font-size: clamp(1.375rem, 2.7vw, 2.125rem);
   font-weight: 400;
   line-height: 1.42;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 3px 12px rgba(244, 215, 88, 0.42),
-    0 18px 44px rgba(244, 215, 88, 0.34);
 }
 
 /* ---- 章尾小标题 ---- */
@@ -1084,11 +1034,38 @@
 
 .kit li {
   padding: 4px 10px;
+  border: 1px solid var(--line);
   border-radius: 6px;
-  background: #f3f2ec;
+  background: var(--fill);
   font-family: var(--font-mono);
   font-size: var(--t-mini);
-  color: var(--fg-dim);
+  color: var(--tint-ink);
+}
+
+/* 四行词表各走一族。这一片原来是四十多个同款灰方块，
+   是全页密度最高、信息量最低的一块 —— 按行分族之后，至少扫得出边界。 */
+.kit__row:nth-child(1) {
+  --fill: #ebf4ff;
+  --line: #d5e6ff;
+  --tint-ink: #2455a4;
+}
+
+.kit__row:nth-child(2) {
+  --fill: #f0eafe;
+  --line: #dccefc;
+  --tint-ink: #6941b0;
+}
+
+.kit__row:nth-child(3) {
+  --fill: #e0f6ef;
+  --line: #b7ead9;
+  --tint-ink: #236952;
+}
+
+.kit__row:nth-child(4) {
+  --fill: #ffeae6;
+  --line: #ffd6ce;
+  --tint-ink: #b83654;
 }
 
 @media (max-width: 640px) {
@@ -1244,29 +1221,19 @@
   display: flex;
   flex-direction: column;
   padding: clamp(20px, 2vw, 26px);
-  border-radius: var(--r-card);
-  background: var(--face);
-  box-shadow: var(--lit), var(--sh-card);
-  border-left: 4px solid var(--rule);
+  border: 1px solid var(--line);
+  border-radius: var(--r-tint);
+  background: var(--fill);
   transition:
     transform 0.2s var(--ease),
-    box-shadow 0.24s var(--ease);
+    border-color 0.2s var(--ease);
 }
 
-/* 悬停抬 4px。轨道在拖动中时不抬，否则一路拖过去七张卡轮流跳。 */
+/* 悬停抬 4px。轨道在拖动中时不抬，否则一路拖过去七张卡轮流跳。
+   抬起时加深同色系边，不加投影 —— 柔彩面上落墨影会发脏（DESIGN.md §5）。 */
 .rail:not([data-grab]) .wcard:hover {
   transform: translateY(-4px);
-  box-shadow: var(--lit), var(--sh-lift);
-}.wcard[data-t='blue'] {
-  border-left-color: var(--brand);
-}
-
-.wcard[data-t='yellow'] {
-  border-left-color: var(--highlight);
-}
-
-.wcard[data-t='coral'] {
-  border-left-color: var(--pop);
+  border-color: var(--tint-mid);
 }
 
 .wcard__top {
@@ -1282,19 +1249,7 @@
   font-weight: 400;
   line-height: 0.85;
   letter-spacing: -0.02em;
-  color: var(--rule);
-}
-
-.wcard[data-t='blue'] .wcard__no {
-  color: #b7d3f2;
-}
-
-.wcard[data-t='yellow'] .wcard__no {
-  color: #e8cf7a;
-}
-
-.wcard[data-t='coral'] .wcard__no {
-  color: #f2b3bd;
+  color: var(--tint-mid);
 }
 
 .wcard__state {
@@ -1310,23 +1265,24 @@
 
 .wcard__state {
   padding: 4px 10px;
+  border: 1px solid var(--line);
   border-radius: var(--r-pill);
+  background: #fff;
   font-size: var(--t-mini);
   font-weight: 600;
 }
 
+/* 状态只染字，不染面。十张卡各有族色，再给状态一块绿/蓝/灰的实底，
+   同一张卡上就有两个互不相干的色相在打架。 */
 .wcard__state[data-s='live'] {
-  background: #e7f6ee;
   color: #1d7a4c;
 }
 
 .wcard__state[data-s='maintained'] {
-  background: #eaf2fc;
   color: var(--brand-deep);
 }
 
 .wcard__state[data-s='archived'] {
-  background: #f2f1eb;
   color: var(--fg-faint);
 }
 
@@ -1335,6 +1291,7 @@
   font-family: var(--font-mono);
   font-size: 1.0625rem;
   font-weight: 600;
+  color: var(--tint-ink);
 }
 
 .wcard__cn {
@@ -1361,8 +1318,9 @@
 
 .wcard__stack li {
   padding: 4px 9px;
+  border: 1px solid var(--line);
   border-radius: 6px;
-  background: #f3f2ec;
+  background: #fff;
   font-family: var(--font-mono);
   font-size: var(--t-mini);
   color: var(--fg-dim);
@@ -1387,7 +1345,7 @@
 .wcard__nums b {
   font-family: var(--font-display);
   font-size: 1.125rem;
-  color: var(--fg);
+  color: var(--tint-ink);
 }
 
 .wcard__links {
@@ -1398,7 +1356,7 @@
 }
 
 .wcard__links a {
-  color: var(--brand-deep);
+  color: var(--tint-ink);
 }
 
 .wcard__links a:hover {
@@ -1427,9 +1385,9 @@
   gap: 16px 28px;
   margin-top: clamp(28px, 4vh, 44px);
   padding: clamp(18px, 2.2vw, 26px) clamp(20px, 2.6vw, 30px);
-  border: 1.5px dashed rgba(26, 26, 46, 0.2);
-  border-radius: var(--r-card);
-  background: #fcfbf7;
+  border: 1px solid #b4e9f2;
+  border-radius: var(--r-tint);
+  background: #dff6f9;
 }
 
 .hub__t {
@@ -1482,15 +1440,15 @@
 }
 
 .notes__nums span:nth-child(1) b {
-  color: var(--brand-deep);
+  color: #2455a4;
 }
 
 .notes__nums span:nth-child(2) b {
-  color: #8a6a10;
+  color: #b83654;
 }
 
 .notes__nums span:nth-child(3) b {
-  color: var(--pop-deep);
+  color: #a82262;
 }
 
 .notes__nums s {
@@ -1532,23 +1490,9 @@
   display: block;
   height: 100%;
   border-radius: var(--r-pill);
+  background: var(--tint-mid);
 }
 
-.bars__track i[data-t='blue'] {
-  background: var(--brand);
-}
-
-.bars__track i[data-t='yellow'] {
-  background: var(--highlight);
-}
-
-.bars__track i[data-t='coral'] {
-  background: var(--pop);
-}
-
-.bars__track i[data-t='teal'] {
-  background: #2f9c95;
-}
 
 .bars__n {
   font-family: var(--font-mono);
@@ -1655,7 +1599,13 @@
    06 联系
    ========================================================================== */
 
-/* 收口做成一整块饱和蓝卡，白字。 */
+/* 收口做成一整块淡紫面，墨字。
+   上一版是整块饱和蓝 + 白字。它自己没问题，问题在**全页只有它和中段那块黄
+   是有颜色的面** —— 中间五章一路近白，到这儿突然砸下一整块饱和蓝，
+   读起来是两块广告牌夹着一叠白纸，不是一个连贯的版面。
+   柔彩铺开之后，收口反而该收力：同一族淡底 + 墨字 + 白药丸，
+   靠巨号水印和那行 42px 的邮箱立分量，不靠饱和度。
+   顺带解掉 DESIGN.md §5 那条「墨影只准落在纸面上」的约束 —— 这面本来就是纸。 */
 .contact {
   position: relative;
   overflow: hidden;
@@ -1665,14 +1615,10 @@
   align-items: start;
   gap: clamp(24px, 4vw, 56px);
   padding: clamp(28px, 4vw, 60px);
-  border-radius: var(--r-lg);
-  /* 同色相的竖向明度落差（亮档 → 深档），不是两个色的渐变 ——
-     后者就是被判掉的「蓝紫渐变」。这样它读作一块受光的实体板。 */
-  background: linear-gradient(170deg, #3288db, var(--brand) 46%, #2673c6);
-  color: #fff;
-  /* 饱和蓝面上的投影用蓝，不用墨 —— 墨影落在饱和色上会发脏发黑。 */
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 4px 14px rgba(43, 127, 216, 0.2),
-    0 22px 54px rgba(43, 127, 216, 0.22);
+  border: 1px solid #dccefc;
+  border-radius: var(--r-tint);
+  background: #f0eafe;
+  color: var(--fg);
 }
 
 /* 巨号 @88lin —— 它是**水印**，不是一个单独展示的元素。 */
@@ -1688,7 +1634,7 @@
   font-weight: 600;
   line-height: 0.9;
   letter-spacing: -0.03em;
-  color: rgba(255, 255, 255, 0.13);
+  color: #e3d8fb;
   pointer-events: none;
   user-select: none;
 }
@@ -1714,9 +1660,9 @@
   justify-items: center;
   gap: 10px;
   padding: 14px 14px 16px;
+  border: 1px solid #dccefc;
   border-radius: var(--r-md);
   background: #fff;
-  box-shadow: 0 2px 6px rgba(20, 70, 130, 0.22), 0 14px 32px rgba(20, 70, 130, 0.2);
 }
 
 .qr img {
@@ -1759,7 +1705,7 @@
   z-index: 1;
   font-size: var(--t-label);
   letter-spacing: 0.14em;
-  color: rgba(255, 255, 255, 0.7);
+  color: #6941b0;
 }
 
 /* 邮箱是这一页真正的出口，排成整章最大的一行。 */
@@ -1774,17 +1720,17 @@
   font-weight: 600;
   letter-spacing: -0.02em;
   word-break: break-all;
-  color: #fff;
+  color: var(--ink);
   transition: color 0.16s var(--ease);
 }
 
 .mailto:hover {
-  color: var(--highlight);
+  color: #6941b0;
 }
 
 .mailto i {
   font-style: normal;
-  color: var(--highlight);
+  color: #6941b0;
 }
 
 .chans {
@@ -1804,19 +1750,17 @@
   gap: 9px;
   padding: 12px 18px;
   border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, 0.13);
-  border: 1px solid rgba(255, 255, 255, 0.32);
-  color: #fff;
+  background: #fff;
+  border: 1px solid #dccefc;
+  color: var(--ink);
   font-size: var(--t-small);
   transition:
-    background-color 0.16s var(--ease),
     border-color 0.16s var(--ease),
     transform 0.14s var(--ease);
 }
 
 .chans a:hover {
-  background: rgba(255, 255, 255, 0.22);
-  border-color: #fff;
+  border-color: #ab8ae0;
   transform: translateY(-2px);
 }
 
@@ -1825,13 +1769,13 @@
 }
 
 .chans span {
-  color: rgba(255, 255, 255, 0.76);
+  color: var(--fg-dim);
 }
 
 .chans i {
   font-family: var(--font-mono);
   font-style: normal;
-  color: rgba(255, 255, 255, 0.62);
+  color: #ab8ae0;
 }
 
 /* 窄屏拉成整行：自然换行的结果是六个宽度各异的块堆一列，右缘参差不齐。 */
