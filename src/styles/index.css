@@ -46,6 +46,8 @@
   --gutter: clamp(20px, 4vw, 56px);
   --wrap: 1280px;
   --s-section: clamp(80px, 11vh, 150px);
+  /* 吸顶栏实高，给 scroll-padding-top 用。窄屏多一条 40px 的章节条，见下面。 */
+  --nav-h: 65px;
 
   /* 展示字很粗，同样的视觉重量下字号可以比细体小一档。 */
   --t-hero: clamp(2.5rem, 5.6vw, 4.75rem);
@@ -101,6 +103,17 @@
   --paper: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch' seed='7'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.13'/%3E%3C/svg%3E");
 }
 
+/*
+  章节留白在手机上收一档。11vh 在 844px 高的屏上算出来是 92.8px，
+  上下各一份 —— 那是照着桌面那种「一章一口气」的呼吸量给的，
+  在 390px 宽的屏上占掉的是四分之一屏高。64px 仍然分得开章，但不空转。
+*/
+@media (max-width: 640px) {
+  :root {
+    --s-section: 64px;
+  }
+}
+
 *,
 *::before,
 *::after {
@@ -110,6 +123,12 @@
 html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
+  /*
+    锚点落位补偿。顶栏是吸顶的，不补的话点「案例」跳过去，章顶正好落在 y=0，
+    整整一个顶栏的高度盖在上面 —— 实测桌面手机都盖 65px。
+    以前靠章节留白（92.8px）兜着才没露馅，留白一收紧、顶栏一加第二行就穿帮。
+  */
+  scroll-padding-top: var(--nav-h);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -404,10 +423,16 @@ button {
   outline-offset: 3px;
 }
 
-/* 窄屏让位顺序：先撤章节锚点，再撤 GitHub。下单入口任何宽度都留着。 */
+/* 窄屏让位顺序：先撤章节锚点，再撤 GitHub。下单入口任何宽度都留着。
+   撤掉的章节锚点由下面那条 .nav-chips 接手，不是真的没有了。 */
 @media (max-width: 860px) {
   .nav-links a:not(.gh):not(.nav-cta) {
     display: none;
+  }
+
+  /* 顶栏从一行变两行，锚点落位的补偿值跟着走 */
+  :root {
+    --nav-h: 106px;
   }
 }
 
@@ -421,7 +446,84 @@ button {
   }
 }
 
+/* ---- 窄屏章节条 ---- */
+
+/*
+  ≤860px 顶栏那排锚点整体让位给下单入口（见上面那条规则），手机上就没有任何
+  章节入口了 —— 而手机整页 21 屏，比桌面的 12 屏更需要它。这条第二行补上。
+
+  横滑而不是换行：换行会让吸顶高度随章数变，锚点落位的补偿值就成了活的。
+  现在高度是定的，--nav-h 跟着它走。
+*/
+.nav-chips {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .nav-chips {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    gap: 2px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    padding-inline: var(--gutter);
+    border-top: 1px solid var(--rule-soft);
+    background: inherit;
+  }
+
+  .nav-chips::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav-chips a {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 6px;
+    /* 40px 高：命中区闸门要 ≥24，这里给足；也是顶栏第二行的高度来源 */
+    height: 40px;
+    padding-inline: 10px;
+    font-size: var(--t-small);
+    color: var(--fg-dim);
+    white-space: nowrap;
+    transition: color 0.16s var(--ease);
+  }
+
+  /* 编号用等宽小字，和章序轨、章头那套编号是同一门语言 */
+  .nav-chips b {
+    font-family: var(--font-mono);
+    font-size: var(--t-mini);
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    color: var(--fg-faint);
+    transition: color 0.16s var(--ease);
+  }
+
+  /* 当前章：和上面那排锚点同一个做法 —— 黄色下划线 + 字变重 */
+  .nav-chips a[data-on] {
+    position: relative;
+    color: var(--fg);
+    font-weight: 600;
+  }
+
+  .nav-chips a[data-on] b {
+    color: var(--brand);
+  }
+
+  .nav-chips a[data-on]::after {
+    content: '';
+    position: absolute;
+    inset: auto 10px 5px 10px;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--highlight);
+  }
+}
+
 /* ------------------------------------------------------------------ 按钮 */
+
 
 .btn {
   display: inline-flex;
@@ -1331,5 +1433,82 @@ button {
     --my: 0px;
     --px: 0;
     --py: 0;
+  }
+}
+
+/* ============================================================================
+   触摸设备：命中区
+   ----------------------------------------------------------------------------
+   实测 390×844，可点的东西普遍不到 44px：叠卡圆点 8×8、箭头 34×34、
+   站名 116×33、案例卡里的「打开 ↗」高 25、子页「← 回首页」高 17。
+   WCAG 2.5.5 要 44×44，8px 的圆点连 2.5.8 的 24px 底线都够不上。
+
+   **视觉尺寸一个都不改** —— 那批数值是从参照站量出来的（见 DESIGN.md 第 1 条），
+   这里只用 ::after 往外铺命中区，或用 padding + 等量负 margin 把高度撑到 44
+   而不推动版面。桌面用鼠标，命中区铺开反而会互相压，所以整块锁在 pointer: coarse 里。
+   ========================================================================== */
+
+@media (pointer: coarse) {
+  .deck__arrow {
+    position: relative;
+  }
+
+  .deck__arrow::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+  }
+
+  /*
+    圆点不能靠 ::after 往外铺：8px 宽 + 7px 间距 = 一格才 15px，
+    铺 44px 会和隔壁两颗的命中区叠在一起，叠了之后点下去算谁全看谁画在上面 ——
+    实测有效宽度反而掉到 24px。所以把按钮本体做成真实的命中盒，
+    那颗点改由 ::before 画，格与格不重叠。
+
+    宽度取 28 不是 44：一排五颗 + 两枚箭头，44 的格宽在 320px 上会把控制条挤爆。
+    28 过 WCAG 2.5.8 的 24px 底线，而「翻页」这件事另有两条够 44 的路 ——
+    箭头是 44×44，卡片本身还能直接拖。
+  */
+  .deck__dots {
+    gap: 2px;
+  }
+
+  .deck__dots button {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 44px;
+    background: none;
+  }
+
+  .deck__dots button::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ddd8c8;
+    transition:
+      background-color 0.18s var(--ease),
+      width 0.24s var(--ease);
+  }
+
+  .deck__dots button[data-on] {
+    width: 34px;
+    background: none;
+  }
+
+  .deck__dots button[data-on]::before {
+    width: 22px;
+    border-radius: 4px;
+    background: var(--brand);
+  }
+
+  .nav-mark {
+    padding-block: 6px;
+    margin-block: -6px;
   }
 }

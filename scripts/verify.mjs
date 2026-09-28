@@ -452,6 +452,88 @@ try {
     await c.close()
   }
 
+  /* ---- 触控命中区：手机上点得中 ---- */
+  /*
+    量的是「手指点这一点算不算它」，不是 getBoundingClientRect ——
+    命中区是用 padding / ::after 往外铺的，盒模型量不到，量了会全线误报。
+
+    两个坑，踩过才写在这儿：
+      · 必须逐屏滚 + 等落定再量。页面挂了 Lenis，scrollIntoView 之后坐标不立刻生效，
+        抢着 elementFromPoint 会打在上一屏的东西上，于是每个元素都报「被挡住」被跳过，
+        这个闸门就变成了自我安慰。
+      · 吸顶导航会盖住视口顶上 70px。落在那条带里的按钮是被遮挡，不是尺寸不够，得排掉。
+
+    底线取 WCAG 2.5.8 的 24px（AA）。叠卡圆点是唯一停在 24–44 之间的：
+    一排五颗 + 两枚箭头，44 的格宽在 320px 上会把控制条挤爆，
+    而「翻页」另有两条够 44 的路（箭头 44×44、卡片可直接拖）。
+  */
+  {
+    const MIN = 24
+    const c = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+      isMobile: true,
+      hasTouch: true,
+    })
+    const q = await c.newPage()
+    await q.goto(url, { waitUntil: 'networkidle' })
+    await q.evaluate(() => {
+      document.documentElement.classList.remove('js')
+      document.querySelectorAll('[data-stagger]').forEach((e) => e.classList.add('is-in'))
+    })
+    await q.waitForTimeout(500)
+
+    const pageH = await q.evaluate(() => document.documentElement.scrollHeight)
+    const seen = new Map()
+    for (let y = 0; y < pageH; y += 700) {
+      await q.evaluate((t) => window.scrollTo({ top: t, behavior: 'instant' }), y)
+      await q.waitForTimeout(500)
+      const found = await q.evaluate((MIN) => {
+        const probe = (el, cx, cy, dx, dy) => {
+          let far = 0
+          for (let d = 1; d <= 40; d++) {
+            const x = cx + dx * d
+            const y = cy + dy * d
+            if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) break
+            const h = document.elementFromPoint(x, y)
+            if (h && (h === el || el.contains(h))) far = d
+            else break
+          }
+          return far
+        }
+        const res = []
+        for (const el of document.querySelectorAll('a,button,[role=button],summary')) {
+          const r = el.getBoundingClientRect()
+          if (!r.width || !r.height) continue
+          if (r.bottom > innerHeight - 4) continue
+          if (!el.closest('.nav') && r.top < 70) continue
+          const cx = r.left + r.width / 2
+          const cy = r.top + r.height / 2
+          const self = document.elementFromPoint(cx, cy)
+          if (!(self === el || el.contains(self))) continue
+          const w = probe(el, cx, cy, -1, 0) + probe(el, cx, cy, 1, 0) + 1
+          const h = probe(el, cx, cy, 0, -1) + probe(el, cx, cy, 0, 1) + 1
+          const label = (el.textContent || '').trim().slice(0, 14) || el.className || el.tagName
+          res.push({ key: (el.className?.toString?.() || el.tagName) + '|' + label, label, w, h, ok: w >= MIN && h >= MIN })
+        }
+        return res
+      }, MIN)
+      for (const f of found) if (!seen.has(f.key) || !f.ok) seen.set(f.key, f)
+    }
+    const all = [...seen.values()]
+    const tooSmall = all.filter((x) => !x.ok)
+    ok(
+      all.length >= 25,
+      `390px · 命中区闸门真的量到了东西（${all.length} 个可点元素）`,
+    )
+    ok(
+      tooSmall.length === 0,
+      `390px · 可点元素命中区 ≥ ${MIN}px（${all.length} 个）${
+        tooSmall.length ? '：' + tooSmall.map((x) => `${x.label} ${x.w}×${x.h}`).join(', ') : ''
+      }`,
+    )
+    await c.close()
+  }
+
   /* ---- 配色配额：颜色只做重音，不做铺面 ---- */
   /* 整页截一张长图，按色相分桶数像素。 */
   {

@@ -32,6 +32,15 @@
   color: var(--fg);
 }
 
+/* 实测只有 58×17 —— 子页唯一的返回路径，手机上得够得着。视觉不动，只撑命中区。 */
+@media (pointer: coarse) {
+  .cpage__back a {
+    display: inline-block;
+    padding-block: 14px;
+    margin-block: -14px;
+  }
+}
+
 /* ---- 页头 ---- */
 
 .cpage__hd {

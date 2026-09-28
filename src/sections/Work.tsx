@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Section } from '../components/Section'
 import { hub, projects, worksIntro } from '../content/site'
-import { prefersReducedMotion } from '../lib/caps'
+import { isCoarse, prefersReducedMotion } from '../lib/caps'
 import { useReveal } from '../lib/motion'
 
 const STATE: Record<string, string> = {
@@ -131,6 +131,13 @@ export function Work() {
     const root = scene.current
     if (!el || !root) return
     if (prefersReducedMotion()) return
+    /*
+      触摸设备不自动滚。这一章在手机上是 scroll-snap: x mandatory，
+      每帧写 scrollLeft 会和吸附一直互相拉扯，手指刚停住又被拖走；
+      而「悬停即停」这个刹车在没有指针的设备上根本不存在，一旦滚起来就停不下。
+      再加上一个常驻 rAF 白白耗电 —— 手机上就让它老实待着，手指划到哪算哪。
+    */
+    if (isCoarse()) return
 
     const SPEED = 32 / 1000 // px per ms
     const DWELL = 900 // 到头停多久再往回
@@ -234,7 +241,10 @@ export function Work() {
       <div ref={scene}>
       <div className="rail-top">
         <p className="rail-hint">
-          自动横滚，悬停即停 · 也可滚轮 / 拖拽 / 箭头 · <b>{projects.length}</b> 个
+          {/* 手机上这四样一个都没有：不自动滚、没有悬停、没有滚轮，箭头也收起来了。
+              用 CSS 换而不是 JS 判断 —— 这一页是预渲染的，JS 判断会水合不一致。 */}
+          <span className="rail-hint__fine">自动横滚，悬停即停 · 也可滚轮 / 拖拽 / 箭头</span>
+          <span className="rail-hint__coarse">左右滑动看全部</span> · <b>{projects.length}</b> 个
         </p>
         <div className="rail-nav">
           <button type="button" onClick={() => page(-1)} disabled={atStart} aria-label="上一张">

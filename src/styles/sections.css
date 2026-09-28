@@ -1098,6 +1098,20 @@
   color: var(--fg);
 }
 
+.rail-hint__coarse {
+  display: none;
+}
+
+@media (pointer: coarse) {
+  .rail-hint__fine {
+    display: none;
+  }
+
+  .rail-hint__coarse {
+    display: inline;
+  }
+}
+
 .rail-nav {
   display: flex;
   gap: 8px;
@@ -1858,5 +1872,39 @@
     justify-items: start;
     margin-top: 6px;
     text-align: left;
+  }
+}
+
+/* ============================================================================
+   触摸设备：命中区与手势
+   ----------------------------------------------------------------------------
+   同 index.css 末尾那一块，视觉尺寸不动，只补命中区：padding 撑到 44px、
+   等量负 margin 把版面推回原位。
+   ========================================================================== */
+
+@media (pointer: coarse) {
+  .wcard__links a,
+  .notes__hd a {
+    padding-block: 10px;
+    margin-block: -10px;
+  }
+
+  .prov summary {
+    padding-block: 11px;
+    margin-block: -11px;
+  }
+
+  .mailto {
+    padding-block: 6px;
+    margin-block: -6px;
+  }
+
+  /*
+    进度条在触摸上是纯读数，不是控件：横推本来就能直接用手指拖轨，
+    而它只有 4px 高、又带着 touch-action: none —— 手指正好落在这条上时
+    连整页竖滚都被它吃掉。交出指针事件，竖滚就不会再被 4px 拦住。
+  */
+  .rail-bar {
+    pointer-events: none;
   }
 }
