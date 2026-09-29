@@ -1675,7 +1675,9 @@
   gap: 10px;
   padding: 14px 14px 16px;
   border: 1px solid #dccefc;
-  border-radius: var(--r-md);
+  /* 柔彩卡一律 20px（见 DESIGN.md 第五基准）。这张白卡压在淡紫面上，
+     12px 在 340px 宽的面上读作「方」，跟旁边那排胶囊也对不齐。 */
+  border-radius: var(--r-tint);
   background: #fff;
 }
 
@@ -1711,6 +1713,15 @@
 
   .qr {
     justify-self: start;
+  }
+
+  /*
+    巨号 @88lin 撤掉。它是给大色面当视觉锚的（双栏时占右下那片空白），
+    而这里一转单列，二维码卡就压到它头上 —— 实测盖掉 37%，露出半截字，
+    读作渲染坏了而不是水印。单列没有大色面，锚也就没有要锚的东西。
+  */
+  .contact__ghost {
+    display: none;
   }
 }
 
@@ -1806,7 +1817,11 @@
     width: 100%;
     justify-content: space-between;
     padding: 13px 18px;
-    border-radius: var(--r-md);
+    /*
+      圆角不跟着改。这里原来降到 --r-md（12px），于是同一组按钮在桌面是胶囊、
+      在手机变方角 —— 「拉成整行」是宽度的事，跟形状没关系，全宽的胶囊照样是胶囊。
+      站内可点的东西一律 --r-pill，这一条是唯一的例外，是漏网不是决定。
+    */
   }
 
   .chans span {

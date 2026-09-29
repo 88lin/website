@@ -534,6 +534,58 @@ try {
     await c.close()
   }
 
+  /* ---- 圆角语言：可点的东西要么胶囊要么卡，不许卡在中间 ---- */
+  /*
+    站内只有两种圆角语言：按钮/标签是胶囊（--r-pill），面是卡（16 / 20px）。
+    这条闸门是补的 —— 之前 .chans a 在 @media (max-width: 560px) 里被显式降到
+    --r-md，于是同一组按钮桌面是胶囊、手机变方角，跑了不知道多久没人发现
+    （判词原话「不应该是圆角胶囊吗？现在四方形小圆角了」）。
+    「拉成整行」是宽度的事，跟形状无关，全宽的胶囊照样是胶囊。
+
+    所以量的是**移动端 computed 值**：这类降级只写在窄屏媒体查询里，
+    桌面量不出来。
+  */
+  {
+    const c = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+      isMobile: true,
+      hasTouch: true,
+    })
+    const q = await c.newPage()
+    await q.goto(url, { waitUntil: 'networkidle' })
+    await q.evaluate(() => {
+      document.documentElement.classList.remove('js')
+      document.querySelectorAll('[data-stagger]').forEach((e) => e.classList.add('is-in'))
+    })
+    await q.waitForTimeout(400)
+
+    const odd = await q.evaluate(() => {
+      const bad = []
+      for (const el of document.querySelectorAll('a,button,[role=button],summary')) {
+        const b = el.getBoundingClientRect()
+        if (!b.width || !b.height) continue
+        const cs = getComputedStyle(el)
+        // 没有可见的面就没有形状可谈：叠卡那几个圆点的本体只是命中盒，
+        // 点是 ::before 画的。不排掉的话闸门会对着一个透明盒子报圆角。
+        const painted =
+          cs.backgroundImage !== 'none' ||
+          !/^rgba\(0, 0, 0, 0\)|^transparent$/.test(cs.backgroundColor) ||
+          parseFloat(cs.borderTopWidth) > 0
+        if (!painted) continue
+        const r = parseFloat(cs.borderTopLeftRadius)
+        // 0 = 纯文字链接，不参与；胶囊看的是「≥ 半高」而不是 999，
+        // 因为 22×8 那颗指示条给 4px 就已经是胶囊了
+        if (r === 0 || r >= Math.min(b.width, b.height) / 2 || r >= 16) continue
+        bad.push(
+          `${(el.className?.toString?.() || el.tagName).split(' ')[0]} ${r}px（${Math.round(b.width)}×${Math.round(b.height)}）`,
+        )
+      }
+      return [...new Set(bad)]
+    })
+    ok(odd.length === 0, `390px · 可点元素圆角是胶囊或卡${odd.length ? '：' + odd.join(', ') : ''}`)
+    await c.close()
+  }
+
   /* ---- 配色配额：颜色只做重音，不做铺面 ---- */
   /* 整页截一张长图，按色相分桶数像素。 */
   {

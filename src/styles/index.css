@@ -249,7 +249,8 @@ button {
   top: 8px;
   left: 8px;
   padding: 10px 16px;
-  border-radius: var(--r-sm);
+  /* 它聚焦时是这一页唯一露出来的按钮，形状得和别的按钮同一门语言 */
+  border-radius: var(--r-pill);
   background: var(--ink);
   color: #fff;
   font-size: var(--t-small);
@@ -484,11 +485,16 @@ button {
     gap: 6px;
     /* 40px 高：命中区闸门要 ≥24，这里给足；也是顶栏第二行的高度来源 */
     height: 40px;
-    padding-inline: 10px;
+    padding-inline: 12px;
+    /* 药丸。站内可点的东西一律胶囊（.btn / .chans a / 章名 kicker 都是），
+       方角那一版是我漏给的，一排方块钉在顶栏上和全站语言对不上。 */
+    border-radius: var(--r-pill);
     font-size: var(--t-small);
     color: var(--fg-dim);
     white-space: nowrap;
-    transition: color 0.16s var(--ease);
+    transition:
+      color 0.16s var(--ease),
+      background-color 0.16s var(--ease);
   }
 
   /* 编号用等宽小字，和章序轨、章头那套编号是同一门语言 */
@@ -501,24 +507,16 @@ button {
     transition: color 0.16s var(--ease);
   }
 
-  /* 当前章：和上面那排锚点同一个做法 —— 黄色下划线 + 字变重 */
+  /* 当前章：淡蓝实底药丸。不用顶栏那条黄下划线 —— 下划线画在药丸里会贴着
+     圆角挤成一道，而柔彩卡那套语言本来就是「淡底 + 同色系字」。 */
   .nav-chips a[data-on] {
-    position: relative;
+    background: #ebf4ff;
     color: var(--fg);
     font-weight: 600;
   }
 
   .nav-chips a[data-on] b {
     color: var(--brand);
-  }
-
-  .nav-chips a[data-on]::after {
-    content: '';
-    position: absolute;
-    inset: auto 10px 5px 10px;
-    height: 3px;
-    border-radius: 2px;
-    background: var(--highlight);
   }
 }
 
@@ -684,6 +682,23 @@ button {
   flex-wrap: wrap;
   gap: 12px;
   margin-top: clamp(24px, 3.2vh, 36px);
+}
+
+/*
+  320px 上这两个出口会换行：实测 159 + 144 + 12 = 315，而可用宽只有 280
+  （320 减去左右各 20 的页边）。换行本身不算错，错的是首屏最重要的两个出口
+  一上一下堆起来，第二个被推到折叠线以下。收字号与内边距压回一行。
+  只动 ≤380px —— 360 起本来就是一行，390 / 412 一个像素不变。
+*/
+@media (max-width: 380px) {
+  .hero__acts {
+    gap: 8px;
+  }
+
+  .hero__acts .btn {
+    padding-inline: 14px;
+    font-size: 0.875rem;
+  }
 }
 
 /* ============================================================================
@@ -1021,6 +1036,15 @@ button {
   .deck__hint {
     display: none;
   }
+
+  /*
+    提示文字一撤，控制条右边就没东西撑了 —— 箭头和圆点靠左挤着，
+    右边空 74px，整条读作「没对齐」。居中就行。
+    桌面不能这么做：那里 hint 还在，左对齐才是对的。
+  */
+  .deck__ctl {
+    justify-content: center;
+  }
 }
 
 @media (max-width: 900px) {
@@ -1037,6 +1061,37 @@ button {
 @media (max-width: 640px) {
   .deck {
     padding: 0 34px 28px 0;
+  }
+
+  /*
+    操作条不额外抵消 .deck 的 34px 右留白。那段留白是给后三张卡错位用的，
+    容器因此正好收成前卡的宽度，配合上面 1080px 那条的 justify-content: center，
+    整条就居中在卡片上（实测左右各 37px）。
+    试过用负 margin 把它撑回 350 再居中 —— 那样是居中在视口上，而卡片本身
+    靠左 17px，看着仍然偏。
+  */
+
+  /*
+    左侧那条 46px 的族色带连着竖排书脊一起收掉。它们是一套：职责是「卡只露出
+    左边一条边时也认得出是哪个案例」。但窄屏错位量只有 11px，46px 的带子被前卡
+    整个盖住，一次都露不出来 —— 实测它和书脊合吃 66px 左留白，正文只剩 230px，
+    卡片读作又瘦又高（宽高比 0.77）。
+
+    收成 6px 一道色条而不是整个删掉：族色是五张卡的识别标记，删了五张全白。
+    正文拿回 40px（230 → 270，+17%）。
+  */
+  .dcard {
+    padding-left: 6px;
+  }
+
+  .dcard::before {
+    width: 6px;
+    /* 6px 的条再加一道边线会读成「两条线」，而且内容会压在边线上 */
+    border-right: 0;
+  }
+
+  .dcard__spine {
+    display: none;
   }
 
   .dcard[data-slot='1'] {
@@ -1483,6 +1538,9 @@ button {
     width: 28px;
     height: 44px;
     background: none;
+    /* 本体现在只是个命中盒，形状交给 ::before；圆角跟着站内语言走，
+       免得闸门量 computed 值时把它读成一个 4px 的方按钮 */
+    border-radius: var(--r-pill);
   }
 
   .deck__dots button::before {
@@ -1499,6 +1557,7 @@ button {
   .deck__dots button[data-on] {
     width: 34px;
     background: none;
+    border-radius: var(--r-pill);
   }
 
   .deck__dots button[data-on]::before {

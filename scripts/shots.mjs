@@ -54,7 +54,15 @@ try {
     })),
   }))
 
-  const frames = Math.min(Math.ceil(info.pageH / dev.h), 16)
+  /*
+    上限从 16 提到 26。16 屏 × 844 = 13504px，而手机版这一页 21.4 屏 ——
+    联系章、二维码、页脚整整最后 5.5 屏从来没进过取景器，那批问题
+    （水印被二维码盖掉 37%、按钮圆角在窄屏降级）就是这么漏过去的。
+    截不全的时候必须喊出来，不能默默少截几张。
+  */
+  const CAP = 26
+  const want = Math.ceil(info.pageH / dev.h)
+  const frames = Math.min(want, CAP)
   for (let i = 0; i < frames; i++) {
     await page.evaluate((y) => window.scrollTo({ top: y, behavior: 'instant' }), i * dev.h)
     await page.waitForTimeout(280)
@@ -62,7 +70,9 @@ try {
   }
 
   console.log(
-    `\n${dev.w}×${dev.h}${route ? ' /' + route : ''}  页高 ${info.pageH}px（${(info.pageH / dev.h).toFixed(1)} 屏）  横溢 ${info.overflow}px  出图 ${frames} 张`,
+    `\n${dev.w}×${dev.h}${route ? ' /' + route : ''}  页高 ${info.pageH}px（${(info.pageH / dev.h).toFixed(1)} 屏）  横溢 ${info.overflow}px  出图 ${frames} 张${
+      want > CAP ? `\n  \x1b[33m⚠ 只截到前 ${CAP} 屏，还有 ${want - CAP} 屏没看\x1b[0m` : ''
+    }`,
   )
   console.log('  ' + info.secs.map((s) => `${s.id}:${s.h}`).join('  '))
   if (errs.length) console.log('  ERR: ' + [...new Set(errs)].slice(0, 6).join(' | '))
