@@ -11,8 +11,17 @@
    alt 原来是纯白，而纸底本身就近白 —— 两档之间几乎没有落差，
    一路滚下来读作「一张纸到底」。参照站走的是 奶油 ↔ 淡紫白，色相拐一下，
    章与章的边界才立得住。彩度 0.02，仍在 verify D 段的「纸」桶里。 */
+/*
+  章头上方比章尾下方少一档。章与章之间的净空白 = 上章 padding-bottom + 下章
+  padding-top，等距时实测 199px（桌面）／129px（手机）—— 一片空白里还夹着一次
+  地面换色，读起来像「这一章是不是已经结束了」。
+
+  偏向上章尾部而不是两边平分：章头本身有 kicker + 巨号编号 + 大标题三层重量，
+  上方不需要和章尾一样多的留白；空白挂在上章那边，标题就更贴近它自己的章节。
+  收完是 178 / 115。地面色交替还在，章界不靠留白也立得住。
+*/
 .sec {
-  padding-block: var(--s-section);
+  padding-block: calc(var(--s-section) * 0.8) var(--s-section);
 }
 
 .sec[data-tone='alt'] {
@@ -1000,9 +1009,17 @@
 
 /* ---- 章尾小标题 ---- */
 
+/*
+  章内小节头（「手上有什么」用的就是这个）。
+
+  原来是 margin-top 9vh + padding-top 4vh，实测标题上方净空 110px（手机）／
+  117px（桌面）—— 而它上面紧邻的是黄底论点面板，一块实底色面收住之后再留 110px
+  才起下一个小标题，那片空白读作「这一章是不是结束了」。
+  收到 5.5vh + 3vh（手机 80px、桌面 85px）：横线仍分得开两个小节，但不再断气。
+*/
 .svc-head {
-  margin-top: clamp(56px, 9vh, 104px);
-  padding-top: clamp(28px, 4vh, 48px);
+  margin-top: clamp(40px, 5.5vh, 72px);
+  padding-top: clamp(22px, 3vh, 34px);
   border-top: 1px solid var(--rule);
 }
 
@@ -1593,12 +1610,39 @@
   grid-template-columns: 6.5em minmax(0, 1fr) auto;
   align-items: baseline;
   gap: 14px;
-  padding: 15px 4px;
+  padding: 15px 10px;
+  /*
+    负 margin 抵消左右内边距：正文仍从 0 开始，和上面「最近六篇」那行对齐，
+    而 hover 块比正文宽出 10px，圆角才有地方长。反过来做（只加 padding）
+    会把整列文字往右推 10px，跟上面那行错开。
+  */
+  margin-inline: -10px;
+  /* 圆角写在基础态：平时没有背景所以看不见，hover 与键盘焦点时才显形。
+     写在 :hover 里的话焦点环还是方的。 */
+  border-radius: var(--r-sm);
   transition: background-color 0.15s var(--ease);
 }
 
+/*
+  选中态。原来是 #fbfaf5 直角块 —— 那是个暖近白，压在这一章冷调的淡紫白地面
+  （#f6f5fc）上，两者亮度几乎相同、只差色相，读起来像「渲染没刷干净」而不是
+  「选中」。换成这一章自己的族色淡底：写作章 tint 是 peach，--fill 为 #ffeae6，
+  彩度 (255-230)/255 = 0.098 仍在「淡底」档内，铺一行不占饱和配额。
+  这里写死而不用 var(--fill)：data-t 只挂在章头的编号与 kicker 上，
+  章节 section 本身只有 data-tone，这个作用域里取不到族色变量。
+*/
 .posts a:hover {
-  background: #fbfaf5;
+  background: #ffeae6;
+}
+
+/*
+  选中块带圆角，而分隔线画在 li 上、正好贴着块的上下边 —— 四个圆角会被两条直线
+  切断，读作「圆角没画完」。hover 时把这一条和上一条的线让开，圆角才完整。
+  :has() 不支持的旧浏览器会整条忽略，退回「线还在」的样子，不会坏。
+*/
+.posts li:has(a:hover),
+.posts li:has(+ li a:hover) {
+  border-bottom-color: transparent;
 }
 
 .posts__date {
@@ -1623,7 +1667,8 @@
 
 .posts a:hover i {
   transform: translate(3px, -3px);
-  color: var(--brand-deep);
+  /* 族色而不是全站蓝：蓝箭头落在粉底上是两个色系打架 */
+  color: #b83654;
 }
 
 .posts__date {
