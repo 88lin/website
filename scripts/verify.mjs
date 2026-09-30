@@ -614,6 +614,42 @@ try {
       return [...new Set(bad)]
     })
     ok(odd.length === 0, `390px · 可点元素圆角是胶囊或卡${odd.length ? '：' + odd.join(', ') : ''}`)
+
+    /*
+      被拉宽的按钮，里面的字要跟着居中。
+
+      判词「按钮居中文字不居中」。那次是 .flow__cta 拉满了整行而文字还贴在左边 ——
+      我写的是 `.flow__cta .btn { justify-content: center }`，而这个类直接挂在
+      <a class="btn btn--blue flow__cta"> 上，它自己就是按钮，没有叫 .btn 的后代，
+      选择器整条空转。实测内容中心偏左 72px。
+
+      量内容墨迹而不是元素框：按钮被拉宽后元素框当然是满的，看不出字在哪。
+      只挑「盒子明显比内容宽」的（扣掉左右 padding 还余 24px 以上），
+      那就是被拉过的；本来就贴合内容的按钮不参与。
+      .dcard__go 与「数字出处」那类块级链接不在 .btn 里，它们跟随文本流左对齐是对的。
+    */
+    const offCenter = await q.evaluate(() => {
+      const bad = []
+      for (const el of document.querySelectorAll('.btn')) {
+        const box = el.getBoundingClientRect()
+        if (!box.width || !box.height) continue
+        const cs = getComputedStyle(el)
+        const range = document.createRange()
+        range.selectNodeContents(el)
+        const ink = range.getBoundingClientRect()
+        if (!ink.width) continue
+        const slack = box.width - ink.width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)
+        if (slack < 24) continue
+        const off = Math.round(ink.left + ink.width / 2 - (box.left + box.width / 2))
+        if (Math.abs(off) <= 4) continue
+        bad.push(`${(el.className?.toString?.() || el.tagName).split(' ').pop()} 偏 ${off}px`)
+      }
+      return [...new Set(bad)]
+    })
+    ok(
+      offCenter.length === 0,
+      `390px · 拉宽的按钮内容跟着居中${offCenter.length ? '：' + offCenter.join(', ') : ''}`,
+    )
     await c.close()
   }
 
