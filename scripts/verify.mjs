@@ -46,6 +46,37 @@ try {
   process.exit(1)
 }
 
+/*
+  产物必须比源码新，否则你验的是上一次构建。
+
+  这个坑刚吃过一次：sections.css 多了一个右括号，postcss 报错、构建以退出码 1
+  失败，而那条命令的输出被 `>/dev/null 2>&1` 吞了 —— 于是后面整轮测量都跑在旧
+  dist 上，量出来的字号、卡高、圆角全是上一版的值，据此得出的结论全错。
+  闸门放在这儿比「记得看构建输出」可靠。
+*/
+const newestMtime = async (dir) => {
+  let t = 0
+  for (const e of await readdir(dir, { withFileTypes: true })) {
+    const p = path.join(dir, e.name)
+    t = Math.max(t, e.isDirectory() ? await newestMtime(p) : (await stat(p)).mtimeMs)
+  }
+  return t
+}
+{
+  const srcT = Math.max(
+    await newestMtime(path.join(ROOT, 'src')),
+    (await stat(path.join(ROOT, 'index.html'))).mtimeMs,
+  )
+  const distT = await newestMtime(DIST)
+  if (srcT > distT) {
+    console.error(
+      `verify: 源码比产物新 ${((srcT - distT) / 1000).toFixed(1)}s —— 先跑 npm run build，` +
+        '并且别把它的输出重定向掉（构建失败时 dist 会停在上一版）',
+    )
+    process.exit(1)
+  }
+}
+
 /* ══════════════════════════════════════════════ A 事实 */
 head('A 事实一致性')
 

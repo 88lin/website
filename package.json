@@ -9,6 +9,7 @@
     "build:client": "tsc -b --noCheck && vite build",
     "build:ssr": "vite build --ssr src/entry-server.tsx --outDir dist-ssr",
     "preview": "vite preview",
+    "serve": "node scripts/preview.mjs",
     "fonts": "node scripts/fonts.mjs",
     "static": "node scripts/static.mjs",
     "verify": "node scripts/verify.mjs",
