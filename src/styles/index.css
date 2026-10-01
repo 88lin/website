@@ -1060,7 +1060,16 @@ button {
 /* 窄屏收窄错位量：390px 上 54px 的横向错位会把后卡推出视口。 */
 @media (max-width: 640px) {
   .deck {
-    padding: 0 34px 28px 0;
+    /*
+      右侧不再留 34px。那段本是给后三张卡错位用的，代价是把前卡 —— 首屏最大的
+      那个视觉块 —— 整个推成左 20 右 54，实测偏左 34px，而同屏其他块一律左右各 20，
+      整个首屏读作歪的。
+
+      34px 是按旧的 54px 错位量留的，现在错位只有 11/20/22px，让它们直接错进
+      页边那 20px gutter 就够（卡片 transform 溢出不影响文档宽度，实测横溢仍是 0）。
+      前卡因此和 .chap / .svc / .case / .contact 这些块左右对齐。
+    */
+    padding: 0 0 28px;
   }
 
   /*
@@ -1094,16 +1103,23 @@ button {
     display: none;
   }
 
+  /*
+    错位量跟着视口缩。卡片宽度是「视口 − 40」，而错位量若写死，视口越窄卡片占比
+    越大、错位后越容易顶边 —— 实测写死 22px 时 320px 上最后一张卡右缘正好落在
+    视口边上（余量 0）、360px 余 1px。横溢闸门抓不到它，因为 transform 的溢出
+    不计入文档宽度，但看上去就是贴死了没有呼吸。
+    上限仍是放大前卡之后实测的安全值；下限保证最窄屏上也还看得出是「一叠」。
+  */
   .dcard[data-slot='1'] {
-    transform: translate3d(11px, 9px, 0) scale(0.976) rotate(0.9deg);
+    transform: translate3d(clamp(8px, 2.8vw, 11px), 9px, 0) scale(0.976) rotate(0.9deg);
   }
 
   .dcard[data-slot='2'] {
-    transform: translate3d(21px, 17px, 0) scale(0.951) rotate(1.8deg);
+    transform: translate3d(clamp(14px, 5.1vw, 20px), 17px, 0) scale(0.951) rotate(1.8deg);
   }
 
   .dcard[data-slot='3'] {
-    transform: translate3d(30px, 24px, 0) scale(0.928) rotate(2.6deg);
+    transform: translate3d(clamp(15px, 5.6vw, 22px), 24px, 0) scale(0.928) rotate(2.6deg);
   }
 }
 
