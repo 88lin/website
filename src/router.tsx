@@ -66,8 +66,13 @@ export function Router({ initial, children }: { initial?: RoutePath; children: R
   }, [])
 
   const href = useCallback(
-    (to: RoutePath) => (to === '/' ? state.base : state.base + to.replace(/^\//, '')),
-    [state.base],
+    (to: RoutePath) => {
+      // 预渲染不知道部署目录，按当前路由深度生成相对地址。
+      // 服务端与客户端保持一致，长按新标签打开、复制链接和无 JS 导航也能保留子路径。
+      const up = '../'.repeat(state.path.split('/').filter(Boolean).length)
+      return (up || './') + to.replace(/^\//, '')
+    },
+    [state.path],
   )
 
   const navigate = useCallback(

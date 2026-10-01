@@ -13,11 +13,11 @@
 npm install
 npm run dev              # Vite dev server
 npm run build            # client → ssr → prerender，产物在 dist/
-npm run verify           # 97 道闸门：事实 / 交互 / 结构 / 设计纪律
+npm run verify           # 验收闸门：事实 / 交互 / 结构 / 设计纪律
 npm run shots            # 取景器，出图到 .shots/（人眼过一遍用）
 ```
 
-Node ≥ 20。`npm run verify` 与 `npm run shots` 都要先 `npm run build`：它们验的是真正要发出去的那份产物，不是 dev server。
+Node ≥ 22。`npm run verify` 与 `npm run shots` 都要先 `npm run build`：它们验的是真正要发出去的那份产物，不是 dev server。
 
 ---
 
@@ -38,7 +38,9 @@ src/
     Section.tsx       章头（编号 ─── 章名）与虚线数据面板
     Nav.tsx           顶栏：当前章常亮 + CSS scroll-timeline 进度条
   content/
-    site.ts           身份、渠道、指标、七章、六项服务、作品、技术栈、写作 —— 唯一事实源
+    site.ts           身份、渠道、七章、六项服务、作品、技术栈与写作文案
+    activity.ts       GitHub / 博客快照的格式化与查询入口
+    generated/activity.json  自动生成的数字、标签计数、最近更新文章与采集日期
     cases.ts          六个深度案例：论点 / 摘要 / 三段 / 取舍 / 实测 / 数字出处
   lib/
     motion.ts         入场揭示、当前章、懒建 ScrollTrigger、平滑滚动
@@ -80,6 +82,9 @@ public/
 
 | 命令 | 作用 |
 |---|---|
+| `npm run refresh:data` | 读取 GitHub API / 博客公开数据，校验完整性后替换 JSON 快照 |
+| `npm run test:data` | 数据采集测试：分页、统计口径、失败保护、日期与令牌隔离 |
+| `node scripts/build-pages.mjs` | 构建 → 字体采集与子集化 → 重建 → OG / sitemap → 数据验收 |
 | `npm run verify` | 验收闸门，见下。要先 build |
 | `npm run shots` | 取景器：按屏切片截图到 `.shots/`。`--mobile` / `--route=case/lofi/` |
 | `npm run fonts` | 字体流水线：采真实用字 → 定轴 → 子集化 → 零缺字校验，硬预算 200 KB。**改完文案必跑** |
@@ -104,15 +109,17 @@ OG 图**从真页面取景**：打开 `dist/index.html`，把真实的大标题�
 
 ## 验收闸门
 
-`npm run verify` 是四段 97 条断言，任何一条红就非零退出。
+`npm run verify` 分四段断言，任何一条红就非零退出。
 
-**A 事实一致性** — 产物里的数字必须等于 `site.ts` / `cases.ts` 的当前值；已知旧值黑名单（`4,764`、`4,821`、`4,686`、`25 个原创`、`v3.1.15`…）在任何 HTML 里出现一次就红，注释里也不许留；`description` 与 `og:description` 必须由源码现算且彼此一致；sitemap 覆盖全部路由且 `lastmod = AS_OF`；每条路由都有预渲染产物。
+**A 事实一致性** — 产物总数、项目卡片、案例数字出处、日期与 `generated/activity.json` 一致；`description` 与 `og:description` 必须现算且彼此一致；部署目录的 sitemap 覆盖全部路由且 `lastmod = AS_OF`；每条路由都有预渲染产物。动态数字不再用历史值黑名单判断（Star 可能合法回落）。`node scripts/verify.mjs --data-only` 只跑这一段，供 Actions 使用。
 
 **B 交互与结构** — 看起来能操作的东西必须真的能操作，四种输入逐个验：
 - 叠卡：箭头 / 圆点 / 方向键 / 拖拽都能翻到下一张；最前那张的链接点得中（不被拖拽面吃掉）；5–6 张且每张 star ≥ `DECK_MIN_STARS`
 - 横推轨：鼠标滚轮横移、横移时页面不跟着纵滚、拖拽横移、拖完不误触链接、聚焦后方向键可推、到头箭头置灰、到头后把滚动交回页面
 - 顶栏当前章高亮、数字出处可展开、章头开幕六章全被点着
-- 三档宽度（1440 / 834 / 390）无横向溢出、无控制台报错、案例行三块互不重叠
+- 五档宽度（1440 / 834 / 768 / 390 / 320）无横向溢出、无控制台报错、案例行三块互不重叠
+- 手机触摸拖动中断时叠卡复位，不误翻页；重新横滑和点击案例仍可用
+- 禁用 JavaScript 时仍能通过原生链接进入案例、切换案例和返回本站首页，保留部署子路径
 - 每条案例子页直链 200、单个 H1、无报错
 - 禁用 JS 时正文完整（7500+ 字，H1 可读），且首屏四个读数印的是**真值不是 0**
   —— 这条是补一次真事故，见 `components/Count.tsx` 文件头
@@ -127,17 +134,29 @@ OG 图**从真页面取景**：打开 `dist/index.html`，把真实的大标题�
 
 ## 数据刷新流程
 
-`site.ts` 与 `cases.ts` 里每一个数字都是实测的，不许拍脑袋。`AS_OF` 标着核实日期，页面上也印着这个日期。
+参考 [88lin/home 的 Actions](https://github.com/88lin/home/blob/main/.github/workflows/update-github-stats.yml)，本项目把刷新直接接进 Pages 工作流。每周二北京时间 **08:23**、推送 `main` 或手动运行时，先拉取数据，再构建并部署。定时任务可能排队延迟；只会在默认分支运行。长期没有仓库活动时，GitHub 可能停用定时任务，可在 Actions 重新启用。
 
-1. **GitHub**：`api.github.com/users/88lin` 取 followers；翻 `users/88lin/repos?per_page=100&type=owner`，**滤掉 fork**，对自有仓库求 star 与 fork 之和。
-2. **博客**：`blog.88lin.eu.org` 首页取文章数、标签计数与「最新发布」那六条的永久链接。那 27 个词是**标签**不是分类，一篇可挂多个，所以合计比文章数大 —— 文案里必须说清楚。
-   首页那个「建站天数」**不要用**：它取决于 NotionNext 最后一次增量重建的时刻，08-23 记作 1,795，09-20 直读又变回 1,794。会倒退的数不收录。
-3. **video_vip**：数字直接数 `video_vip.user.js` 源码（版本、`@include` 条数、`videoParseList` 条目数、`playerContainers` 的 host 数）。
-4. **computer-repair-skill**：Playbook 数点 `references/playbook-*.md`，要排掉 `playbook-index.md` 与 `playbook-authoring.md`。
-5. 旧值记得补进 `verify.mjs` 的 `STALE` 黑名单 —— 那张表是防回潮的，不是历史档案。
-6. 改完文案 → `npm run fonts`（字表可能变了）→ `npm run build` → `npm run static` → `npm run verify`。
+- **GitHub**：自动分页读取全部公开仓库，累计 Star / Fork 只计算 `fork=false`；同时更新原创仓库数、fork 仓库数、关注者、following，以及每个展示项目的 Star / Fork。首页、叠卡、作品轨、案例正文、数字出处和分享描述共用同一快照。`home` 包含 fork 仓库的口径不直接套用。
+- **博客**：从首页公开的 `__NEXT_DATA__` 读取文章数、标签总数、前 13 个标签计数及最近更新的 6 篇文章，保留永久链接。列表按博客的最近编辑顺序展示，日期使用 `lastEditedDay`，页面标为「最近更新」。
+- **日期与失败保护**：用 Asia/Shanghai 日期。任一来源失败、分页不完整、展示仓库缺失或数据格式变化时，保留旧 JSON 并让工作流失败，不部署半份数据；线上继续保留上一次成功产物。快照显示最近成功采集的日期，不能视为实时数值。
+- **内容证据**：解析源、Playbook、测试用例等功能数字仍需人工核验出处；自动刷新日期只对应 GitHub / 博客数据。
+- **字体与分享图**：新文章可能增加中文用字，Actions 缓存 OFL 源字体、重新子集化，再生成当前读数的 OG 图与 sitemap，并复制到 `dist/`。
 
-最后一步的顺序不能颠倒：OG 图是从构建产物取景的，`verify` 验的也是产物。
+Actions 使用自带的 `GITHUB_TOKEN`，只需现有 `contents: read`、`pages: write`、`id-token: write` 权限，无需额外 PAT。刷新和部署在同一工作流，不创建机器人提交，也不依赖提交触发另一轮部署。仓库中的 JSON 是可离线构建的基线快照；最新在线数据在每次部署的产物中。
+
+本地刷新（可通过环境变量 `GITHUB_TOKEN` 或 `GH_TOKEN` 提高 GitHub API 限额，令牌只发给 GitHub）：
+
+```bash
+npm run refresh:data
+npm run test:data
+python -m pip install 'fonttools[woff]' brotli
+python scripts/prepare-fonts.py
+npx playwright install chromium
+node scripts/build-pages.mjs
+npm run verify
+```
+
+普通离线开发仍可直接 `npm run build`，使用已保存的快照；发布前使用上面的完整流程。不要手改生成 JSON 中的数字。
 
 ---
 
@@ -160,13 +179,13 @@ OG 图**从真页面取景**：打开 `dist/index.html`，把真实的大标题�
 | 无 JS | 预渲染的完整页面，内容全部可见可读；`.js` 类由兜底定时器摘掉 |
 | JS 加载失败 | 同上。2.5 秒兜底把 `.js` 摘掉，绝不因为动效没跑起来而把正文藏住 |
 | `prefers-reduced-motion` | 揭示与视差整套退化为静态（不是变慢），不建 ScrollTrigger |
-| 窄屏 | 服务两栏转单栏、三列账目行转单栏、渠道胶囊拉成整行、横推轨转 scroll-snap 手势 |
+| 窄屏 | 顶栏保持单行，不显示 00–06 章节条；服务两栏转单栏、三列账目行转单栏、渠道胶囊拉成整行、横推轨转 scroll-snap 手势 |
 | 老浏览器 | `text-spacing-trim`、`animation-timeline` 都在 `@supports` 里，认不了就没有，不影响功能 |
 
 ---
 
 ## 部署
 
-只维护 `main` 一个分支。`.github/workflows/deploy.yml` 监听它 —— **推到 main 即部署**（build → prerender → GitHub Pages）。
+只维护 `main` 一个分支。`.github/workflows/deploy.yml` 在推送、每周二定时与手动运行时执行数据刷新、完整构建及 GitHub Pages 部署。仓库 Settings → Pages 的 Source 应为 GitHub Actions。
 
-CI 不跑 `npm run verify`，所以推之前自己跑一遍。
+CI 跑采集单元测试与产物数据验收；完整交互 / 设计验收仍在本地用 `npm run verify` 运行。

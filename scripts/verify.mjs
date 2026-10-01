@@ -3,7 +3,7 @@
  *
  *   A 事实   —— 产物里的数字必须等于 site.ts / cases.ts 里的当前值，旧值一个不剩
  *   B 交互   —— 看起来能操作的东西必须真的能操作，四种输入逐个验
- *   C 结构   —— 三档宽度下无横向溢出、无控制台报错、包体在预算内
+ *   C 结构   —— 多档宽度下无横向溢出、无控制台报错、包体在预算内
  *   D 纪律   —— 被判掉过的那批 CSS 一个都不许回来
  *
  * 为什么必须是脚本而不是人眼看截图：上一轮被用户点名的三条 bug
@@ -81,7 +81,7 @@ const newestMtime = async (dir) => {
 head('A 事实一致性')
 
 const site = await readFile(path.join(ROOT, 'src/content/site.ts'), 'utf8')
-const casesSrc = await readFile(path.join(ROOT, 'src/content/cases.ts'), 'utf8')
+const activity = JSON.parse(await readFile(path.join(ROOT, 'src/content/generated/activity.json'), 'utf8'))
 
 const grab = (src, re, what) => {
   const m = src.match(re)
@@ -92,13 +92,10 @@ const grab = (src, re, what) => {
   return m[1]
 }
 
-const asOf = grab(site, /AS_OF\s*=\s*'([\d.]+)'/, ' AS_OF')
-const stars = grab(site, /value:\s*'([\d,]+)',\s*label:\s*'累计 Star'/, '累计 Star')
-const repos = grab(site, /value:\s*'(\d+)',\s*label:\s*'原创仓库'/, '原创仓库')
-/* video_vip 的 star 在 site.ts 的 projects 里（那是作品轨的数据源）。
-   窗口放到 900 是因为 blurb 会随文案增删，700 曾经刚好卡在边界上。 */
-const vipStars = grab(site, /slug:\s*'video_vip'[\s\S]{0,900}?stars:\s*(\d+)/, 'video_vip star')
-const vipPretty = Number(vipStars).toLocaleString('en-US')
+const asOf = activity.asOf.replace(/-/g, '.')
+const stars = activity.github.stars.toLocaleString('en-US')
+const repos = String(activity.github.originals)
+const vipPretty = activity.github.repositories.video_vip.stars.toLocaleString('en-US')
 
 const htmls = []
 const walk = async (dir) => {
@@ -125,20 +122,8 @@ const og = (home.match(/property="og:description" content="([^"]+)"/) || [])[1] 
 ok(desc.includes(stars) && desc.includes(asOf), '首页 description 由 site.ts 现算（含当前数字与日期）')
 ok(og === desc, 'og:description 与 description 一致')
 
-/* 已知旧值黑名单。 */
+/* 只保留内容/字体回归项。动态计数可能合法地回到历史数值，不能按旧数字拉黑。 */
 const STALE = [
-  '4,764',
-  '4,791', // 08-21 那次的 Σstar
-  '4,821', // 08-23 那次的 Σstar
-  '5,772', // 09-20 那次的 Σstar
-  '4,658',
-  '4,669', // 08-21 那次的 video_vip
-  '4,686', // 08-23 那次的 video_vip
-  '4,956', // 09-20 那次的 video_vip
-  '24 个原创',
-  '25 个原创', // 08-23 那次的原创仓库数
-  '1,794',
-  '1,795', // 博客那个会倒退的「建站天数」，整个不收录
   '62 个 Playbook', // repair skill 08-23 的 playbook 数
   'v3.1.15', // video_vip 08-23 的版本号
   '2026.08.16',
@@ -161,7 +146,7 @@ const routerSrc = await readFile(path.join(ROOT, 'src/router.tsx'), 'utf8')
 const routes = [...routerSrc.match(/export const ROUTES[^=]*=\s*\[([^\]]+)\]/)[1].matchAll(/'([^']+)'/g)].map(
   (m) => m[1],
 )
-const sitemap = await readFile(path.join(ROOT, 'public/sitemap.xml'), 'utf8')
+const sitemap = await readFile(path.join(DIST, 'sitemap.xml'), 'utf8')
 const missing = routes.filter((r) => !sitemap.includes(r === '/' ? 'website/</loc>' : `website${r}</loc>`))
 ok(missing.length === 0, `sitemap 覆盖 ${routes.length} 条路由${missing.length ? ' 缺 ' + missing : ''}`)
 ok(sitemap.includes(asOf.replace(/\./g, '-')), `sitemap lastmod = ${asOf.replace(/\./g, '-')}`)
@@ -172,6 +157,27 @@ for (const r of routes) {
     `路由 ${r} 有预渲染产物`,
   )
 }
+
+// 核对每个案例与项目卡片，避免只更新首页总数而留下另一份旧数字。
+const escape = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+for (const [file, html] of htmls) {
+  for (const match of html.matchAll(/GitHub API：GET \/repos\/88lin\/([\w.-]+)，([\d-]+)/g)) {
+    const stats = activity.github.repositories[match[1]]
+    ok(Boolean(stats) && match[2] === activity.asOf && html.includes(`${stats.stars.toLocaleString('en-US')} Star / ${stats.forks.toLocaleString('en-US')} Fork`), `${file} · ${match[1]} 案例读数与日期匹配快照`)
+  }
+}
+const projectCards = [...home.matchAll(/<article\b[^>]*class="wcard"[\s\S]*?<\/article>/g)]
+ok(projectCards.length > 0, '作品卡片已预渲染')
+for (const card of projectCards) {
+  const name = card[0].match(/https:\/\/github\.com\/88lin\/([\w.-]+)/)?.[1]
+  const stats = activity.github.repositories[name]
+  ok(Boolean(stats) && (!stats.stars || new RegExp(`<b>${escape(stats.stars.toLocaleString('en-US'))}<\\/b>\\s*Star`).test(card[0])), `作品 ${name} Star 匹配快照`)
+  ok(Boolean(stats) && (!stats.forks || new RegExp(`<b>${stats.forks}<\\/b>\\s*Fork`).test(card[0])), `作品 ${name} Fork 匹配快照`)
+}
+for (const post of activity.blog.latest) {
+  ok(home.includes(post.href) && home.includes(post.date), `博客最近更新 ${post.date} · ${post.href}`)
+}
+if (process.argv.includes('--data-only')) process.exit(fail ? 1 : 0)
 
 /* ══════════════════════════════════════════════ C 包体预算（不用浏览器，先算完） */
 head('C 包体预算')
@@ -289,7 +295,7 @@ try {
     target: e.getAttribute('target'),
     text: e.textContent.trim(),
   }))
-  const internal = /\/case\/[a-z0-9-]+\/$/.test(go.href || '')
+  const internal = new URL(go.href || '', url).href.startsWith(url + 'case/')
   const external = /^https:\/\/(88lin\.github\.io|github\.com\/88lin)/.test(go.href || '') && go.target === '_blank'
   ok(internal || external, `叠卡 · 最前那张的链接可达（${internal ? '站内案例页' : '外链新标签'}：${go.href}）`)
 
@@ -443,8 +449,8 @@ try {
   ok(errs.length === 0, `首页无控制台报错${errs.length ? '：' + [...new Set(errs)].join(' | ') : ''}`)
   await ctx.close()
 
-  /* ---- 三档宽度：无横向溢出、无报错、窄屏不叠字 ---- */
-  for (const w of [1440, 834, 390]) {
+  /* ---- 桌面、平板与窄屏手机：无横向溢出、无报错、不叠字 ---- */
+  for (const w of [1440, 834, 768, 390, 320]) {
     const c = await browser.newContext({
       viewport: { width: w, height: w < 700 ? 844 : 900 },
       isMobile: w < 700,
@@ -480,6 +486,50 @@ try {
     })
     ok(bad.length === 0, `${w}px · 案例行三块互不重叠${bad.length ? '：' + bad.join(', ') : ''}`)
     ok(e2.length === 0, `${w}px · 无控制台报错${e2.length ? '：' + [...new Set(e2)].join(' | ') : ''}`)
+    await c.close()
+  }
+
+  /* ---- 真实触摸事件：中断拖动不能翻页，下一次手势与链接仍然可用 ---- */
+  {
+    const c = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+      isMobile: true,
+      hasTouch: true,
+    })
+    const q = await c.newPage()
+    await q.goto(url, { waitUntil: 'networkidle' })
+    const deck = q.locator('.deck__stack')
+    await deck.scrollIntoViewIfNeeded()
+    await q.waitForTimeout(500)
+    const box = await deck.boundingBox()
+    const x = box.x + box.width * 0.75
+    const y = Math.max(130, Math.min(620, box.y + box.height / 2))
+    const cdp = await c.newCDPSession(q)
+    const drag = async (end) => {
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] })
+      for (let i = 1; i <= 8; i++) {
+        await cdp.send('Input.dispatchTouchEvent', {
+          type: 'touchMove', touchPoints: [{ x: x - i * 14, y }],
+        })
+        await q.waitForTimeout(25)
+      }
+      await cdp.send('Input.dispatchTouchEvent', { type: end, touchPoints: [] })
+      await q.waitForTimeout(500)
+    }
+    const initial = await deck.getAttribute('aria-label')
+    await drag('touchCancel')
+    const reset = await deck.evaluate((el) =>
+      !el.hasAttribute('data-dragging') && el.querySelector('[data-slot="0"]').style.getPropertyValue('--dx') === '0px',
+    )
+    ok((await deck.getAttribute('aria-label')) === initial && reset, '390px · 触摸被取消后卡片复位，不误翻页')
+    await drag('touchEnd')
+    ok((await deck.getAttribute('aria-label')) !== initial, '390px · 中断后再次触摸横滑仍能翻页')
+    const link = q.locator('.dcard[data-slot="0"] .dcard__go')
+    const target = await link.getAttribute('href')
+    await link.tap()
+    await q.waitForURL(new URL(target, url).href)
+    ok(await q.locator('.cpage__claim').isVisible(), '390px · 触摸翻页后点击可进入完整案例')
+    await cdp.detach()
     await c.close()
   }
 
@@ -725,6 +775,23 @@ try {
       shown.includes(stars) && !shown.includes('0'),
       `禁用 JS 时读数带印的是真值（${shown.join(' / ')}）`,
     )
+
+    // 使用 HTML 原生链接导航，能抓出被客户端点击拦截掩盖的部署子路径错误。
+    const caseLink = q.locator('.case__say a').first()
+    const caseURL = await caseLink.evaluate((el) => el.href)
+    ok(caseURL.startsWith(url + 'case/'), '禁用 JS 时案例链接保留部署子路径')
+    await caseLink.click()
+    await q.waitForURL(caseURL)
+    ok(await q.locator('.cpage__claim').isVisible(), '禁用 JS 时可从首页进入案例')
+    const nextLink = q.locator('.cpage__more a').first()
+    const nextURL = await nextLink.evaluate((el) => el.href)
+    ok(nextURL.startsWith(url + 'case/'), '禁用 JS 时其它案例链接保留部署子路径')
+    await nextLink.click()
+    await q.waitForURL(nextURL)
+    ok(await q.locator('.cpage__claim').isVisible(), '禁用 JS 时可切换到其它案例')
+    await q.locator('.cpage__back a').click()
+    await q.waitForURL(url)
+    ok(await q.locator('#hero').isVisible(), '禁用 JS 时可从案例返回本站首页')
     await c.close()
   }
 } finally {

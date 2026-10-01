@@ -153,7 +153,7 @@ export function CasePage({ slug }: { slug: string }) {
         <footer className="foot">
           <p>{footer.copyright}</p>
           <p className="foot__meta">
-            <span>数字核实于 {AS_OF}</span>
+            <span>GitHub / 博客更新于 {AS_OF}</span>
           </p>
         </footer>
       </div>

@@ -1,6 +1,7 @@
 /* 全站唯一数据源。 */
 
-export const AS_OF = '2026.09.21'
+import { AS_OF, blog, formatCount, github, repositoryStats } from './activity'
+export { AS_OF } from './activity'
 
 /* ---------------------------------------------------------------- 章节 */
 
@@ -75,42 +76,42 @@ export type Metric = {
 export const metrics: Metric[] = [
   {
     id: 'stars',
-    value: '6,053',
+    value: formatCount(github.stars),
     label: '累计 Star',
-    sub: '30 个原创仓库合计',
+    sub: `${github.originals} 个原创仓库合计`,
     source: 'GET /users/88lin/repos → Σ stargazers_count (fork=false)',
   },
   {
     id: 'repos',
-    value: '30',
+    value: String(github.originals),
     label: '原创仓库',
-    sub: '另有 88 个 fork，共 118 个公开仓库',
+    sub: `另有 ${github.forkedRepos} 个 fork，共 ${github.publicRepos} 个公开仓库`,
     source: 'GET /users/88lin/repos → count(fork=false)',
   },
   {
     id: 'forks',
-    value: '614',
+    value: formatCount(github.forks),
     label: '被 Fork',
     sub: '有人真的拿去改了',
     source: 'GET /users/88lin/repos → Σ forks_count (fork=false)',
   },
   {
     id: 'followers',
-    value: '180',
+    value: formatCount(github.followers),
     label: '关注者',
-    sub: '没有互关任务，只有 7 个 following',
+    sub: `没有互关任务，只有 ${github.following} 个 following`,
     source: 'GET /users/88lin → followers',
   },
   {
     id: 'posts',
-    value: '56',
+    value: String(blog.posts),
     label: '博客文章',
     sub: '工具、教程、资源，写完就能抄走用',
     source: 'blog.88lin.eu.org 首页统计条',
   },
   {
     id: 'tags',
-    value: '27',
+    value: String(blog.tagTotal),
     label: '文章标签',
     sub: '一篇可挂多个，所以合计比文章数大',
     source: 'blog.88lin.eu.org 首页标签云条目数',
@@ -149,7 +150,7 @@ export const services: Service[] = [
     id: 'repo',
     no: '01',
     title: 'GitHub 项目跑通与二次开发',
-    body: '拿到一个开源仓库装不起来、跑到一半报错、或者想改成自己要的样子，都可以直接丢过来。我自己维护着 30 个原创仓库，踩环境的坑踩得够多。',
+    body: `拿到一个开源仓库装不起来、跑到一半报错、或者想改成自己要的样子，都可以直接丢过来。我自己维护着 ${github.originals} 个原创仓库，踩环境的坑踩得够多。`,
     does: ['代码复现', '环境部署', '依赖报错', 'Git 冲突', '二次开发', '前端美化', 'Bug 排查', '功能修改'],
     deliver: '能跑起来的环境、一份从零开始的复现步骤、改动说明',
     fit: '手上有 repo 但装不起来，或者需要在别人的代码上继续改的人',
@@ -334,13 +335,13 @@ export type Project = {
 
 export const worksIntro = {
   headline: '做过的东西',
-  body: '十个还在维护的仓库，横着滑。每张卡写清它解决什么、用什么做的、现在什么状态，点卡里的按钮可以直接打开或看源码。star 与 fork 是 GitHub API 当天的真值。',
+  body: '十个还在维护的仓库，横着滑。每张卡写清它解决什么、用什么做的、现在什么状态，点卡里的按钮可以直接打开或看源码。star 与 fork 来自 GitHub API，更新日期见页脚。',
 }
 
 /* 首屏叠卡的门槛：star 少于这个数的不进叠卡。 */
 export const DECK_MIN_STARS = 10
 
-export const projects: Project[] = [
+const projectContent: Omit<Project, 'stars' | 'forks'>[] = [
   {
     slug: 'video_vip',
     name: 'video_vip',
@@ -350,8 +351,6 @@ export const projects: Project[] = [
     blurb:
       '我 star 最多的仓库，也是维护时间最长的一个。在视频站播放页挂一枚可拖动的按钮，把播放地址交给第三方解析源换回能播的播放器。当前 16 路解析源随时可切，22 条站点适配各写自己的容器与遮罩清理规则。',
     stack: ['JavaScript', '油猴脚本', '多端适配'],
-    stars: 4969,
-    forks: 493,
     state: 'maintained',
     live: 'https://88lin.github.io/vip/',
     repo: 'https://github.com/88lin/video_vip',
@@ -366,8 +365,6 @@ export const projects: Project[] = [
     blurb:
       '把每日签到、成长任务、盲盒、连登兑换与断登补签全接管掉。零依赖纯 Python，Windows / macOS 定时任务，配置可以直接交给 AI 一句话生成，之后静默跑着不花 token。',
     stack: ['Python', '零依赖', '定时任务', 'MIT'],
-    stars: 651,
-    forks: 54,
     state: 'maintained',
     repo: 'https://github.com/88lin/workbuddy-auto-signin',
     tint: 'blue',
@@ -381,8 +378,6 @@ export const projects: Project[] = [
     blurb:
       '让 Agent 像一名谨慎的维修工程师：64 个按需加载的 Playbook，覆盖 Windows / macOS / Linux 的诊断、清理、性能、网络与安全维护。先取证，再计划，确认后修改。',
     stack: ['Agent Skill', 'Python', 'Markdown', 'AGPL-3.0'],
-    stars: 291,
-    forks: 31,
     state: 'live',
     live: 'https://repair.88lin.eu.org',
     repo: 'https://github.com/88lin/computer-repair-skill',
@@ -397,8 +392,6 @@ export const projects: Project[] = [
     blurb:
       'macOS 灵动岛式播放器可拖到任意位置，21 个精选电台，打开即听，不用注册也不用下载。五个单键快捷键、专注计时、睡眠定时 15 分钟到 8 小时，支持 PWA 安装。',
     stack: ['Next.js 16', 'React', 'TypeScript', 'PWA'],
-    stars: 92,
-    forks: 23,
     state: 'live',
     live: 'https://lofi.88lin.eu.org',
     repo: 'https://github.com/88lin/lofi-radio-web',
@@ -413,8 +406,6 @@ export const projects: Project[] = [
     blurb:
       '每日签到额度自动领，支持多账号与余额换算，错过了会自动补签。纯 Python 本地静默运行，Windows / macOS / Linux 三套定时任务都给了现成配置。',
     stack: ['Python', '多账号', 'cron', 'MIT'],
-    stars: 33,
-    forks: 3,
     state: 'maintained',
     repo: 'https://github.com/88lin/agentrouter-auto-signin',
     tint: 'cream',
@@ -428,8 +419,6 @@ export const projects: Project[] = [
     blurb:
       '给 AI 助手与聊天机器人做的动画球体：纯 CSS 动画、零运行时依赖，内置 8 套调色板与 8 个预设，装上就能用。React 19 与 TypeScript 类型都带着。',
     stack: ['React 19', 'TypeScript', 'CSS 动画', 'MIT'],
-    stars: 7,
-    forks: 0,
     state: 'live',
     live: 'https://88lin.github.io/react-ai-orb',
     repo: 'https://github.com/88lin/react-ai-orb',
@@ -444,8 +433,6 @@ export const projects: Project[] = [
     blurb:
       '给书签建四条索引（字面、内容、意图、上下文），RRF 融合之后逐维实测，赢的留、输的关。负面结果写进 README，不藏。本地单文件 SQLite，1,524 个测试。',
     stack: ['Python', 'SQLite FTS5', 'RRF', 'Local-first'],
-    stars: 0,
-    forks: 1,
     state: 'live',
     live: 'https://88lin.github.io/facetmark/',
     repo: 'https://github.com/88lin/facetmark',
@@ -460,8 +447,6 @@ export const projects: Project[] = [
     blurb:
       '用 Unicode 变体选择符给任意一段文字埋一层看不见的水印，带 Reed-Solomon 纠错与可选的 AES-GCM-256 加密，另配一条 AI 读得懂的 emoji 签名。纯浏览器本地运行，零网络请求，编码规范完全公开。',
     stack: ['JavaScript', 'Unicode', 'Reed-Solomon', '纯前端'],
-    stars: 0,
-    forks: 0,
     state: 'live',
     live: 'https://88lin.github.io/textmark/',
     repo: 'https://github.com/88lin/textmark',
@@ -476,8 +461,6 @@ export const projects: Project[] = [
     blurb:
       '把《从 SEO 到 GEO》整本书压成 13 张方法论能力卡，讲的是怎么让内容被 AI 搜索引用。适配 Claude Code / Codex / Cursor 等宿主，带教程与全流水线审计 —— 「蒸馏一本书」那项服务的样板。',
     stack: ['Agent Skill', 'GEO', 'Python', 'MIT'],
-    stars: 1,
-    forks: 0,
     state: 'maintained',
     repo: 'https://github.com/88lin/geo-book-skill',
     tint: 'blue',
@@ -491,14 +474,17 @@ export const projects: Project[] = [
     blurb:
       '把 Markdown 一键排成能直接粘进公众号编辑器的 HTML。6 套精选主题加一个主题生成器，样式全内联不掉格式，两道脚本关卡校验。',
     stack: ['Agent Skill', 'HTML', 'Python Lint'],
-    stars: 0,
-    forks: 0,
     state: 'live',
     live: 'https://88lin.github.io/gzh-design-skill/docs/gallery/index.html',
     repo: 'https://github.com/88lin/gzh-design-skill',
     tint: 'rose',
   },
 ]
+
+export const projects: Project[] = projectContent.map((project) => ({
+  ...project,
+  ...repositoryStats(project.slug),
+}))
 
 /* ---------------------------------------------------------------- 写作 */
 
@@ -507,35 +493,13 @@ export const writing = {
   body: '博客写的是能直接抄走用的东西：软件资源、AI 工具、效率方法、学习资料。不追热点，追可复用。下面是标签计数，一篇文章可以挂多个标签，所以合计比文章数大。',
   href: 'https://blog.88lin.eu.org',
   hrefLabel: 'blog.88lin.eu.org',
-  posts: 56,
-  /** 用年份差，不用博客首页那个「建站天数」—— 那个数实测会倒退。 */
-  years: 5,
+  posts: blog.posts,
+  /** 按本次快照年份计算，避免跨年水合差异。 */
+  years: Number(AS_OF.slice(0, 4)) - 2021,
   since: '2021',
-  tags: [
-    { name: '工具', count: 28 },
-    { name: '教程', count: 23 },
-    { name: '热门', count: 12 },
-    { name: '软件资源', count: 11 },
-    { name: 'AI工具', count: 9 },
-    { name: '必看', count: 9 },
-    { name: '生活', count: 8 },
-    { name: '个人成长', count: 6 },
-    { name: '思考', count: 6 },
-    { name: '健康', count: 6 },
-    { name: '省钱攻略', count: 3 },
-    { name: '学术论文', count: 3 },
-    { name: '学习工具', count: 3 },
-  ],
-  tagTotal: 27,
-  /** 每篇必须带永久链接：只有标题和日期就是六行点不开的死字。 */
-  latest: [
-    { title: '全网VIP视频免费看教程：短剧电视剧白嫖指南', date: '2026-08-18', href: 'https://blog.88lin.eu.org/article/46' },
-    { title: '李笑来作品集：6 本书浓缩成一份可执行的人生操作系统', date: '2026-08-15', href: 'https://blog.88lin.eu.org/article/20' },
-    { title: '眼镜是妥协的艺术：挑框、验光、网配蔡司的避坑指南', date: '2026-08-15', href: 'https://blog.88lin.eu.org/article/43' },
-    { title: 'C盘清理详细教程：Windows系统一键瘦身', date: '2026-08-15', href: 'https://blog.88lin.eu.org/article/10' },
-    { title: '实用生活指南：必备经验与高效技巧分享', date: '2026-08-15', href: 'https://blog.88lin.eu.org/article/50' },
-    { title: 'Windows实用教程：常见问题解决与系统优化指南', date: '2026-08-15', href: 'https://blog.88lin.eu.org/article/14' },
-  ],
+  tags: blog.tags,
+  tagTotal: blog.tagTotal,
+  latest: blog.latest,
 }
 
 /* ---------------------------------------------------------------- 联系 */

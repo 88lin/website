@@ -15,7 +15,9 @@
     "verify": "node scripts/verify.mjs",
     "shots": "node scripts/shots.mjs",
     "icons": "python scripts/mkicon.py",
-    "qr": "node scripts/qr.mjs"
+    "qr": "node scripts/qr.mjs",
+    "refresh:data": "node scripts/refresh-data.mjs",
+    "test:data": "node --test scripts/refresh-data.test.mjs"
   },
   "dependencies": {
     "gsap": "^3.13.0",

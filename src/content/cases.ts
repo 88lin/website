@@ -1,6 +1,7 @@
 /* 六个深度案例。 */
 
 import type { Tint } from './site'
+import { repositoryStars, repositoryForks, repositoryProvenance } from './activity'
 
 export type CaseSection = { label: string; body: string }
 /* 一条实测。 */
@@ -47,7 +48,7 @@ export const cases: CaseStudy[] = [
     role: '独立开发与长期维护',
     stackLine: 'JavaScript · 油猴脚本 · v3.2.6',
     summary:
-      '2023 年写的用户脚本，现在 4,969 star，是我维护时间最长的一个。它做的事很朴素：在视频站的播放页左上角挂一枚可拖动的悬浮按钮，点开选一路解析源，把当前播放地址交给它，换回一个能播的播放器容器，并按站点各自的规则清掉会员遮罩与弹层。',
+      `2023 年写的用户脚本，现在 ${repositoryStars('video_vip')} star，是我维护时间最长的一个。它做的事很朴素：在视频站的播放页左上角挂一枚可拖动的悬浮按钮，点开选一路解析源，把当前播放地址交给它，换回一个能播的播放器容器，并按站点各自的规则清掉会员遮罩与弹层。`,
     sections: [
       {
         label: '背景',
@@ -59,7 +60,7 @@ export const cases: CaseStudy[] = [
       },
       {
         label: '怎么解',
-        body: '解析源做成一张可切换的清单（当前 16 路），失效就换一路、跟着版本更新，不绑死一家；脚本自己不判断谁快谁好，判断权交给此刻能播的那一路。站点适配不用通用选择器，22 条各写一份自己的 container 与 displayNodes / cleanupNodes，改一个站不牵动其余。入口用 35 条 @include 同时覆盖桌面与移动端域名。按钮可以右键拖到任意位置，因为不同站点的控制条位置不一样，固定坐标注定挡住某个站。另外提供一个不装脚本也能用的网页版。README 里篇幅最长的一节不是实现，是「怎么装、为什么不生效、建议配 AdGuard」—— 一个近五千 star 的脚本，长期成本主要花在兼容性与用户支持上，这一点写在明面上比藏起来有用。',
+        body: '解析源做成一张可切换的清单（当前 16 路），失效就换一路、跟着版本更新，不绑死一家；脚本自己不判断谁快谁好，判断权交给此刻能播的那一路。站点适配不用通用选择器，22 条各写一份自己的 container 与 displayNodes / cleanupNodes，改一个站不牵动其余。入口用 35 条 @include 同时覆盖桌面与移动端域名。按钮可以右键拖到任意位置，因为不同站点的控制条位置不一样，固定坐标注定挡住某个站。另外提供一个不装脚本也能用的网页版。README 里篇幅最长的一节不是实现，是「怎么装、为什么不生效、建议配 AdGuard」—— 一个长期维护的脚本，长期成本主要花在兼容性与用户支持上，这一点写在明面上比藏起来有用。',
       },
     ],
     tradeoffs: [
@@ -73,13 +74,13 @@ export const cases: CaseStudy[] = [
       },
     ],
     results: [
-      { value: '4,969', label: 'GitHub Star' },
-      { value: '493', label: 'Fork' },
+      { value: repositoryStars('video_vip'), label: 'GitHub Star' },
+      { value: repositoryForks('video_vip'), label: 'Fork' },
       { value: '16', label: '解析源' },
       { value: '22', label: '站点适配' },
     ],
     provenance: [
-      { value: '4,969 Star / 493 Fork', from: 'GitHub API：GET /repos/88lin/video_vip，2026-09-21' },
+      repositoryProvenance('video_vip'),
       { value: '16 路解析源', from: 'video_vip.user.js v3.2.6 的 videoParseList 条目数（15 路第三方 ?url= 接口 + 1 路无损云）' },
       { value: '22 条站点适配', from: '同一文件 playerContainers 的 host 条目数，覆盖 13 个独立域名，含桌面与移动端' },
       { value: '35 条 @include', from: '同一文件脚本头，覆盖桌面与移动端入口' },
@@ -99,7 +100,7 @@ export const cases: CaseStudy[] = [
     role: '独立开发与长期维护',
     stackLine: 'Python 标准库 · 零依赖 · 单文件 · MIT',
     summary:
-      '腾讯的 AI 工作台 WorkBuddy 每天有一串要手点的入口：签到、领旅行礼物、派 Buddy 出门、领任务、领任务奖、连登兑换、开盲盒。每一下都只要一秒，但它们散在不同页面，漏一天就断签。这个脚本把它们全接管了：纯 Python 标准库、单文件、零依赖，只读你本机已有的登录态，仓库里一个密钥都没有。651 star。',
+      `腾讯的 AI 工作台 WorkBuddy 每天有一串要手点的入口：签到、领旅行礼物、派 Buddy 出门、领任务、领任务奖、连登兑换、开盲盒。每一下都只要一秒，但它们散在不同页面，漏一天就断签。这个脚本把它们全接管了：纯 Python 标准库、单文件、零依赖，只读你本机已有的登录态，仓库里一个密钥都没有。${repositoryStars('workbuddy-auto-signin')} star。`,
     sections: [
       {
         label: '背景',
@@ -125,13 +126,13 @@ export const cases: CaseStudy[] = [
       },
     ],
     results: [
-      { value: '651', label: 'GitHub Star' },
-      { value: '54', label: 'Fork' },
+      { value: repositoryStars('workbuddy-auto-signin'), label: 'GitHub Star' },
+      { value: repositoryForks('workbuddy-auto-signin'), label: 'Fork' },
       { value: '0', label: '第三方依赖' },
       { value: '3', label: '覆盖操作系统' },
     ],
     provenance: [
-      { value: '651 Star / 54 Fork', from: 'GitHub API：GET /repos/88lin/workbuddy-auto-signin，2026-09-21' },
+      repositoryProvenance('workbuddy-auto-signin'),
       { value: '0 第三方依赖', from: 'README 特性表：「零依赖 —— 纯 Python 标准库，不用 pip install」' },
       { value: '3 覆盖操作系统', from: 'README 前置条件与特性表：自动探测 Windows / macOS / Linux 凭据文件' },
       { value: '双定时模式 · 零 token', from: 'README 模式对比表：模式 B 系统级静默，Token 消耗一栏为「零」' },
@@ -176,13 +177,13 @@ export const cases: CaseStudy[] = [
     ],
     results: [
       { value: '64', label: '专项 Playbook' },
-      { value: '291', label: 'GitHub Star' },
+      { value: repositoryStars('computer-repair-skill'), label: 'GitHub Star' },
       { value: '3', label: '覆盖操作系统' },
       { value: '0', label: '需装桌面端' },
     ],
     provenance: [
       { value: '64 专项 Playbook', from: '仓库树 skills/computer-repair-skill/references/playbook-*.md 计数（不含索引与 authoring）' },
-      { value: '291 Star / 31 Fork', from: 'GitHub API：GET /repos/88lin/computer-repair-skill，2026-09-21' },
+      repositoryProvenance('computer-repair-skill'),
       { value: '3 覆盖操作系统', from: 'README 声明的 Windows / macOS / Linux 三条排查路径' },
       { value: 'CI 结构校验', from: '仓库 GitHub Actions 工作流：路由表与 Playbook 结构校验' },
     ],
@@ -227,13 +228,13 @@ export const cases: CaseStudy[] = [
       },
     ],
     results: [
-      { value: '92', label: 'GitHub Star' },
-      { value: '23', label: 'Fork' },
+      { value: repositoryStars('lofi-radio-web'), label: 'GitHub Star' },
+      { value: repositoryForks('lofi-radio-web'), label: 'Fork' },
       { value: '21', label: '精选电台' },
       { value: '0', label: '注册步骤' },
     ],
     provenance: [
-      { value: '92 Star / 23 Fork', from: 'GitHub API：GET /repos/88lin/lofi-radio-web，2026-09-21' },
+      repositoryProvenance('lofi-radio-web'),
       { value: '21 精选电台', from: 'README 功能特性表：涵盖 Lofi / Chillhop / Jazz / Classical / Hip-Hop / Ambient' },
       { value: '5 个单键快捷键', from: 'README 快捷键表：Space / ← / → / M / T' },
       { value: '0 注册步骤', from: 'lofi.88lin.eu.org 无账号体系，打开即播' },
@@ -338,7 +339,7 @@ export const cases: CaseStudy[] = [
       { value: '1,524 测试用例', from: 'facetmark README Tests 徽章与 tests/ 目录，2026-09-21' },
       { value: '融合 -5.4pp', from: 'README「What Is Actually Measured」：配置 B 对配置 A 的 W1 查询集实测' },
       { value: '4 条索引 / RRF 融合', from: 'README「How It Works」：lex_tri / lex_seg / content / intent + context' },
-      { value: '0 Star / 1 Fork', from: 'GitHub API：GET /repos/88lin/facetmark，2026-09-21' },
+      repositoryProvenance('facetmark'),
     ],
     link: 'https://88lin.github.io/facetmark/',
     linkLabel: '项目主页',

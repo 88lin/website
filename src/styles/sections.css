@@ -585,6 +585,7 @@
   font-size: var(--t-label);
   line-height: 1.6;
   color: var(--fg-faint);
+  overflow-wrap: anywhere;
 }
 
 .case__year {

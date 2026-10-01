@@ -1,0 +1,572 @@
+{
+  "asOf": "2026-10-01",
+  "github": {
+    "stars": 6698,
+    "forks": 675,
+    "originals": 30,
+    "publicRepos": 117,
+    "forkedRepos": 87,
+    "followers": 191,
+    "following": 7,
+    "repositories": {
+      "301": {
+        "stars": 0,
+        "forks": 0
+      },
+      "88lin": {
+        "stars": 2,
+        "forks": 0
+      },
+      "88lin.github.io": {
+        "stars": 1,
+        "forks": 0
+      },
+      "agentrouter-auto-signin": {
+        "stars": 41,
+        "forks": 4
+      },
+      "ai-answer-assistant": {
+        "stars": 0,
+        "forks": 0
+      },
+      "ai-website-cloner-template": {
+        "stars": 1,
+        "forks": 0
+      },
+      "aiwechat-vercel": {
+        "stars": 0,
+        "forks": 0
+      },
+      "anti-distill": {
+        "stars": 0,
+        "forks": 0
+      },
+      "anything-analyzer": {
+        "stars": 1,
+        "forks": 0
+      },
+      "api-enhanced": {
+        "stars": 0,
+        "forks": 0
+      },
+      "atbclone": {
+        "stars": 0,
+        "forks": 0
+      },
+      "awesome-ai-research-writing": {
+        "stars": 0,
+        "forks": 0
+      },
+      "bilibili-rag": {
+        "stars": 0,
+        "forks": 0
+      },
+      "bokebox": {
+        "stars": 0,
+        "forks": 0
+      },
+      "boss-agent-cli": {
+        "stars": 2,
+        "forks": 0
+      },
+      "broadcastchannel": {
+        "stars": 0,
+        "forks": 0
+      },
+      "burner-x": {
+        "stars": 0,
+        "forks": 0
+      },
+      "cangjie-skill": {
+        "stars": 1,
+        "forks": 0
+      },
+      "canvasmind": {
+        "stars": 0,
+        "forks": 0
+      },
+      "chatlab": {
+        "stars": 0,
+        "forks": 0
+      },
+      "cikweb": {
+        "stars": 0,
+        "forks": 0
+      },
+      "claude-ally-health": {
+        "stars": 0,
+        "forks": 0
+      },
+      "cli-anything": {
+        "stars": 0,
+        "forks": 0
+      },
+      "codex-jailbreak-guide": {
+        "stars": 0,
+        "forks": 0
+      },
+      "computer-repair-skill": {
+        "stars": 338,
+        "forks": 35
+      },
+      "cookhero": {
+        "stars": 0,
+        "forks": 0
+      },
+      "crush-skills": {
+        "stars": 0,
+        "forks": 0
+      },
+      "decotv": {
+        "stars": 1,
+        "forks": 0
+      },
+      "deep-research": {
+        "stars": 0,
+        "forks": 0
+      },
+      "deeppoint-ai": {
+        "stars": 0,
+        "forks": 0
+      },
+      "devenv-chat-backup-skill": {
+        "stars": 0,
+        "forks": 0
+      },
+      "diataxis-docs-skill": {
+        "stars": 1,
+        "forks": 0
+      },
+      "divinesense": {
+        "stars": 0,
+        "forks": 0
+      },
+      "douyin-creator-tools": {
+        "stars": 0,
+        "forks": 0
+      },
+      "easel": {
+        "stars": 0,
+        "forks": 0
+      },
+      "ex-skill": {
+        "stars": 0,
+        "forks": 0
+      },
+      "exampass-assistant": {
+        "stars": 0,
+        "forks": 0
+      },
+      "facetmark": {
+        "stars": 0,
+        "forks": 1
+      },
+      "geo-book-skill": {
+        "stars": 1,
+        "forks": 0
+      },
+      "gift-ledger": {
+        "stars": 0,
+        "forks": 0
+      },
+      "glm-proxy-skill": {
+        "stars": 0,
+        "forks": 0
+      },
+      "gpt-image-studio": {
+        "stars": 54,
+        "forks": 8
+      },
+      "gpt-wordbook": {
+        "stars": 1,
+        "forks": 0
+      },
+      "gujumpgate": {
+        "stars": 0,
+        "forks": 0
+      },
+      "gzh-design-skill": {
+        "stars": 0,
+        "forks": 0
+      },
+      "heolume": {
+        "stars": 0,
+        "forks": 3
+      },
+      "home-location-endpoint": {
+        "stars": 0,
+        "forks": 0
+      },
+      "html-ppt-skill": {
+        "stars": 0,
+        "forks": 0
+      },
+      "hypit": {
+        "stars": 0,
+        "forks": 0
+      },
+      "immortal-skill": {
+        "stars": 0,
+        "forks": 0
+      },
+      "interview-guide": {
+        "stars": 3,
+        "forks": 0
+      },
+      "ios-location-spoofer-web": {
+        "stars": 0,
+        "forks": 0
+      },
+      "kail_location": {
+        "stars": 0,
+        "forks": 0
+      },
+      "khazix-skills": {
+        "stars": 1,
+        "forks": 0
+      },
+      "lessai": {
+        "stars": 0,
+        "forks": 0
+      },
+      "lineage-skill": {
+        "stars": 1,
+        "forks": 0
+      },
+      "lofi-radio-web": {
+        "stars": 92,
+        "forks": 23
+      },
+      "metapi": {
+        "stars": 1,
+        "forks": 0
+      },
+      "movecar": {
+        "stars": 0,
+        "forks": 1
+      },
+      "mtranserver": {
+        "stars": 0,
+        "forks": 0
+      },
+      "music-geshizhuanhuan": {
+        "stars": 0,
+        "forks": 0
+      },
+      "my-skills": {
+        "stars": 2,
+        "forks": 1
+      },
+      "mydesign-system": {
+        "stars": 0,
+        "forks": 0
+      },
+      "nihaisha-tcm": {
+        "stars": 3,
+        "forks": 0
+      },
+      "nihaixia": {
+        "stars": 1,
+        "forks": 1
+      },
+      "non-tech-guide": {
+        "stars": 0,
+        "forks": 0
+      },
+      "noomo-storytelling": {
+        "stars": 0,
+        "forks": 0
+      },
+      "nuwa-skill": {
+        "stars": 1,
+        "forks": 0
+      },
+      "open-medkit": {
+        "stars": 0,
+        "forks": 0
+      },
+      "opentalking": {
+        "stars": 0,
+        "forks": 0
+      },
+      "openvid": {
+        "stars": 0,
+        "forks": 0
+      },
+      "paperstudio": {
+        "stars": 0,
+        "forks": 0
+      },
+      "pdd-auto-reply": {
+        "stars": 0,
+        "forks": 0
+      },
+      "periodic-table-web": {
+        "stars": 0,
+        "forks": 0
+      },
+      "piclist": {
+        "stars": 0,
+        "forks": 0
+      },
+      "picx": {
+        "stars": 0,
+        "forks": 0
+      },
+      "picx-images-hosting": {
+        "stars": 0,
+        "forks": 0
+      },
+      "qr-skill": {
+        "stars": 0,
+        "forks": 0
+      },
+      "quartz": {
+        "stars": 0,
+        "forks": 0
+      },
+      "qzonearchive": {
+        "stars": 0,
+        "forks": 0
+      },
+      "rag": {
+        "stars": 0,
+        "forks": 0
+      },
+      "react-ai-orb": {
+        "stars": 7,
+        "forks": 1
+      },
+      "rent-ops": {
+        "stars": 0,
+        "forks": 0
+      },
+      "roam-control": {
+        "stars": 0,
+        "forks": 0
+      },
+      "serverless-qrcode-hub": {
+        "stars": 0,
+        "forks": 0
+      },
+      "she-love-me": {
+        "stars": 1,
+        "forks": 0
+      },
+      "site-release": {
+        "stars": 0,
+        "forks": 0
+      },
+      "skid-homework": {
+        "stars": 0,
+        "forks": 0
+      },
+      "slidebot-ai": {
+        "stars": 0,
+        "forks": 0
+      },
+      "social-publisher": {
+        "stars": 0,
+        "forks": 0
+      },
+      "softwarecopyright-skill": {
+        "stars": 1,
+        "forks": 0
+      },
+      "storageui": {
+        "stars": 0,
+        "forks": 0
+      },
+      "swu-checkin": {
+        "stars": 0,
+        "forks": 0
+      },
+      "tampermonkey": {
+        "stars": 0,
+        "forks": 0
+      },
+      "teamai-cli": {
+        "stars": 0,
+        "forks": 0
+      },
+      "teardown-lab": {
+        "stars": 0,
+        "forks": 0
+      },
+      "telegramautosignbot": {
+        "stars": 0,
+        "forks": 0
+      },
+      "textcard-studio": {
+        "stars": 0,
+        "forks": 0
+      },
+      "textmark": {
+        "stars": 0,
+        "forks": 0
+      },
+      "tg-signer": {
+        "stars": 0,
+        "forks": 0
+      },
+      "tiktok-agent-skills": {
+        "stars": 0,
+        "forks": 0
+      },
+      "transfer-api": {
+        "stars": 1,
+        "forks": 1
+      },
+      "trendradar": {
+        "stars": 0,
+        "forks": 0
+      },
+      "video_vip": {
+        "stars": 5312,
+        "forks": 522
+      },
+      "vtuber-chisa-lin": {
+        "stars": 0,
+        "forks": 0
+      },
+      "website": {
+        "stars": 0,
+        "forks": 1
+      },
+      "wesum-wechat-monitor": {
+        "stars": 2,
+        "forks": 7
+      },
+      "wloc": {
+        "stars": 0,
+        "forks": 0
+      },
+      "workbuddy-auto-signin": {
+        "stars": 898,
+        "forks": 80
+      },
+      "working-with-ai": {
+        "stars": 0,
+        "forks": 0
+      },
+      "xhs-claude-skills": {
+        "stars": 0,
+        "forks": 0
+      },
+      "xianyu-auto-reply": {
+        "stars": 0,
+        "forks": 0
+      },
+      "xianyu-super-butler": {
+        "stars": 0,
+        "forks": 0
+      },
+      "xiaohongshuskills": {
+        "stars": 0,
+        "forks": 0
+      },
+      "yinyuan-skills": {
+        "stars": 0,
+        "forks": 0
+      },
+      "zheng-qinan-skill": {
+        "stars": 1,
+        "forks": 0
+      },
+      "zperiod": {
+        "stars": 0,
+        "forks": 0
+      }
+    }
+  },
+  "blog": {
+    "posts": 56,
+    "tagTotal": 27,
+    "tags": [
+      {
+        "name": "工具",
+        "count": 27
+      },
+      {
+        "name": "教程",
+        "count": 23
+      },
+      {
+        "name": "热门",
+        "count": 11
+      },
+      {
+        "name": "软件资源",
+        "count": 11
+      },
+      {
+        "name": "必看",
+        "count": 9
+      },
+      {
+        "name": "AI工具",
+        "count": 8
+      },
+      {
+        "name": "生活",
+        "count": 8
+      },
+      {
+        "name": "个人成长",
+        "count": 7
+      },
+      {
+        "name": "思考",
+        "count": 7
+      },
+      {
+        "name": "健康",
+        "count": 6
+      },
+      {
+        "name": "省钱攻略",
+        "count": 3
+      },
+      {
+        "name": "学术论文",
+        "count": 3
+      },
+      {
+        "name": "学习工具",
+        "count": 3
+      }
+    ],
+    "latest": [
+      {
+        "title": "全网VIP视频免费看教程：短剧电视剧白嫖指南",
+        "date": "2026-09-30",
+        "href": "https://blog.88lin.eu.org/article/46"
+      },
+      {
+        "title": "一篇关于亲密关系中信任与判断的深度笔记",
+        "date": "2026-09-29",
+        "href": "https://blog.88lin.eu.org/article/52"
+      },
+      {
+        "title": "面向新型创业者的短课 · Anything You Want",
+        "date": "2026-09-04",
+        "href": "https://blog.88lin.eu.org/article/34"
+      },
+      {
+        "title": "小白 AI 创业实战笔记",
+        "date": "2026-09-04",
+        "href": "https://blog.88lin.eu.org/article/chuangye"
+      },
+      {
+        "title": "Windows实用教程：常见问题解决与系统优化指南",
+        "date": "2026-09-02",
+        "href": "https://blog.88lin.eu.org/article/14"
+      },
+      {
+        "title": "李笑来作品集：6 本书浓缩成一份可执行的人生操作系统",
+        "date": "2026-08-15",
+        "href": "https://blog.88lin.eu.org/article/20"
+      }
+    ]
+  }
+}

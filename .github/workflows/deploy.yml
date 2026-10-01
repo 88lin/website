@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    # 每周二北京时间 08:23；避开整点高峰，GitHub 仍可能排队延迟。
+    - cron: '23 0 * * 2'
 
 permissions:
   contents: read
@@ -17,6 +20,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -24,8 +28,23 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      # build = 客户端构建 → SSR 构建 → 预渲染注入首屏 HTML
-      - run: npm run build
+      - run: npm run test:data
+      - name: Refresh GitHub and blog data
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run refresh:data
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install 'fonttools[woff]' brotli
+      - uses: actions/cache@v4
+        with:
+          path: .shots/fontsrc
+          key: font-sources-v1
+      - run: python scripts/prepare-fonts.py
+      - run: npx playwright install --with-deps chromium
+      # 同一工作流完成刷新和部署；不依赖机器人提交触发另一个工作流。
+      - run: node scripts/build-pages.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

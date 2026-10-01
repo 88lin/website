@@ -1,4 +1,4 @@
-/** 05 写作：左边标签量表，右边最近六篇（每篇带永久链接）。 */
+/** 05 写作：左边标签量表，右边最近更新（每篇带永久链接）。 */
 
 import { Section } from '../components/Section'
 import { Count } from '../components/Count'
@@ -53,10 +53,10 @@ export function Notes() {
         </div>
 
         <div className="notes__right">
-          {/* 「最近六篇」与博客入口同一行左右分列。上一版入口是列表下面一枚孤零零的胶囊，
+          {/* 「最近更新」与博客入口同一行左右分列。上一版入口是列表下面一枚孤零零的胶囊，
               四周全是空白，读起来像掉在那儿的。 */}
           <p className="notes__hd">
-            <span className="notes__label">最近六篇</span>
+            <span className="notes__label">最近更新</span>
             <a href={writing.href} target="_blank" rel="noreferrer">
               {writing.hrefLabel} ↗
             </a>

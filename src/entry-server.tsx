@@ -13,7 +13,7 @@ export const HOME_DESC =
     .map((s) => s.title)
     .join('、')}等 ${services.length} 类活。` +
   `GitHub ${metric('repos').value} 个原创仓库、累计 ${metric('stars').value} star、${projects.length} 个在线项目，` +
-  `每个数字都写了接口出处，核实于 ${AS_OF}。`
+  `GitHub / 博客数据更新于 ${AS_OF}。`
 
 /* 各条案例子页的 title / description，同样现算（条数随 cases 走，不写死）。 */
 export const CASE_META = Object.fromEntries(

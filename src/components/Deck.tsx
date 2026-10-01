@@ -68,6 +68,12 @@ export function Deck() {
     else if (d > THRESHOLD) go(-1)
   }
 
+  // 系统接管触摸（如纵向滚动）或丢失指针时，只复位，不把中断当成翻页。
+  const onCancel = () => {
+    setDragging(false)
+    setDrag(0)
+  }
+
   useEffect(() => {
     const el = host.current
     if (!el) return
@@ -102,7 +108,11 @@ export function Deck() {
         onPointerDown={onDown}
         onPointerMove={onMove}
         onPointerUp={onUp}
-        onPointerCancel={onUp}
+        onPointerCancel={onCancel}
+        onLostPointerCapture={(e) => {
+          // 触摸从子元素的隐式捕获转给卡组时，也会冒泡 lostpointercapture。
+          if (e.target === e.currentTarget) onCancel()
+        }}
       >
         {deckItems.map((p, i) => {
           const slot = (i - index + n) % n

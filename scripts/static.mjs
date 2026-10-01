@@ -1,7 +1,7 @@
 /* 生成 robots / sitemap / 404 / OG 图。 */
 
 import { chromium } from 'playwright'
-import { readFile, writeFile } from 'node:fs/promises'
+import { readFile, writeFile, copyFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
@@ -28,13 +28,8 @@ if (!routesLine) {
 }
 const ROUTES = [...routesLine[1].matchAll(/'([^']+)'/g)].map((m) => m[1])
 
-const siteSrc = await readFile(path.join(ROOT, 'src/content/site.ts'), 'utf8')
-const asOf = siteSrc.match(/AS_OF\s*=\s*'(\d{4})\.(\d{2})\.(\d{2})'/)
-if (!asOf) {
-  console.error('static: 没在 src/content/site.ts 里找到 AS_OF')
-  process.exit(1)
-}
-const lastmod = `${asOf[1]}-${asOf[2]}-${asOf[3]}`
+const activity = JSON.parse(await readFile(path.join(ROOT, 'src/content/generated/activity.json'), 'utf8'))
+const lastmod = activity.asOf
 
 /*
   图标的破缓存版本号也从 index.html 现读。
@@ -169,6 +164,11 @@ await page.evaluate(
 await page.waitForTimeout(400)
 await page.locator('#og').screenshot({ path: path.join(PUB, 'og.png') })
 await browser.close()
+
+// static 在 build 之后运行；同步到部署目录，避免部署旧 OG 图与 sitemap。
+for (const file of ['robots.txt', 'sitemap.xml', '404.html', 'og.png']) {
+  await copyFile(path.join(PUB, file), path.join(DIST, file))
+}
 
 const { size } = await import('node:fs').then((fs) => fs.promises.stat(path.join(PUB, 'og.png')))
 console.log(`static: og.png ${(size / 1024).toFixed(1)} KB（取景自 dist/index.html）`)

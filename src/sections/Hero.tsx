@@ -97,7 +97,7 @@ export function Hero() {
       </div>
 
       <p className="kicker" style={{ marginTop: '18px' }} data-stagger>
-        全部数字核实于 {AS_OF} · 每个都写了接口出处
+        GitHub / 博客更新于 {AS_OF} · 每个都写了接口出处
       </p>
     </section>
   )

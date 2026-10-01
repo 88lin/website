@@ -46,7 +46,7 @@
   --gutter: clamp(20px, 4vw, 56px);
   --wrap: 1280px;
   --s-section: clamp(80px, 11vh, 150px);
-  /* 吸顶栏实高，给 scroll-padding-top 用。窄屏多一条 40px 的章节条，见下面。 */
+  /* 单行吸顶栏实高，桌面与移动端的锚点共用。 */
   --nav-h: 65px;
 
   /* 展示字很粗，同样的视觉重量下字号可以比细体小一档。 */
@@ -424,16 +424,10 @@ button {
   outline-offset: 3px;
 }
 
-/* 窄屏让位顺序：先撤章节锚点，再撤 GitHub。下单入口任何宽度都留着。
-   撤掉的章节锚点由下面那条 .nav-chips 接手，不是真的没有了。 */
+/* 窄屏保持单行：先撤章节锚点，再撤 GitHub。下单入口任何宽度都留着。 */
 @media (max-width: 860px) {
   .nav-links a:not(.gh):not(.nav-cta) {
     display: none;
-  }
-
-  /* 顶栏从一行变两行，锚点落位的补偿值跟着走 */
-  :root {
-    --nav-h: 106px;
   }
 }
 
@@ -444,79 +438,6 @@ button {
 
   .nav-in {
     gap: 14px;
-  }
-}
-
-/* ---- 窄屏章节条 ---- */
-
-/*
-  ≤860px 顶栏那排锚点整体让位给下单入口（见上面那条规则），手机上就没有任何
-  章节入口了 —— 而手机整页 21 屏，比桌面的 12 屏更需要它。这条第二行补上。
-
-  横滑而不是换行：换行会让吸顶高度随章数变，锚点落位的补偿值就成了活的。
-  现在高度是定的，--nav-h 跟着它走。
-*/
-.nav-chips {
-  display: none;
-}
-
-@media (max-width: 860px) {
-  .nav-chips {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    gap: 2px;
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    scrollbar-width: none;
-    padding-inline: var(--gutter);
-    border-top: 1px solid var(--rule-soft);
-    background: inherit;
-  }
-
-  .nav-chips::-webkit-scrollbar {
-    display: none;
-  }
-
-  .nav-chips a {
-    display: flex;
-    flex: none;
-    align-items: center;
-    gap: 6px;
-    /* 40px 高：命中区闸门要 ≥24，这里给足；也是顶栏第二行的高度来源 */
-    height: 40px;
-    padding-inline: 12px;
-    /* 药丸。站内可点的东西一律胶囊（.btn / .chans a / 章名 kicker 都是），
-       方角那一版是我漏给的，一排方块钉在顶栏上和全站语言对不上。 */
-    border-radius: var(--r-pill);
-    font-size: var(--t-small);
-    color: var(--fg-dim);
-    white-space: nowrap;
-    transition:
-      color 0.16s var(--ease),
-      background-color 0.16s var(--ease);
-  }
-
-  /* 编号用等宽小字，和章序轨、章头那套编号是同一门语言 */
-  .nav-chips b {
-    font-family: var(--font-mono);
-    font-size: var(--t-mini);
-    font-weight: 400;
-    letter-spacing: 0.06em;
-    color: var(--fg-faint);
-    transition: color 0.16s var(--ease);
-  }
-
-  /* 当前章：淡蓝实底药丸。不用顶栏那条黄下划线 —— 下划线画在药丸里会贴着
-     圆角挤成一道，而柔彩卡那套语言本来就是「淡底 + 同色系字」。 */
-  .nav-chips a[data-on] {
-    background: #ebf4ff;
-    color: var(--fg);
-    font-weight: 600;
-  }
-
-  .nav-chips a[data-on] b {
-    color: var(--brand);
   }
 }
 
