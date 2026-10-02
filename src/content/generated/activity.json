@@ -1,8 +1,8 @@
 {
-  "asOf": "2026-10-01",
+  "asOf": "2026-10-03",
   "github": {
-    "stars": 6698,
-    "forks": 675,
+    "stars": 6756,
+    "forks": 673,
     "originals": 30,
     "publicRepos": 117,
     "forkedRepos": 87,
@@ -22,7 +22,7 @@
         "forks": 0
       },
       "agentrouter-auto-signin": {
-        "stars": 41,
+        "stars": 42,
         "forks": 4
       },
       "ai-answer-assistant": {
@@ -106,8 +106,8 @@
         "forks": 0
       },
       "computer-repair-skill": {
-        "stars": 338,
-        "forks": 35
+        "stars": 339,
+        "forks": 34
       },
       "cookhero": {
         "stars": 0,
@@ -235,7 +235,7 @@
       },
       "lofi-radio-web": {
         "stars": 92,
-        "forks": 23
+        "forks": 22
       },
       "metapi": {
         "stars": 1,
@@ -422,8 +422,8 @@
         "forks": 0
       },
       "video_vip": {
-        "stars": 5312,
-        "forks": 522
+        "stars": 5319,
+        "forks": 518
       },
       "vtuber-chisa-lin": {
         "stars": 0,
@@ -442,8 +442,8 @@
         "forks": 0
       },
       "workbuddy-auto-signin": {
-        "stars": 898,
-        "forks": 80
+        "stars": 947,
+        "forks": 84
       },
       "working-with-ai": {
         "stars": 0,
