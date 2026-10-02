@@ -142,7 +142,11 @@ OG 图**从真页面取景**：打开 `dist/index.html`，把真实的大标题�
 
 ## 数据刷新流程
 
-参考 [88lin/home 的 Actions](https://github.com/88lin/home/blob/main/.github/workflows/update-github-stats.yml)，本项目把刷新直接接进 Pages 工作流。每周二北京时间 **08:23**、推送 `main` 或手动运行时，先拉取数据，再构建并部署。定时任务可能排队延迟；只会在默认分支运行。长期没有仓库活动时，GitHub 可能停用定时任务，可在 Actions 重新启用。
+数据刷新由独立工作流 `.github/workflows/refresh-data.yml` 负责：每周二北京时间 **08:23**（或手动运行）拉取数据，重建一次产物让含快照日期的生成文件同步，然后把变化**提交回 main**。
+
+之所以要提交回来：正式站点由 Cloudflare Pages 从仓库构建，它只认仓库里已提交的 `src/content/generated/activity.json`。刷新结果若只留在 Actions 的工作区，就只进 GitHub Pages 的产物，到不了正式站点。
+
+`.github/workflows/deploy.yml`（GitHub Pages，预览用）每周二 **08:45** 运行，刻意晚于刷新任务，等新快照落地后再构建；推送 `main` 或手动运行时也会跑。定时任务可能排队延迟；只会在默认分支运行。长期没有仓库活动时，GitHub 可能停用定时任务，可在 Actions 重新启用。
 
 - **GitHub**：自动分页读取全部公开仓库，累计 Star / Fork 只计算 `fork=false`；同时更新原创仓库数、fork 仓库数、关注者、following，以及每个展示项目的 Star / Fork。首页、叠卡、作品轨、案例正文、数字出处和分享描述共用同一快照。`home` 包含 fork 仓库的口径不直接套用。
 - **博客**：从首页公开的 `__NEXT_DATA__` 读取文章数、标签总数、前 13 个标签计数及最近更新的 6 篇文章，保留永久链接。列表按博客的最近编辑顺序展示，日期使用 `lastEditedDay`，页面标为「最近更新」。
@@ -150,7 +154,9 @@ OG 图**从真页面取景**：打开 `dist/index.html`，把真实的大标题�
 - **内容证据**：解析源、Playbook、测试用例等功能数字仍需人工核验出处；自动刷新日期只对应 GitHub / 博客数据。
 - **字体与分享图**：新文章可能增加中文用字，Actions 缓存 OFL 源字体、重新子集化，再生成当前读数的 OG 图与 sitemap，并复制到 `dist/`。
 
-Actions 使用自带的 `GITHUB_TOKEN`，只需现有 `contents: read`、`pages: write`、`id-token: write` 权限，无需额外 PAT。刷新和部署在同一工作流，不创建机器人提交，也不依赖提交触发另一轮部署。仓库中的 JSON 是可离线构建的基线快照；最新在线数据在每次部署的产物中。
+Actions 使用自带的 `GITHUB_TOKEN`，无需额外 PAT。刷新工作流需要 `contents: write`（用于提交快照），部署工作流仍是 `contents: read`、`pages: write`、`id-token: write`。
+
+一点已实测的行为：用 `GITHUB_TOKEN` 做的 push **不会触发 GitHub Actions**（官方防循环设计）——数据刷新的机器人提交之后，部署工作流不会自动再跑。正式站点由 Cloudflare Pages 的 Git 集成收到该 push 后重建；GitHub Pages 靠自己的定时任务与推送更新。仓库中的 JSON 既是可离线构建的基线，也是正式站点的唯一数据来源。
 
 本地刷新（可通过环境变量 `GITHUB_TOKEN` 或 `GH_TOKEN` 提高 GitHub API 限额，令牌只发给 GitHub）：
 
@@ -194,6 +200,10 @@ npm run verify
 
 ## 部署
 
-只维护 `main` 一个分支。`.github/workflows/deploy.yml` 在推送、每周二定时与手动运行时执行数据刷新、完整构建及 GitHub Pages 部署。仓库 Settings → Pages 的 Source 应为 GitHub Actions。
+只维护 `main` 一个分支。
+
+- **正式站点**：Cloudflare Pages 从仓库构建（构建命令 `npm run build`，输出目录 `dist`，需设 `NODE_VERSION=22`），推送 `main` 即重新部署。
+- **预览**：`.github/workflows/deploy.yml` 在推送、每周二 08:45 定时与手动运行时执行完整构建并部署到 GitHub Pages。仓库 Settings → Pages 的 Source 应为 GitHub Actions。
+- **数据**：`.github/workflows/refresh-data.yml` 每周二 08:23 刷新快照并提交回 `main`。
 
 CI 跑采集单元测试与产物数据验收；完整交互 / 设计验收仍在本地用 `npm run verify` 运行。
