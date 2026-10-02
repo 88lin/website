@@ -78,7 +78,7 @@ git diff --check
 1. 将 `dev` 的 DNS 指向实际托管方。如果继续使用本仓库的 GitHub Pages，将 `dev` CNAME 指向 `88lin.github.io`，在仓库 Settings → Pages 设置自定义域名 `dev.88lin.eu.org`，证书就绪后启用 HTTPS。Actions 部署中的 `public/CNAME` 不能代替控制台设置。
 2. 部署完整 `dist/`。核验首页、6 个案例、`/robots.txt`、`/sitemap.xml` 均能通过 HTTPS 获取；不存在路径应返回 HTTP 404。检查 CDN/WAF 没有强制登录、验证码或额外的 `X-Robots-Tag: noindex`。本地通过不能证明大陆不同网络的可达性。
 3. 核验原 `https://88lin.github.io/website/` 及每个旧案例地址是否逐页跳到新地址；不要把全部旧案例都跳到首页。迁移行为由托管配置决定，本轮没有修改远端设置。
-4. 在各平台验证网站所有权，按当前账号可用能力提交 `https://dev.88lin.eu.org/sitemap.xml` 或首页/案例 URL：[百度搜索资源平台](https://ziyuan.baidu.com/)、[Bing Webmaster Tools](https://www.bing.com/webmasters/)、[搜狗站长平台](https://zhanzhang.sogou.com/)、[360 站长平台](https://zhanzhang.so.com/)。入口、提交方式及账号资格以各后台当前界面为准。本轮没有这些平台的验证材料，没有提交或伪造验证代码。
+4. 在各平台验证网站所有权，按当前账号可用能力提交 `https://dev.88lin.eu.org/sitemap.xml` 或首页/案例 URL：[百度搜索资源平台](https://ziyuan.baidu.com/)、[Bing Webmaster Tools](https://www.bing.com/webmasters/)、[搜狗站长平台](https://zhanzhang.sogou.com/)、[360 站长平台](https://zhanzhang.so.com/)。入口、提交方式及账号资格以各后台当前界面为准。Bing 与 Google 的所有权验证标记已写入 `index.html` 的 `<head>`（`msvalidate.01`、`google-site-verification`），随外壳预渲染进全部七条路由；百度、搜狗、360 的验证方式以后台实际要求为准，需要时同样加在这里。
 5. 如 Bing 后台开放 IndexNow，可在实际部署后按官方流程配置所有权密钥并提交更新 URL。本轮没有生成一个无法验证的占位密钥，也没有向站内注入提交脚本。
 6. 在你控制的 GitHub 简介、博客、导航和公众号资料中逐步统一「茉灵智库（88lin）」与正式官网链接。本轮只修改当前网站仓库，没有代发外部内容。
 

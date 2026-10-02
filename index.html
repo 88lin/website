@@ -29,6 +29,11 @@
       })()
     </script>
     <meta name="site-seo-placeholder" />
+    <!-- 站长平台所有权验证。这两条不进 seo.ts：它们不是从内容源现算的元数据，
+         而是站点级的固定令牌，放在外壳里即可 —— 预渲染会把整段 head 复制到每条路由，
+         dev 模式下原始 HTML 也带着，客户端切换路由时不会被 PageMetadata 摘掉。 -->
+    <meta name="msvalidate.01" content="8E8B99B786171A5D199F348D0ACB6387" />
+    <meta name="google-site-verification" content="8giVYWnLlMFeEyR1jB4K2d9BZb5TGbsXvKPrIorHbNI" />
     <!-- 与 body 的地面色一致（#fdfcf8）。差半档会让移动端的地址栏底色和页面接不上。 -->
     <meta name="theme-color" content="#FDFCF8" />
     <!-- 图标：奶油圆角方 + 竖黄条 + 三条递增的圆头横条。
