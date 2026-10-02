@@ -3,14 +3,15 @@
 import { useEffect } from 'react'
 import { Router, useRouter, type RoutePath } from './router'
 import { Home } from './pages/Home'
-import { CasePage } from './pages/CasePage'
+import { CasePage, MissingPage } from './pages/CasePage'
+import { PageMetadata } from './components/PageMetadata'
 import { bootPointer, bootScroll } from './lib/motion'
 
 function Page() {
   const { path } = useRouter()
   const m = path.match(/^\/case\/([a-z0-9-]+)\/?$/)
-  if (m) return <CasePage slug={m[1]} />
-  return <Home />
+  if (m) return <CasePage key={m[1]} slug={m[1]} />
+  return path === '/' ? <Home /> : <MissingPage />
 }
 
 function Shell() {
@@ -21,18 +22,19 @@ function Shell() {
     document.documentElement.dataset.booted = '1'
     document.documentElement.classList.add('js')
     const offPointer = bootPointer()
-    let offScroll: (() => void) | undefined
-    bootScroll().then((fn) => {
-      offScroll = fn
+    const scrollAbort = new AbortController()
+    bootScroll(scrollAbort.signal).catch((error) => {
+      if (!scrollAbort.signal.aborted) console.warn('平滑滚动加载失败，保留浏览器原生滚动。', error)
     })
     return () => {
       offPointer()
-      offScroll?.()
+      scrollAbort.abort()
     }
   }, [])
 
   return (
     <>
+      <PageMetadata />
       <a className="skip" href="#main">
         跳到正文
       </a>

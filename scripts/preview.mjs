@@ -1,9 +1,9 @@
 /*
-  本地预览：npm run serve（要先 npm run build）
+  本地预览：npm run preview / npm run serve（要先 npm run build）
 
-  用 lib/serve.mjs 而不是 vite preview —— 它把产物挂在 /website/ 子路径下并开
+  用 lib/serve.mjs 而不是 vite preview —— 它默认把产物挂在正式域名对应的根路径下并开
   gzip，跟 GitHub Pages 的行为一致，所以看到的是真正要发出去的那份东西。
-  子路径这件事踩过坑（base 写死绝对路径会 404），预览时就该按线上形态看。
+  base 保持相对路径，SEO 回归另验 /website/ 子路径兼容。
 
   监听 0.0.0.0，同时打印局域网地址：视觉问题基本都得在真机上看，
   模拟器的字体渲染和触摸手感都不作数。

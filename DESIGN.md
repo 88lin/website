@@ -334,9 +334,15 @@ React 不必重排，动画也不会因为重挂载而断。所有卡都在同�
 `og:description` 停在旧 star 数、子页描述停在旧数字、sitemap 少了一整条子页、
 404 页的图标 `?v=` 停在旧版本号、CTA 文案在两个文件里各手抄一遍。
 
-现在全部现算：`entry-server.tsx` 导出 `HOME_DESC` 与 `CASE_META`，
-预渲染只做替换、不存散文；sitemap 从 `ROUTES` 与 `AS_OF` 现算；
+现在由 `src/content/seo.ts` 统一生成元数据，`entry-server.tsx` 导出
+`seoTags`、`SITE_URL` 与 `llmsText`，预渲染和客户端共用；
+sitemap 由 `prerender.mjs` 根据 `ROUTES` 与正式网址生成，不把统计快照日期当作 `lastmod`；
 OG 图从构建产物取景；404 页的 `?v=` 从 `index.html` 现读。
+
+案例的 `seoDescription` 是 `cases.ts` 中专供搜索与分享的短摘要，和完整的
+`summary` 相邻维护。它只概括正文中的功能与取舍，不写随快照变化的 Star、Fork、
+仓库数等读数；修改相关正文时必须一起复核。meta、OG、TechArticle 共用这一个字段，
+不在标签或构建脚本中再抄副本。长度与产物一致性检查不能代替正文语义复核。
 
 `npm run verify` 的 A 段负责证明它真的算对了、且旧值一个都没剩 ——
 跑出来还抓到过一处：我自己写的 `<head>` 注释里还引着旧数字。

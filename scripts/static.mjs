@@ -1,6 +1,7 @@
-/* 生成 robots / sitemap / 404 / OG 图。 */
+/* 生成 404 / OG 图；robots、sitemap、llms、CNAME 由 prerender 生成。 */
 
 import { chromium } from 'playwright'
+import siteUrl from '../src/content/site-url.json' with { type: 'json' }
 import { readFile, writeFile, copyFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -8,7 +9,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 const ROOT = fileURLToPath(new URL('../', import.meta.url))
 const PUB = path.join(ROOT, 'public')
 const DIST = path.join(ROOT, 'dist')
-const SITE = 'https://88lin.github.io/website/'
+const SITE = siteUrl.url
 
 /* A 组语义色，与 src/styles/palettes.css 一致 */
 const PAPER = '#fdfcf8'
@@ -17,25 +18,11 @@ const BRAND = '#2b7fd8'
 const HIGHLIGHT = '#f4d758'
 const DIM = '#4a4a5a'
 
-/* ---------------------------------------------------------------- 路由与日期 */
-
-/* 路由表与核实日期都从源码里取，不在这里重抄一份。 */
-const routerSrc = await readFile(path.join(ROOT, 'src/router.tsx'), 'utf8')
-const routesLine = routerSrc.match(/export const ROUTES[^=]*=\s*\[([^\]]+)\]/)
-if (!routesLine) {
-  console.error('static: 没在 src/router.tsx 里找到 ROUTES')
-  process.exit(1)
-}
-const ROUTES = [...routesLine[1].matchAll(/'([^']+)'/g)].map((m) => m[1])
-
-const activity = JSON.parse(await readFile(path.join(ROOT, 'src/content/generated/activity.json'), 'utf8'))
-const lastmod = activity.asOf
-
 /*
   图标的破缓存版本号也从 index.html 现读。
   这里原来硬写着 `?v=10`，而 index.html 换图标时已经涨到 `?v=14` ——
   于是 404 页引的是一份浏览器眼里「另一个」图标，白付一次请求。
-  和 sitemap 的 lastmod 一样：能算出来的就别抄。
+  版本号已有明确来源，不再维护第二份副本。
 */
 const shellHtml = await readFile(path.join(ROOT, 'index.html'), 'utf8')
 const iconV = (shellHtml.match(/favicon\.ico\?v=(\d+)/) || [])[1]
@@ -43,22 +30,6 @@ if (!iconV) {
   console.error('static: 没在 index.html 里找到 favicon.ico?v= 版本号')
   process.exit(1)
 }
-
-/* ---------------------------------------------------------------- robots / sitemap */
-
-await writeFile(path.join(PUB, 'robots.txt'), `User-agent: *\nAllow: /\n\nSitemap: ${SITE}sitemap.xml\n`)
-
-const urls = ROUTES.map((r) => {
-  const loc = SITE + r.replace(/^\//, '')
-  const priority = r === '/' ? '1.0' : '0.8'
-  return `  <url><loc>${loc}</loc><lastmod>${lastmod}</lastmod><changefreq>monthly</changefreq><priority>${priority}</priority></url>`
-}).join('\n')
-
-await writeFile(
-  path.join(PUB, 'sitemap.xml'),
-  `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`,
-)
-console.log(`static: sitemap ${ROUTES.length} 条路由，lastmod ${lastmod}；404 图标 ?v=${iconV}`)
 
 /* ---------------------------------------------------------------- 404 */
 
@@ -72,7 +43,8 @@ await writeFile(
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light">
 <title>页面不存在 · 茉灵智库</title>
-<link rel="icon" href="./favicon.svg?v=${iconV}" type="image/svg+xml">
+<meta name="robots" content="noindex, follow">
+<link rel="icon" href="${SITE}favicon.svg?v=${iconV}" type="image/svg+xml">
 <style>
   html{background:${PAPER};color:${INK};-webkit-text-size-adjust:100%}
   body{margin:0;min-height:100svh;display:flex;align-items:center;
@@ -97,8 +69,8 @@ await writeFile(
   <p class="k">404 · NOT FOUND</p>
   <h1>这个地址下<mark>没有东西</mark>。</h1>
   <p>可能是链接过期了，也可能是我改过结构。首页有全部案例与作品的入口。</p>
-  <a href="./">回首页 <span aria-hidden="true">→</span></a>
-  <p class="m">88lin.github.io/website</p>
+  <a href="${SITE}">回首页 <span aria-hidden="true">→</span></a>
+  <p class="m">${new URL(SITE).hostname}</p>
 </div></body>
 </html>
 `,
@@ -166,11 +138,11 @@ await page.locator('#og').screenshot({ path: path.join(PUB, 'og.png') })
 await browser.close()
 
 // static 在 build 之后运行；同步到部署目录，避免部署旧 OG 图与 sitemap。
-for (const file of ['robots.txt', 'sitemap.xml', '404.html', 'og.png']) {
+for (const file of ['404.html', 'og.png']) {
   await copyFile(path.join(PUB, file), path.join(DIST, file))
 }
 
 const { size } = await import('node:fs').then((fs) => fs.promises.stat(path.join(PUB, 'og.png')))
 console.log(`static: og.png ${(size / 1024).toFixed(1)} KB（取景自 dist/index.html）`)
-console.log('static: robots.txt / sitemap.xml / 404.html / og.png 已写入')
+console.log('static: 404.html / og.png 已写入；发现文件由 prerender 生成')
 console.log('static: 图标全套由 scripts/mkicon.py 负责，这里不动')

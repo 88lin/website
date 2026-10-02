@@ -10,7 +10,7 @@
  * （叠卡不能翻、横推轨滚不动、墨影落在饱和面上）全都「看起来是对的」。
  * 截图能看出丑，看不出不能用。
  *
- * 服务器用 scripts/lib/serve.mjs：它把产物挂在 /website/ 子路径下并开 gzip，
+ * 服务器用 scripts/lib/serve.mjs：它把产物挂在正式域名对应的根路径下并开 gzip，
  * 和 GitHub Pages 的行为一致，所以验的是真正要发出去的那份东西。
  */
 
@@ -21,10 +21,11 @@ import { gzipSync } from 'node:zlib'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { serveDist } from './lib/serve.mjs'
+import siteUrl from '../src/content/site-url.json' with { type: 'json' }
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url))
 const DIST = path.join(ROOT, 'dist')
-const PORT = 5187
+const PORT = 0
 
 /** JS / CSS 的 gzip 预算。超了就红 —— 字体与脚本一失控，LCP 跟着走。 */
 const BUDGET_JS_KB = 320
@@ -147,9 +148,9 @@ const routes = [...routerSrc.match(/export const ROUTES[^=]*=\s*\[([^\]]+)\]/)[1
   (m) => m[1],
 )
 const sitemap = await readFile(path.join(DIST, 'sitemap.xml'), 'utf8')
-const missing = routes.filter((r) => !sitemap.includes(r === '/' ? 'website/</loc>' : `website${r}</loc>`))
+const missing = routes.filter((r) => !sitemap.includes(`${siteUrl.url}${r.replace(/^\//, '')}</loc>`))
 ok(missing.length === 0, `sitemap 覆盖 ${routes.length} 条路由${missing.length ? ' 缺 ' + missing : ''}`)
-ok(sitemap.includes(asOf.replace(/\./g, '-')), `sitemap lastmod = ${asOf.replace(/\./g, '-')}`)
+ok(!sitemap.includes('<lastmod>'), 'sitemap 不用统计快照或构建日期冒充正文修改日期')
 for (const r of routes) {
   const f = r === '/' ? 'index.html' : r.replace(/^\/|\/$/g, '') + '/index.html'
   ok(
@@ -427,10 +428,10 @@ try {
   }
 
   /* ---- 数字出处可展开 ---- */
-  await p.$eval('.prov summary', (e) => e.scrollIntoView({ block: 'center', behavior: 'instant' }))
-  await p.click('.prov summary')
+  await p.$eval('#cases .prov summary', (e) => e.scrollIntoView({ block: 'center', behavior: 'instant' }))
+  await p.click('#cases .prov summary')
   await p.waitForTimeout(250)
-  ok((await p.$$eval('.prov[open] .prow', (e) => e.length)) > 0, '数字出处 · 点开能看到逐条出处')
+  ok((await p.$$eval('#cases .prov[open] .prow', (e) => e.length)) > 0, '数字出处 · 点开能看到逐条出处')
 
   /* ---- 章头开幕：像真人那样一路滚下去，六章都要被点着 ---- */
   /* 不能靠 scrollIntoView 逐章跳：把一个 2000px 高的章「居中」时，它的章头 早就跑到视口上方去了，IntersectionObserver 当然不开火 —— 这是测法的问题， 不是代码的问题。 */

@@ -1,7 +1,7 @@
 /* 01 服务：六件可以直接开工的活，两栏分栏清单 + 三步流程带。 */
 
 import { Section } from '../components/Section'
-import { services, servicesFlow, servicesIntro, CONTACT_HREF, CTA_LABEL } from '../content/site'
+import { services, servicesFlow, servicesIntro, cooperationQuestions, CONTACT_HREF, CTA_LABEL } from '../content/site'
 import { useStagger } from '../lib/motion'
 
 export function Services() {
@@ -17,7 +17,7 @@ export function Services() {
 
         <div className="svc">
           {services.map((s) => (
-            <article className="svc__item" data-t={s.tint} key={s.id} data-stagger>
+            <article id={`service-${s.id}`} className="svc__item" data-t={s.tint} key={s.id} data-stagger>
               <b className="svc__no" aria-hidden="true">
                 {s.no}
               </b>
@@ -44,7 +44,7 @@ export function Services() {
         </div>
 
         <div className="flow" data-stagger>
-          <p className="flow__h">怎么开始</p>
+          <h3 className="flow__h">怎么开始</h3>
           <ol className="flow__ol">
             {servicesFlow.map((f) => (
               <li key={f.no}>
@@ -59,6 +59,15 @@ export function Services() {
             <i aria-hidden="true">→</i>
           </a>
         </div>
+        <section className="cooperation" aria-labelledby="cooperation-title">
+          <h3 id="cooperation-title">合作前先看</h3>
+          {cooperationQuestions.map((item) => (
+            <details className="prov" key={item.question}>
+              <summary><i aria-hidden="true" />{item.question}</summary>
+              <p className="prov__body">{item.answer}</p>
+            </details>
+          ))}
+        </section>
       </div>
     </Section>
   )

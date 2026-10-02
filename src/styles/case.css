@@ -21,6 +21,17 @@
   color: var(--brand-deep);
 }
 
+.cpage__miss h1 {
+  font-size: 1.5rem;
+  margin-bottom: 16px;
+}
+
+.cpage__back {
+  font-size: var(--t-small);
+  color: var(--fg-faint);
+  overflow-wrap: anywhere;
+}
+
 .cpage__back a {
   font-family: var(--font-mono);
   font-size: var(--t-small);
@@ -83,10 +94,22 @@
   line-height: 1.26;
 }
 
-.cpage__spec {
+.cpage__spec,
+.cpage__byline {
   margin-top: 16px;
   font-size: var(--t-small);
   color: var(--fg-faint);
+}
+
+.cpage__summary {
+  max-width: 46em;
+  margin-top: 20px;
+  color: var(--fg-dim);
+}
+
+.cpage__byline a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .cpage__stats {
@@ -108,6 +131,7 @@
 }
 
 .step__k {
+  font-weight: 400;
   display: flex;
   align-items: baseline;
   gap: 10px;

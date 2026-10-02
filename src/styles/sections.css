@@ -247,6 +247,12 @@
   color: var(--fg-dim);
 }
 
+.svc__item[id] { scroll-margin-top: 100px; }
+.cooperation { margin-top: 32px; max-width: 52em; }
+.cooperation > h3 { font-size: var(--t-small); }
+.cooperation summary { min-height: 44px; color: var(--fg-dim); font-size: var(--t-small); }
+.cooperation .prov__body { font-size: var(--t-small); color: var(--fg-dim); }
+
 .svc-note b {
   font-family: var(--font-display);
   font-size: 1.125rem;

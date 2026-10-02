@@ -1,0 +1,37 @@
+# 茉灵智库（88lin）
+
+> 茉灵智库（88lin）是独立开发者，提供 AI Agent 开发、工作流自动化、网站定制与 GitHub 项目二次开发。下面六项服务写清交付物，开源案例提供源码与数字出处，方便你判断是否适合合作。
+
+本站是独立开发者的个人官网与开源作品集。案例用于说明工程方法，不代表商业客户背书。
+GitHub / 博客数字快照：2026.10.01；这不是全部内容的修改日期。
+
+## 服务
+
+- [GitHub 项目跑通与二次开发](https://dev.88lin.eu.org/#service-repo): 能跑起来的环境、一份从零开始的复现步骤、改动说明。适合：手上有 repo 但装不起来，或者需要在别人的代码上继续改的人。
+- [开源贡献协助（Issue / PR）](https://dev.88lin.eu.org/#service-oss): 一次被合并的贡献、Contributor 身份、一段能写进简历的说明。适合：想丰富简历、补一段真实开源经历的同学与开发者。
+- [把一本书蒸馏成 AI Skill](https://dev.88lin.eu.org/#service-skill): 可导入的 Skill 目录、使用教程、一条自己会报错的校验流水线。适合：想把知识变成随时能调用的能力，而不是又一个收藏夹的人。
+- [Agent 工作流与自动化](https://dev.88lin.eu.org/#service-agent): 能跑的工作流、部署方式、出错时该看哪里。适合：已经在用 AI，但一直停在「问答」这一步的团队和个人。
+- [网站开发与创意前端](https://dev.88lin.eu.org/#service-front): 可维护的代码、一套自己能改下去的设计令牌与文档、性能预算达标。适合：已经有内容、但页面撑不起内容的项目。
+- [程序定制与疑难杂症](https://dev.88lin.eu.org/#service-fix): 能用的东西、源码、以及怎么自己继续改。适合：需求不大没人愿意接，或者已经被别人做砸了的活。
+
+## 案例与实现过程
+
+- [video_vip：全网 VIP 视频解析脚本](https://dev.88lin.eu.org/case/video-vip/): 在会员视频页上挂一枚按钮，换一个能播的播放器。
+- [workbuddy-auto-signin：WorkBuddy 签到自动化](https://dev.88lin.eu.org/case/workbuddy/): 把每天那几下点击，交给一个不花 token 的本地脚本。
+- [Computer Repair Skill：跨平台电脑维修 Agent](https://dev.88lin.eu.org/case/repair/): 先取证，再判断；先计划，再修改。
+- [Lofi Radio Web：专注场景的网页电台](https://dev.88lin.eu.org/case/lofi/): 打开网页就出声，不用注册，也不用下载。
+- [geo-book-skill：一本书蒸馏成的 Agent Skill](https://dev.88lin.eu.org/case/geo-book/): 书读完就忘，能力卡能被 Agent 当场调用。
+- [facetmark：本地书签检索引擎](https://dev.88lin.eu.org/case/facetmark/): 四条索引逐维实测，赢的留、输的关。
+
+## 合作
+
+1. 说清楚你要解决什么：贴仓库地址、截图、报错日志都行，不需要先整理成需求文档。
+2. 我回一份可执行的判断：能不能做、打算怎么做、大概多久。做不了会直接说做不了。这一步不收费。
+3. 确认范围与报价，开工：范围写在明面上，交付前你先验，不满意的地方当场改。
+
+- [联系茉灵智库](https://dev.88lin.eu.org/#contact): 邮箱 431761794@qq.com，页面提供微信二维码。
+
+## Optional
+
+- [博客](https://blog.88lin.eu.org/): 工具、教程与实践记录。
+- [GitHub](https://github.com/88lin): 原始仓库与可核验证据。

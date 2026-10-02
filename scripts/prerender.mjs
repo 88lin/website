@@ -9,15 +9,17 @@ const ROOT = fileURLToPath(new URL('../', import.meta.url))
 const DIST = path.join(ROOT, 'dist')
 const shell = await readFile(path.join(DIST, 'index.html'), 'utf8')
 const ssrEntry = path.join(ROOT, 'dist-ssr/entry-server.js')
-const { render, ROUTES, HOME_DESC, CASE_META } = await import(pathToFileURL(ssrEntry).href)
+const { render, ROUTES, seoTags, SITE_URL, llmsText } = await import(pathToFileURL(ssrEntry).href)
 
-const SITE = 'https://88lin.github.io/website/'
 const MARKER = '<div id="root"></div>'
-
-/* 每条路由的 title / description 全部来自 entry-server（那里从 site.ts 与 cases.ts 现算）。 */
-const META = { '/': { title: null, desc: HOME_DESC }, ...CASE_META }
-
-const swap = (html, re, next) => (re.test(html) ? html.replace(re, next) : html)
+const SEO_MARKER = '<meta name="site-seo-placeholder" />'
+const escapeHtml = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+const headFor = (route) => seoTags(route).map(({ tag, attrs, text }) => {
+  const attributes = Object.entries(attrs || {}).map(([k, v]) => ` ${k}="${escapeHtml(v)}"`).join('')
+  const start = `<${tag}${attributes} data-site-seo=""`
+  return tag === 'meta' || tag === 'link' ? `${start} />` : `${start}>${tag === 'script' ? text : escapeHtml(text || '')}</${tag}>`
+}).join('\n    ')
+if (!shell.includes(SEO_MARKER)) throw new Error('prerender: missing SEO placeholder')
 
 if (!shell.includes(MARKER)) {
   console.error('prerender: 没找到空的 #root 挂载点')
@@ -32,29 +34,9 @@ for (const route of ROUTES) {
   const up = '../'.repeat(route.split('/').filter(Boolean).length)
   let html = up ? shell.replace(/(href|src|content)="\.\/(?!\/)/g, `$1="${up}`) : shell
 
-  const meta = META[route]
-  if (meta) {
-    const d = meta.desc.replace(/&/g, '&amp;').replace(/"/g, '&quot;')
-    html = swap(html, /<meta\s+name="description"[\s\S]*?\/>/, `<meta name="description" content="${d}" />`)
-    html = swap(
-      html,
-      /<meta\s+property="og:description"[\s\S]*?\/>/,
-      `<meta property="og:description" content="${d}" />`,
-    )
-    // 首页沿用 index.html 里那套 title / canonical，只有子页要换
-    if (meta.title) {
-      const t = meta.title.replace(/&/g, '&amp;')
-      html = swap(html, /<title>[\s\S]*?<\/title>/, `<title>${t}</title>`)
-      html = swap(html, /<meta\s+property="og:title"[\s\S]*?\/>/, `<meta property="og:title" content="${t}" />`)
-      html = swap(
-        html,
-        /<link rel="canonical"[^>]*>/,
-        `<link rel="canonical" href="${SITE}${route.replace(/^\//, '')}" />`,
-      )
-    }
-  }
+  html = html.replace(SEO_MARKER, () => headFor(route))
 
-  html = html.replace(MARKER, `<div id="root">${render(route)}</div>`)
+  html = html.replace(MARKER, `<div id="root" data-route="${route}">${render(route)}</div>`)
 
   const outDir = route === '/' ? DIST : path.join(DIST, route.replace(/^\/|\/$/g, ''))
   await mkdir(outDir, { recursive: true })
@@ -62,6 +44,21 @@ for (const route of ROUTES) {
   await writeFile(outFile, html)
   total += Buffer.byteLength(html)
   console.log(`prerender: ${route.padEnd(18)} → ${(Buffer.byteLength(html) / 1024).toFixed(1)} kB`)
+}
+
+// 每次普通 build 都生成发现文件，避免只跑 build 时发布过期的域名或路由。
+const pub = path.join(ROOT, 'public')
+// 没有逐页的实质内容修改日期时省略 lastmod，不能用统计快照日或构建日代替。
+const urls = ROUTES.map((route) => `  <url><loc>${SITE_URL}${route.replace(/^\//, '')}</loc></url>`).join('\n')
+const files = {
+  'robots.txt': `User-agent: *\nAllow: /\n\nSitemap: ${SITE_URL}sitemap.xml\n`,
+  'sitemap.xml': `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`,
+  'llms.txt': llmsText(),
+  CNAME: new URL(SITE_URL).hostname + '\n',
+}
+for (const [name, text] of Object.entries(files)) {
+  await writeFile(path.join(pub, name), text)
+  await writeFile(path.join(DIST, name), text)
 }
 
 try {

@@ -16,7 +16,7 @@
 - 英文：Turning frontier AI into shipped, maintainable engineering.
 
 **主用途是获客接单**（用户 2026-09-20 的原话：「主要还是可以接单什么之类的，
-获客接单」）。这不是加一个联系方式那么简单，它改了章序：01 就是「我能接什么活」，
+获客接单」）。这不是加一个联系方式那么简单，它改了章序：01 就是「开发与自动化服务」，
 案例与作品降级成证据。作品集仍然是作品集，但它现在为成交服务。
 
 ## 访客是谁
@@ -91,7 +91,7 @@
 
 ## 技术约束
 
-- 静态托管 GitHub Pages（88lin.github.io/website/ 子路径），Node ≥ 20
+- 静态托管 GitHub Pages，正式域名 dev.88lin.eu.org（兼容 /website/ 子路径预览），Node ≥ 22
 - React + Vite + 预渲染（build:client → build:ssr → prerender）
 - 移动端可降级但不可空白；prefers-reduced-motion 全量尊重（退化为静态，不是变慢）
 - 性能预算：JS ≤ 320KB gz、CSS ≤ 24KB gz、字体 ≤ 200KB、LCP < 2.5s、CLS < 0.1

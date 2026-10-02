@@ -2,7 +2,9 @@
 
 一份可核验的接单档案。七章 00–06：先说能接什么活，再用六个深度案例与十个线上仓库兑现。页面上每个数字都写了接口出处，折起来的「数字出处」随时能展开自查。页面本身就是最重要的那件作品。
 
-线上：https://88lin.github.io/website/
+正式网址：https://dev.88lin.eu.org/
+
+SEO / GEO 维护、标题对照与上线提交说明：[docs/seo-geo.md](docs/seo-geo.md)。域名与站长平台设置仍需按文档核验。
 设计规矩与踩坑记录：[DESIGN.md](./DESIGN.md) ｜ 产品事实基线：[PRODUCT.md](./PRODUCT.md)
 
 ---
@@ -13,6 +15,7 @@
 npm install
 npm run dev              # Vite dev server
 npm run build            # client → ssr → prerender，产物在 dist/
+npm run verify:seo       # SEO 产物、无 JS 内容与路由元数据
 npm run verify           # 验收闸门：事实 / 交互 / 结构 / 设计纪律
 npm run shots            # 取景器，出图到 .shots/（人眼过一遍用）
 ```
@@ -26,7 +29,7 @@ Node ≥ 22。`npm run verify` 与 `npm run shots` 都要先 `npm run build`：�
 ```
 src/
   main.tsx            浏览器入口
-  entry-server.tsx    SSR 入口。导出 ROUTES / HOME_DESC / CASE_META
+  entry-server.tsx    SSR 入口。导出 ROUTES / seoTags / llmsText
                       —— head 里的文案由它现算，不在别处存副本
   router.tsx          手写路由（/ 与 /case/:slug/），约 90 行，不引路由库
   App.tsx             外壳：接平滑滚动与指针，分发页面
@@ -54,7 +57,7 @@ scripts/              见下
 public/
   fonts/              3 个子集化 woff2 + OFL 许可证
   wechat-qr.png       微信二维码（npm run qr 从名片截图制版）
-  og.png favicon 全套（同 repair 站那枚）site.webmanifest robots.txt sitemap.xml 404.html
+  og.png favicon 全套（同 repair 站那枚）site.webmanifest robots.txt sitemap.xml llms.txt CNAME 404.html
 ```
 
 ---
@@ -66,15 +69,17 @@ public/
 1. `build:client` — Vite 打包，`gsap / lenis / react` 各自成 chunk。
 2. `build:ssr` — 编出 `dist-ssr/entry-server.js`。
 3. `scripts/prerender.mjs` — 遍历 SSR 导出的 `ROUTES`，逐条：
-   - 把外壳 HTML 里的 `./` 按路由深度改写成 `../`（GitHub Pages 子路径部署）；
+   - 把外壳 HTML 里的 `./` 按路由深度改写成 `../`（同时兼容根域名与子路径部署）；
    - 注入服务端渲染的标记；
-   - 用 `HOME_DESC` / `CASE_META`（都从 `site.ts`、`cases.ts` 现算）写入这条路由**自己的** `<title>` / description / og / canonical；
+   - 用 `seoTags`（由 `content/seo.ts` 从 `site.ts`、`cases.ts` 现算）写入这条路由**自己的** title / description / OG / canonical / JSON-LD，并生成 robots、sitemap、llms.txt 和 CNAME；
    - 输出 `dist/index.html` 与 `dist/case/<slug>/index.html`；
    - 删掉 `dist-ssr/`。
 
 预渲染只改写外壳的 `<head>`，**正文标记保持字节一致**，否则注水会失配。
 
-`<head>` 里的描述**不写数字**。带数字的那版由预渲染现算后换进去 —— 手写一份副本就一定会过期，而分享卡片和页面对不上比没有描述更糟。这条有闸门看着。
+`index.html` 只保留 SEO 占位符。标题、描述和结构化数据由预渲染统一生成；客户端导航也使用同一来源更新 head。描述里的数字来自当前快照，不手写副本。
+
+`npm run preview` 与 `npm run serve` 共用静态预览服务器（默认端口 4178，可用 `PORT` 环境变量修改），错误地址返回独立 404 页。本站资源采用相对路径，不要在托管配置里直接把所有未知路径回退到原始首页 HTML；深层路径会导致脚本和样式地址失效。
 
 ---
 
@@ -84,11 +89,14 @@ public/
 |---|---|
 | `npm run refresh:data` | 读取 GitHub API / 博客公开数据，校验完整性后替换 JSON 快照 |
 | `npm run test:data` | 数据采集测试：分页、统计口径、失败保护、日期与令牌隔离 |
+| `npm run test:server` | 预览服务器测试：路径边界、畸形 URL、重定向参数、HEAD 与压缩协商 |
+| `npm run verify:runtime` | 开发模式 StrictMode 的滚动实例清理与动态依赖失败回退 |
 | `node scripts/build-pages.mjs` | 构建 → 字体采集与子集化 → 重建 → OG / sitemap → 数据验收 |
 | `npm run verify` | 验收闸门，见下。要先 build |
 | `npm run shots` | 取景器：按屏切片截图到 `.shots/`。`--mobile` / `--route=case/lofi/` |
 | `npm run fonts` | 字体流水线：采真实用字 → 定轴 → 子集化 → 零缺字校验，硬预算 200 KB。**改完文案必跑** |
-| `npm run static` | robots / sitemap / 404 / OG 图。sitemap 从 `ROUTES` 与 `AS_OF` 现算 |
+| `npm run static` | 404 / OG 图。robots、sitemap、llms.txt、CNAME 已由每次 build 的 prerender 生成 |
+| `npm run verify:seo` | 7 页元数据与 JSON-LD、发现文件、无 JS 问答和导航、前进后退、移动端与子路径回归 |
 | `npm run icons` | favicon 全套（svg / ico / png / apple-touch / maskable / webmanifest）。只依赖 PIL；图形取自 repair.88lin.eu.org，见 `mkicon.py` 文件头 |
 | `npm run qr` | 微信二维码制版：裁切 → 二值化 → 重染墨色，并自证「零模块改变」 |
 
@@ -103,7 +111,7 @@ OG 图**从真页面取景**：打开 `dist/index.html`，把真实的大标题�
 ⚠️ **加了文案就必须重跑 `npm run fonts`。** 展示字是按站内实际用字子集化的，
 新字不在子集里就会逐字回落到系统字 —— 页面上的表现是「同一个标题里有些字很粗、
 有些很细」。实测漏过 39 个字（含 `Skill` 的 S/k/i/l/l 与 `GitHub` 的 H/u/b）。
-跑法：`npm run build` → 起一个 preview → `node scripts/fonts.mjs --base=http://127.0.0.1:5199`。
+跑法：`npm run build` → `npm run preview` → 另开终端运行 `npm run fonts`（默认连接 4178 端口）。若设置了 `PORT`，用 `node scripts/fonts.mjs --base=http://127.0.0.1:实际端口` 指定。
 
 ---
 
@@ -111,7 +119,7 @@ OG 图**从真页面取景**：打开 `dist/index.html`，把真实的大标题�
 
 `npm run verify` 分四段断言，任何一条红就非零退出。
 
-**A 事实一致性** — 产物总数、项目卡片、案例数字出处、日期与 `generated/activity.json` 一致；`description` 与 `og:description` 必须现算且彼此一致；部署目录的 sitemap 覆盖全部路由且 `lastmod = AS_OF`；每条路由都有预渲染产物。动态数字不再用历史值黑名单判断（Star 可能合法回落）。`node scripts/verify.mjs --data-only` 只跑这一段，供 Actions 使用。
+**A 事实一致性** — 产物总数、项目卡片、案例数字出处、日期与 `generated/activity.json` 一致；`description` 与 `og:description` 必须现算且彼此一致；部署目录的 sitemap 覆盖全部路由且不冒用统计快照或构建日期作为 `lastmod`；每条路由都有预渲染产物。动态数字不再用历史值黑名单判断（Star 可能合法回落）。`node scripts/verify.mjs --data-only` 只跑这一段，供 Actions 使用。
 
 **B 交互与结构** — 看起来能操作的东西必须真的能操作，四种输入逐个验：
 - 叠卡：箭头 / 圆点 / 方向键 / 拖拽都能翻到下一张；最前那张的链接点得中（不被拖拽面吃掉）；5–6 张且每张 star ≥ `DECK_MIN_STARS`

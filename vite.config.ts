@@ -1,9 +1,8 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// base: './' 是必须的——站点部署在 88lin.github.io/website/ 子路径下，
-// 绝对路径会 404。CSS 里的 url('/fonts/...') 由 Vite 改写成相对路径，
-// 这条已在线上验证过。
+// 相对 base 同时兼容 dev.88lin.eu.org 根路径和 /website/ 子路径预览。
+// CSS 的字体 URL 也由 Vite 改写，深层案例可直接打开。
 export default defineConfig({
   base: './',
   plugins: [react()],

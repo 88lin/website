@@ -1,7 +1,7 @@
 /** 案例子页 `/case/:slug/`：三段全文 + 关键取舍 + 数字出处。 */
 
 import { caseBySlug, cases } from '../content/cases'
-import { CONTACT_HREF, CTA_LABEL, AS_OF, footer, profile } from '../content/site'
+import { CONTACT_HREF, CTA_LABEL, AS_OF, footer, profile, profileLabel } from '../content/site'
 import { Panel, Row } from '../components/Section'
 import { Link } from '../router'
 import { useStagger } from '../lib/motion'
@@ -33,22 +33,25 @@ const TINT_CLASS: Record<string, 'blue' | 'yellow' | 'coral'> = {
 
 const STAT_TINTS = ['blue', 'yellow', 'coral', 'plain'] as const
 
+export function MissingPage() {
+  return (
+    <>
+      <CaseNav />
+      <main className="wrap cpage" id="main">
+        <div className="cpage__miss">
+          <h1>页面不存在</h1>
+          <p>这个地址没有对应的页面。回<Link to="/">首页</Link>看全部案例。</p>
+        </div>
+      </main>
+    </>
+  )
+}
+
 export function CasePage({ slug }: { slug: string }) {
   const c = caseBySlug(slug)
   const ref = useStagger<HTMLElement>(60)
 
-  if (!c) {
-    return (
-      <>
-        <CaseNav />
-        <main className="wrap cpage" id="main">
-          <p className="cpage__miss">
-            没有这个案例。回<Link to="/">首页</Link>看全部案例。
-          </p>
-        </main>
-      </>
-    )
-  }
+  if (!c) return <MissingPage />
 
   const tint = TINT_CLASS[c.tint] ?? 'blue'
 
@@ -57,9 +60,11 @@ export function CasePage({ slug }: { slug: string }) {
       <CaseNav />
       <main className="cpage" id="main" ref={ref}>
       <div className="wrap">
-        <p className="cpage__back">
-          <Link to="/">← 回首页</Link>
-        </p>
+        <nav className="cpage__back" aria-label="面包屑">
+          <Link to="/">← 茉灵智库首页</Link>
+          <span aria-hidden="true"> / </span>
+          <span aria-current="page">{c.name}</span>
+        </nav>
 
         <header className="cpage__hd" data-t={tint}>
           <p className="cpage__meta">
@@ -72,6 +77,10 @@ export function CasePage({ slug }: { slug: string }) {
           </h1>
           <p className="cpage__spec" data-stagger>
             {c.year} · {c.role} · {c.stackLine}
+          </p>
+          <p className="cpage__summary" data-stagger>{c.summary}</p>
+          <p className="cpage__byline" data-stagger>
+            作者：{profileLabel} · <a href={c.repo} target="_blank" rel="noreferrer">查看 {c.name} 源码 ↗</a>
           </p>
         </header>
 
@@ -87,10 +96,10 @@ export function CasePage({ slug }: { slug: string }) {
         <div className="cpage__flow" data-t={tint}>
           {c.sections.map((s, i) => (
             <section className="step" key={s.label} data-stagger>
-              <p className="step__k">
-                <b>{String(i + 1).padStart(2, '0')}</b>
+              <h2 className="step__k">
+                <b aria-hidden="true">{String(i + 1).padStart(2, '0')}</b>
                 <span>{s.label}</span>
-              </p>
+              </h2>
               <p className="step__b">{s.body}</p>
             </section>
           ))}

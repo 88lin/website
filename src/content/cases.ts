@@ -19,8 +19,14 @@ export type CaseStudy = {
   year: string
   role: string
   stackLine: string
-  /** 首页卡片用的短摘要 */
+  /** 首页案例行与子页可见介绍，保留完整叙述 */
   summary: string
+  /**
+   * 搜索与分享用短摘要，概括正文事实；与可见介绍分开维护。
+   * 不要写入随快照变化的数字（如 Star、Fork、仓库数），避免形成过期副本。
+   * 修改项目功能或技术取舍时，须与 summary / sections 一起复核。
+   */
+  seoDescription: string
   sections: CaseSection[]
   /** 子页专属：关键取舍，写清楚放弃了什么 */
   tradeoffs: { title: string; body: string }[]
@@ -32,7 +38,7 @@ export type CaseStudy = {
 }
 
 export const casesIntro = {
-  headline: '凭什么信我',
+  headline: '开源项目与工程案例',
   body: '六个项目，各写清楚一件事：背景、卡在哪、最后怎么解。数字都是仓库里能查到的，出处折在每一行下面，想核就点开。',
 }
 
@@ -49,6 +55,7 @@ export const cases: CaseStudy[] = [
     stackLine: 'JavaScript · 油猴脚本 · v3.2.6',
     summary:
       `2023 年写的用户脚本，现在 ${repositoryStars('video_vip')} star，是我维护时间最长的一个。它做的事很朴素：在视频站的播放页左上角挂一枚可拖动的悬浮按钮，点开选一路解析源，把当前播放地址交给它，换回一个能播的播放器容器，并按站点各自的规则清掉会员遮罩与弹层。`,
+    seoDescription: '油猴脚本为视频播放页提供可拖动入口，手动切换第三方解析源，按站点适配播放器与遮罩。案例说明兼容性、用户支持，以及画质和广告不可控的取舍。',
     sections: [
       {
         label: '背景',
@@ -101,6 +108,7 @@ export const cases: CaseStudy[] = [
     stackLine: 'Python 标准库 · 零依赖 · 单文件 · MIT',
     summary:
       `腾讯的 AI 工作台 WorkBuddy 每天有一串要手点的入口：签到、领旅行礼物、派 Buddy 出门、领任务、领任务奖、连登兑换、开盲盒。每一下都只要一秒，但它们散在不同页面，漏一天就断签。这个脚本把它们全接管了：纯 Python 标准库、单文件、零依赖，只读你本机已有的登录态，仓库里一个密钥都没有。${repositoryStars('workbuddy-auto-signin')} star。`,
+    seoDescription: '用纯 Python 标准库完成 WorkBuddy 签到与奖励领取，读取本机登录态并在执行前检查状态；对比 AI 自动化与系统定时的成本和可靠性。',
     sections: [
       {
         label: '背景',
@@ -151,6 +159,7 @@ export const cases: CaseStudy[] = [
     stackLine: 'Agent Skill · Python · Markdown · AGPL-3.0',
     summary:
       '一个能装进 Codex / Claude Code / OpenClaw 的跨平台电脑维修 Skill。C 盘爆满、卡顿、流氓软件、弹窗广告、网络问题这些直接用自然语言说，Agent 按平台与风险挑一条 Playbook 走。64 个 Playbook 按需加载，覆盖 Windows / macOS / Linux。标题那句是它写在 README 第一行的规矩。',
+    seoDescription: '把电脑故障描述交给跨平台维修 Agent，按平台与风险选择 Playbook。案例说明如何先取证、制定计划，再修改系统，并按需加载排查流程。',
     sections: [
       {
         label: '背景',
@@ -203,6 +212,7 @@ export const cases: CaseStudy[] = [
     stackLine: 'Next.js 16 · TypeScript · PWA · MIT',
     summary:
       'Lofi 低保真音乐常被用来做专注时的背景音。这个站把它做成打开即听：21 个精选电台，macOS 灵动岛式播放器可以拖到屏幕任意位置，五个单键快捷键，专注计时只在播放时累计，睡眠定时从 15 分钟到 8 小时。没有账号，没有推荐流。',
+    seoDescription: '为专注场景制作无需注册的网页电台，提供可拖动播放器、键盘操作和本地计时。案例介绍外部音源故障回退，以及简洁体验与功能扩展之间的取舍。',
     sections: [
       {
         label: '背景',
@@ -255,6 +265,7 @@ export const cases: CaseStudy[] = [
     stackLine: 'Agent Skill · Python · 多宿主适配 · MIT',
     summary:
       '把《从 SEO 到 GEO》整本书压成 13 张 Agent 能直接执行的能力卡：每张写清什么时候触发、怎么算做完、什么时候该停下来反问。配 19 个随包模板与一条一致性校验流水线，装进 Claude Code / Codex / Cursor 都能用。这是「帮你蒸馏一本书」那项服务的样板。',
+    seoDescription: '将《从 SEO 到 GEO》蒸馏为 Agent 可执行的能力卡，明确触发条件、执行步骤和停止边界。案例说明来源标注、按需模板与多种开发工具的安装适配。',
     sections: [
       {
         label: '背景',
@@ -305,6 +316,7 @@ export const cases: CaseStudy[] = [
     stackLine: 'Python · SQLite FTS5 · RRF · Local-first',
     summary:
       '书签搜索只匹配标题，但你记得的是「为什么存」。我给每条书签建四条索引（字面、内容、意图、上下文），用 RRF 融合，然后逐维跑对照实验：融合组输给了最简配置 5.4 个百分点，于是输掉的维度默认关闭，负面结果写进 README。',
+    seoDescription: '为本地书签建立多路索引并用 RRF 融合，通过对照实验选择默认配置。案例公开融合效果下降的结果与取舍，保留只读浏览器书签库和本地存储。',
     sections: [
       {
         label: '背景',

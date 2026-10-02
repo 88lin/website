@@ -29,6 +29,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run test:data
+      - run: npm run test:server
       - name: Refresh GitHub and blog data
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -45,6 +46,8 @@ jobs:
       - run: npx playwright install --with-deps chromium
       # 同一工作流完成刷新和部署；不依赖机器人提交触发另一个工作流。
       - run: node scripts/build-pages.mjs
+      - run: npm run verify:seo
+      - run: npm run verify:runtime
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

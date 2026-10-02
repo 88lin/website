@@ -36,6 +36,15 @@ export const profile = {
   githubSince: '2022-08-13',
 }
 
+export const profileLabel = `${profile.name}（${profile.handle}）`
+
+/**
+ * 标题里的品牌写法：两个名号并列，不做主次。
+ * 正文用 profileLabel（茉灵智库（88lin）），标题单独用这个——
+ * 并列的「·」让 88lin 看起来是同等的名号，而不是括号里的注解。
+ */
+export const profileTitleLabel = `${profile.name} · ${profile.handle}`
+
 export const hero = {
   line1: '把前沿 AI 变成',
   line2Pre: '可',
@@ -43,7 +52,7 @@ export const hero = {
   line2Mid: '、可',
   line2Circle: '维护',
   line3: '的工程结果。',
-  sub: '独立开发者，长期写开源、也长期接单。跑不起来的仓库、做不完的重复劳动、撑不起内容的页面，都可以直接发我。下面六件活写清了交付物，页面上每个数字都写了出处，可以自己去核。',
+  sub: `${profileLabel}是独立开发者，提供 AI Agent 开发、工作流自动化、网站定制与 GitHub 项目二次开发。下面六项服务写清交付物，开源案例提供源码与数字出处，方便你判断是否适合合作。`,
   latin: '88LIN · WORK THAT SHIPPED',
   primaryCta: '说说你的需求',
   secondaryCta: '看能接什么活',
@@ -139,7 +148,7 @@ export type Service = {
 }
 
 export const servicesIntro = {
-  headline: '我能接什么活',
+  headline: '开发与自动化服务',
   body: '六件可以直接开工的事。每件都写了具体能做什么、交付什么、适合谁 —— 你对着找自己那一条就行。',
   priceLabel: '按需求报价',
   priceNote: '先聊清楚再开工。说明问题、判断可行性这一段不收费，做不了会直接说做不了。',
@@ -205,6 +214,22 @@ export const services: Service[] = [
     deliver: '能用的东西、源码、以及怎么自己继续改',
     fit: '需求不大没人愿意接，或者已经被别人做砸了的活',
     tint: 'rose',
+  },
+]
+
+/** 合作前的常见问题，答案只描述当前实际流程。 */
+export const cooperationQuestions = [
+  {
+    question: 'GitHub 项目跑不起来，联系前要准备什么？',
+    answer: '先发仓库地址、报错日志或截图，并说明你想实现的功能。不需要先写完整需求文档；我会先判断能否处理、怎么处理和大概多久。',
+  },
+  {
+    question: '开发和自动化服务怎么报价？',
+    answer: '按需求报价。说明问题与判断可行性不收费，能做再确认范围与报价；交付前先验收，不满意的地方按确认的范围修改。',
+  },
+  {
+    question: '这些案例能证明哪些能力？',
+    answer: '这些是我的开源项目与工程实践，用于展示实现方法、技术取舍和维护经验。可以查看源码与数字出处自行核验；它们不代表商业客户评价，也不保证其他项目有相同结果。',
   },
 ]
 
@@ -504,6 +529,15 @@ export const writing = {
 
 /* ---------------------------------------------------------------- 联系 */
 
+export type ContactChannel = {
+  id: string
+  label: string
+  value: string
+  href: string
+  /** 是否代表作者的身份页；群聊邀请等联系入口不是 sameAs。 */
+  isProfile: boolean
+}
+
 export const contact = {
   headline: '有想做的东西？',
   body: '把你要解决的问题说清楚就行 —— 贴仓库地址、截图、报错日志都可以。我会回一份可执行的判断：能不能做、怎么做、大概多久，做不了会直接说。这一步不收费。',
@@ -515,13 +549,13 @@ export const contact = {
     src: './wechat-qr.png',
   },
   channels: [
-    { id: 'github', label: 'GitHub', value: '@88lin', href: 'https://github.com/88lin' },
-    { id: 'qq', label: 'QQ 群', value: '进群聊', href: 'https://qm.qq.com/q/Q46OjlCcY8' },
-    { id: 'wechat-mp', label: '公众号', value: '茉灵智库', href: 'https://go.88lin.eu.org/gzh' },
-    { id: 'blog', label: '博客', value: 'blog.88lin.eu.org', href: 'https://blog.88lin.eu.org' },
-    { id: 'bilibili', label: '哔哩哔哩', value: 'Hathaway', href: 'https://space.bilibili.com/1412014683' },
-    { id: 'hub', label: '导航站', value: 'go.88lin.eu.org', href: hub.href },
-  ],
+    { id: 'github', label: 'GitHub', value: '@88lin', href: 'https://github.com/88lin', isProfile: true },
+    { id: 'qq', label: 'QQ 群', value: '进群聊', href: 'https://qm.qq.com/q/Q46OjlCcY8', isProfile: false },
+    { id: 'wechat-mp', label: '公众号', value: '茉灵智库', href: 'https://go.88lin.eu.org/gzh', isProfile: true },
+    { id: 'blog', label: '博客', value: 'blog.88lin.eu.org', href: 'https://blog.88lin.eu.org', isProfile: true },
+    { id: 'bilibili', label: '哔哩哔哩', value: 'Hathaway', href: 'https://space.bilibili.com/1412014683', isProfile: true },
+    { id: 'hub', label: '导航站', value: 'go.88lin.eu.org', href: hub.href, isProfile: true },
+  ] satisfies ContactChannel[],
 }
 
 export const footer = {

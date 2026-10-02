@@ -16,7 +16,7 @@ const arg = (n, d) => {
   const hit = process.argv.find((a) => a.startsWith(`--${n}=`))
   return hit ? hit.slice(n.length + 3) : d
 }
-const BASE = arg('base', 'http://localhost:5199')
+const BASE = arg('base', 'http://127.0.0.1:4178')
 
 /**
  * 路由表从 src/router.tsx 里现读，不在这儿抄第二份。
@@ -105,6 +105,16 @@ async function collect() {
     const got = await page.evaluate(COLLECT)
     for (const k of Object.keys(bag)) bag[k] += got[k]
   }
+
+  // 缺失态不在可索引路由表里，但客户端 fallback 仍会展示它；单独采字，
+  // 避免「页面不存在 / 首页」等字只在错误页回落到系统字体。
+  await page.evaluate((url) => {
+    history.pushState(null, '', url)
+    window.dispatchEvent(new PopStateEvent('popstate'))
+  }, BASE.replace(/\/$/, '') + '/missing/')
+  await page.locator('.cpage__miss h1').waitFor()
+  const missing = await page.evaluate(COLLECT)
+  for (const k of Object.keys(bag)) bag[k] += missing[k]
 
   await browser.close()
   for (const k of Object.keys(bag)) bag[k] = uniq(bag[k])
