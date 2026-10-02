@@ -25,9 +25,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # 用 GITHUB_TOKEN 做的 push 不会再触发 GitHub Actions（官方的防循环设计），
-          # Cloudflare 是否重建取决于它的 Git 集成是否接收该 push。
-          # 若要确保两边都被这次提交触发，把 PAT 存成仓库 secret：DATA_REFRESH_TOKEN。
+          # 用 GITHUB_TOKEN 做的 push 不会触发 GitHub Actions（官方防循环设计，已实测：
+          # 机器人提交后 Deploy 工作流确实没有再跑）。但 Cloudflare Pages 的 Git 集成
+          # 收得到这次 push，会自动重建 —— 正式站点因此拿到新数字。
+          # GitHub Pages 那边不需要靠它：Deploy 工作流自己有每周定时，会刷新一遍再部署。
+          # 所以这里不必配 PAT；若将来确实需要机器人提交也触发 Actions，再存 DATA_REFRESH_TOKEN。
           token: ${{ secrets.DATA_REFRESH_TOKEN || secrets.GITHUB_TOKEN }}
       - uses: actions/setup-node@v4
         with:
