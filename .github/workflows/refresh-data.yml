@@ -1,0 +1,55 @@
+name: Refresh activity data
+
+# 每周刷新 GitHub / 博客数据快照，并把变化提交回 main。
+#
+# 为什么要把刷新结果提交回来：正式站点由 Cloudflare Pages 从仓库构建，
+# 它只会看到仓库里已提交的 src/content/generated/activity.json。
+# Deploy 工作流虽然也会刷新，但它不回写仓库，所以那份新数据只进 GitHub Pages 的产物，
+# 到不了 Cloudflare。提交回仓库后，Cloudflare 下次构建就会拿到新数字。
+on:
+  schedule:
+    # 每周二北京时间 08:23，与 Deploy 工作流的节奏一致。
+    - cron: '23 0 * * 2'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-data
+  cancel-in-progress: true
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # 用 GITHUB_TOKEN 做的 push 不会再触发 GitHub Actions（官方的防循环设计），
+          # Cloudflare 是否重建取决于它的 Git 集成是否接收该 push。
+          # 若要确保两边都被这次提交触发，把 PAT 存成仓库 secret：DATA_REFRESH_TOKEN。
+          token: ${{ secrets.DATA_REFRESH_TOKEN || secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run test:data
+      - name: Refresh GitHub and blog data
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run refresh:data
+      # 重建一次产物，让 public/llms.txt 等含快照日期的生成文件与数据同步。
+      - run: npm run build
+      - name: Commit snapshot when changed
+        run: |
+          if git diff --quiet -- src/content/generated/activity.json; then
+            echo '快照无变化，不提交'
+            exit 0
+          fi
+          as_of=$(node -p "require('./src/content/generated/activity.json').asOf")
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/content/generated/activity.json public/llms.txt public/sitemap.xml
+          git commit -m "刷新 GitHub / 博客数据快照（${as_of}）"
+          git push
