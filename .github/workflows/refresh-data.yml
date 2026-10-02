@@ -42,10 +42,9 @@ jobs:
       # 重建一次产物，让 public/llms.txt 等含快照日期的生成文件与数据同步。
       - run: npm run build
       # 数据验收。--data-only 会在启动浏览器之前退出，不需要装 Playwright。
+      # 分享图（og.png）不在这里重出：它只是品牌与定位的固定图，跟着读数每周换一次
+      # 没有意义，需要时本地或手动跑 npm run static。
       - run: npm run verify -- --data-only
-      # 分享图会把 .stats（读数带）截进 og.png，数字变了必须重出图，否则图上是旧数。
-      - run: npx playwright install --with-deps chromium
-      - run: npm run static
       - name: Commit snapshot when changed
         run: |
           if git diff --quiet -- src/content/generated/activity.json; then
@@ -55,6 +54,6 @@ jobs:
           as_of=$(node -p "require('./src/content/generated/activity.json').asOf")
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add src/content/generated/activity.json public/llms.txt public/sitemap.xml public/og.png
+          git add src/content/generated/activity.json public/llms.txt public/sitemap.xml
           git commit -m "刷新 GitHub / 博客数据快照（${as_of}）"
           git push
