@@ -1,0 +1,6 @@
+# dev.88lin.eu.org —— Cloudflare Pages 会在部署时读取本文件。
+# 线上实测：x-content-type-options 与 referrer-policy 已由平台返回，此处不重复下发。
+# 只补缺失的 HSTS。X-Frame-Options 暂不加：go 与 blog 的 _headers 里都明确写着要保留
+# iframe 嵌入能力，dev 是否同样需要未确认，先与其余站点保持一致。
+/*
+  Strict-Transport-Security: max-age=31536000
