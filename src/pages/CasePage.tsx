@@ -1,7 +1,7 @@
 /** 案例子页 `/case/:slug/`：三段全文 + 关键取舍 + 数字出处。 */
 
 import { caseBySlug, cases } from '../content/cases'
-import { CONTACT_HREF, CTA_LABEL, AS_OF, footer, profile, profileLabel } from '../content/site'
+import { WECHAT_QR_HREF, QQ_HREF, CTA_LABEL, AS_OF, footer, profile, profileLabel } from '../content/site'
 import { Panel, Row } from '../components/Section'
 import { Link } from '../router'
 import { useStagger } from '../lib/motion'
@@ -16,7 +16,7 @@ function CaseNav() {
           <s>@88LIN</s>
         </Link>
         <nav className="nav-links" aria-label="导航">
-          <a className="nav-cta" href={CONTACT_HREF}>
+          <a className="nav-cta" href={WECHAT_QR_HREF} target="_blank" rel="noreferrer">
             {CTA_LABEL}
           </a>
         </nav>
@@ -137,7 +137,7 @@ export function CasePage({ slug }: { slug: string }) {
           <a className="btn btn--ghost" href={c.repo} target="_blank" rel="noreferrer">
             源码 ↗
           </a>
-          <a className="btn btn--ghost" href={CONTACT_HREF}>
+          <a className="btn btn--ghost" href={QQ_HREF} target="_blank" rel="noreferrer">
             {CTA_LABEL}
           </a>
         </div>

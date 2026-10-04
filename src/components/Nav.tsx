@@ -1,6 +1,6 @@
 /** 顶栏：站名 + 章节锚点 + GitHub + 下单入口。当前章那项常亮。 */
 
-import { CONTACT_HREF, CTA_LABEL, profile } from '../content/site'
+import { WECHAT_QR_HREF, CTA_LABEL, profile } from '../content/site'
 import { useActiveSection } from '../lib/motion'
 
 const LINKS = [
@@ -39,7 +39,7 @@ export function Nav() {
           </a>
           {/* 顶栏常驻的下单入口。接单站，读者滚到任何一章都该够得着出口，不必先滚回顶部或一路滚到底。
               窄屏优先保它，先让章节锚点、再让 GitHub 让位。 */}
-          <a className="nav-cta" href={CONTACT_HREF}>
+          <a className="nav-cta" href={WECHAT_QR_HREF} target="_blank" rel="noreferrer">
             {CTA_LABEL}
           </a>
         </nav>

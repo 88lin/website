@@ -2,7 +2,7 @@
 
 import { Deck } from '../components/Deck'
 import { Count } from '../components/Count'
-import { AS_OF, CONTACT_HREF, hero, metric, profile } from '../content/site'
+import { AS_OF, WECHAT_QR_HREF, hero, metric, profile } from '../content/site'
 import { useMagnet, useReveal, useStagger } from '../lib/motion'
 
 /* 四块读数卡。 */
@@ -66,7 +66,13 @@ export function Hero() {
           </p>
 
           <div className="hero__acts" data-stagger>
-            <a className="btn btn--blue" href={CONTACT_HREF} ref={cta}>
+            <a
+              className="btn btn--blue"
+              href={WECHAT_QR_HREF}
+              target="_blank"
+              rel="noreferrer"
+              ref={cta}
+            >
               {hero.primaryCta}
               <i aria-hidden="true">→</i>
             </a>

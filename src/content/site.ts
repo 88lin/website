@@ -62,6 +62,15 @@ export const CTA_LABEL = '说说你的需求'
 export const CONTACT_EMAIL = '431761794@qq.com'
 export const CONTACT_HREF = 'mailto:431761794@qq.com?subject=%E5%90%88%E4%BD%9C%E5%92%A8%E8%AF%A2'
 
+/** 微信二维码直链。手机多无邮件客户端，mailto 点了没反应，故顶栏与首屏按钮指向这里。 */
+export const WECHAT_QR_HREF = 'https://cdn.jsdmirror.com/gh/88lin/picx-images-hosting@master/weixin.jpg'
+
+/** QQ 直连。 */
+export const QQ_HREF = 'https://qm.qq.com/q/nzF1IVPb3y'
+
+/** QQ 群邀请链接。 */
+export const QQ_GROUP_HREF = 'https://qm.qq.com/q/aKdT9BW3Ye'
+
 /** 导航站。那批小站只留这一枚入口，不在官网再抄一份目录。 */
 export const hub = {
   href: 'https://go.88lin.eu.org/',
@@ -550,7 +559,7 @@ export const contact = {
   },
   channels: [
     { id: 'github', label: 'GitHub', value: '@88lin', href: 'https://github.com/88lin', isProfile: true },
-    { id: 'qq', label: 'QQ 群', value: '进群聊', href: 'https://qm.qq.com/q/Q46OjlCcY8', isProfile: false },
+    { id: 'qq', label: 'QQ 群', value: '进群聊', href: QQ_GROUP_HREF, isProfile: false },
     { id: 'wechat-mp', label: '公众号', value: '茉灵智库', href: 'https://go.88lin.eu.org/gzh', isProfile: true },
     { id: 'blog', label: '博客', value: 'blog.88lin.eu.org', href: 'https://blog.88lin.eu.org', isProfile: true },
     { id: 'bilibili', label: '哔哩哔哩', value: 'Hathaway', href: 'https://space.bilibili.com/1412014683', isProfile: true },
