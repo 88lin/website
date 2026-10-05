@@ -80,9 +80,11 @@ export function Work() {
     let sx = 0
     let sl = 0
     let moved = 0
+    let pointer: number | null = null
 
     const onDown = (e: PointerEvent) => {
-      if (e.button !== 0) return
+      if (e.button !== 0 || !e.isPrimary || pointer !== null) return
+      pointer = e.pointerId
       pause.current()
       down = true
       sx = e.clientX
@@ -91,7 +93,11 @@ export function Work() {
       dragged.current = false
     }
     const onMove = (e: PointerEvent) => {
-      if (!down) return
+      if (!down || pointer !== e.pointerId) return
+      if (e.buttons === 0) {
+        onUp()
+        return
+      }
       const dx = e.clientX - sx
       moved = Math.max(moved, Math.abs(dx))
       if (moved <= 4) return
@@ -105,14 +111,25 @@ export function Work() {
     const onUp = () => {
       if (!down) return
       down = false
+      const id = pointer
+      pointer = null
       delete el.dataset.grab
       dragged.current = moved > 6
+      if (id !== null && el.hasPointerCapture(id)) el.releasePointerCapture(id)
+    }
+    const onLeave = (e: PointerEvent) => {
+      if (pointer === e.pointerId && !el.hasPointerCapture(e.pointerId)) onUp()
+    }
+    const onLostCapture = (e: PointerEvent) => {
+      if (e.target === el) onUp()
     }
 
     el.addEventListener('pointerdown', onDown)
     el.addEventListener('pointermove', onMove)
     el.addEventListener('pointerup', onUp)
     el.addEventListener('pointercancel', onUp)
+    el.addEventListener('pointerleave', onLeave)
+    el.addEventListener('lostpointercapture', onLostCapture)
 
     return () => {
       el.removeEventListener('scroll', sync)
@@ -122,6 +139,8 @@ export function Work() {
       el.removeEventListener('pointermove', onMove)
       el.removeEventListener('pointerup', onUp)
       el.removeEventListener('pointercancel', onUp)
+      el.removeEventListener('pointerleave', onLeave)
+      el.removeEventListener('lostpointercapture', onLostCapture)
     }
   }, [sync])
 
@@ -147,6 +166,7 @@ export function Work() {
     let dwellUntil = 0
     let pausedUntil = 0
     let hovering = false
+    let focused = false
     let inView = false
     let raf = 0
     let last = 0
@@ -162,7 +182,11 @@ export function Work() {
       raf = requestAnimationFrame(tick)
       const dt = last ? Math.min(now - last, 64) : 0
       last = now
-      if (!inView || hovering || now < pausedUntil || now < dwellUntil) return
+      if (!inView || hovering || focused || now < pausedUntil || now < dwellUntil) {
+        // 手动输入可能是平滑滚动或持续拖动，暂停开始时的位置不是最终落点。
+        pos = el.scrollLeft
+        return
+      }
       const max = el.scrollWidth - el.clientWidth
       if (max <= 1) return
       pos += dir * SPEED * dt
@@ -198,10 +222,16 @@ export function Work() {
     const leave = () => {
       hovering = false
     }
+    const focus = () => {
+      focused = true
+    }
+    const blur = (e: FocusEvent) => {
+      focused = e.relatedTarget instanceof Node && el.contains(e.relatedTarget)
+    }
     el.addEventListener('pointerenter', enter)
     el.addEventListener('pointerleave', leave)
-    el.addEventListener('focusin', enter)
-    el.addEventListener('focusout', leave)
+    el.addEventListener('focusin', focus)
+    el.addEventListener('focusout', blur)
 
     raf = requestAnimationFrame(tick)
     return () => {
@@ -209,15 +239,15 @@ export function Work() {
       io.disconnect()
       el.removeEventListener('pointerenter', enter)
       el.removeEventListener('pointerleave', leave)
-      el.removeEventListener('focusin', enter)
-      el.removeEventListener('focusout', leave)
+      el.removeEventListener('focusin', focus)
+      el.removeEventListener('focusout', blur)
       pause.current = () => {}
     }
   }, [])
 
   /** 刚拖完的那一次 click 不算点击，否则一拖就跳走。 */
   const swallowClick = (e: React.MouseEvent) => {
-    if (!dragged.current) return
+    if (e.detail === 0 || !dragged.current) return
     dragged.current = false
     e.preventDefault()
     e.stopPropagation()
@@ -261,6 +291,7 @@ export function Work() {
         id="work-rail"
         ref={rail}
         onClickCapture={swallowClick}
+        onDragStart={(e) => e.preventDefault()}
         /* 键盘可达。 */
         tabIndex={0}
         role="group"

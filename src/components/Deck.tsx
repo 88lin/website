@@ -35,13 +35,15 @@ export function Deck() {
   const [dragging, setDragging] = useState(false)
   const startX = useRef(0)
   const moved = useRef(0)
+  const pointer = useRef<number | null>(null)
   const host = useRef<HTMLDivElement | null>(null)
   const tilt = useTilt<HTMLDivElement>()
 
   const go = useCallback((d: number) => setIndex((i) => (i + d + n) % n), [n])
 
   const onDown = (e: React.PointerEvent) => {
-    if (e.button !== 0) return // 右键中键交回浏览器
+    if (e.button !== 0 || !e.isPrimary || pointer.current !== null) return // 只跟踪一个主指针
+    pointer.current = e.pointerId
     setDragging(true)
     startX.current = e.clientX
     moved.current = 0
@@ -50,7 +52,11 @@ export function Deck() {
   }
 
   const onMove = (e: React.PointerEvent) => {
-    if (!dragging) return
+    if (pointer.current !== e.pointerId) return
+    if (e.buttons === 0) {
+      onCancel()
+      return
+    }
     const d = e.clientX - startX.current
     moved.current = Math.max(moved.current, Math.abs(d))
     if (moved.current > CLICK_SLOP && !e.currentTarget.hasPointerCapture(e.pointerId)) {
@@ -59,19 +65,21 @@ export function Deck() {
     setDrag(d)
   }
 
-  const onUp = () => {
-    if (!dragging) return
-    setDragging(false)
-    const d = drag
-    setDrag(0)
+  const onUp = (e: React.PointerEvent) => {
+    if (pointer.current !== e.pointerId) return
+    const d = e.clientX - startX.current
+    onCancel()
     if (d < -THRESHOLD) go(1)
     else if (d > THRESHOLD) go(-1)
   }
 
   // 系统接管触摸（如纵向滚动）或丢失指针时，只复位，不把中断当成翻页。
   const onCancel = () => {
+    const id = pointer.current
+    pointer.current = null
     setDragging(false)
     setDrag(0)
+    if (id !== null && host.current?.hasPointerCapture(id)) host.current.releasePointerCapture(id)
   }
 
   useEffect(() => {
@@ -105,10 +113,16 @@ export function Deck() {
         aria-roledescription="卡组"
         aria-label={`star 最多的 ${n} 个项目，当前第 ${index + 1} 张：${cur.name}。左右方向键翻页`}
         data-dragging={dragging ? '1' : undefined}
+        // 链接的原生 HTML 拖放会触发 pointercancel，中断卡片手势。
+        onDragStart={(e) => e.preventDefault()}
         onPointerDown={onDown}
         onPointerMove={onMove}
         onPointerUp={onUp}
         onPointerCancel={onCancel}
+        onPointerLeave={(e) => {
+          // 未达到横拖阈值就移出卡组时尚未捕获指针，外部松手不会回到这里。
+          if (pointer.current === e.pointerId && !e.currentTarget.hasPointerCapture(e.pointerId)) onCancel()
+        }}
         onLostPointerCapture={(e) => {
           // 触摸从子元素的隐式捕获转给卡组时，也会冒泡 lostpointercapture。
           if (e.target === e.currentTarget) onCancel()
@@ -186,7 +200,7 @@ export function Deck() {
                       className="dcard__go"
                       to={`/case/${caseSlug}/`}
                       onClick={(e) => {
-                        if (moved.current > CLICK_SLOP) e.preventDefault() // 刚才是拖不是点
+                        if (e.detail > 0 && moved.current > CLICK_SLOP) e.preventDefault() // 只拦拖动产生的鼠标点击
                       }}
                     >
                       看完整案例
@@ -199,7 +213,7 @@ export function Deck() {
                       target="_blank"
                       rel="noreferrer"
                       onClick={(e) => {
-                        if (moved.current > CLICK_SLOP) e.preventDefault()
+                        if (e.detail > 0 && moved.current > CLICK_SLOP) e.preventDefault()
                       }}
                     >
                       {p.live ? '打开看看' : '看源码'}

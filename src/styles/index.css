@@ -625,7 +625,7 @@ button {
 /* ============================================================================
    00 开场 · 右栏：案例叠卡
    ----------------------------------------------------------------------------
-   四张卡都在同一个 grid 单元格里（grid-area: 1/1），所以容器高度 = 最高那张，
+   所有卡都在同一个 grid 单元格里（grid-area: 1/1），所以容器高度 = 最高那张，
    翻页时高度不跳。位置全靠 transform，DOM 从不重排。
 
    卡面刻意不做「白卡 + 灰小标题 + 一段话」那套通用件：
@@ -663,6 +663,9 @@ button {
 
 .dcard {
   position: relative;
+  /* 每张卡独立分层，背卡的遮罩不能越过自己的层级盖住前面的内容。 */
+  z-index: 0;
+  visibility: hidden;
   grid-area: 1 / 1;
   display: flex;
   flex-direction: column;
@@ -676,6 +679,11 @@ button {
   transition:
     transform 0.52s var(--ease),
     box-shadow 0.3s var(--ease);
+}
+
+/* 只展示前四层；其余项目保留尺寸参与排版，轮到可见槽位时再显示。 */
+.dcard:is([data-slot='0'], [data-slot='1'], [data-slot='2'], [data-slot='3']) {
+  visibility: visible;
 }
 
 /* 左边那条窄轨：卡的色相全靠它，不刷满面。 */
