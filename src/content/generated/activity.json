@@ -1,12 +1,12 @@
 {
-  "asOf": "2026-10-03",
+  "asOf": "2026-10-06",
   "github": {
-    "stars": 6756,
-    "forks": 673,
-    "originals": 30,
-    "publicRepos": 117,
+    "stars": 6862,
+    "forks": 682,
+    "originals": 31,
+    "publicRepos": 118,
     "forkedRepos": 87,
-    "followers": 191,
+    "followers": 193,
     "following": 7,
     "repositories": {
       "301": {
@@ -22,7 +22,7 @@
         "forks": 0
       },
       "agentrouter-auto-signin": {
-        "stars": 42,
+        "stars": 45,
         "forks": 4
       },
       "ai-answer-assistant": {
@@ -106,7 +106,7 @@
         "forks": 0
       },
       "computer-repair-skill": {
-        "stars": 339,
+        "stars": 348,
         "forks": 34
       },
       "cookhero": {
@@ -234,7 +234,7 @@
         "forks": 0
       },
       "lofi-radio-web": {
-        "stars": 92,
+        "stars": 93,
         "forks": 22
       },
       "metapi": {
@@ -422,8 +422,8 @@
         "forks": 0
       },
       "video_vip": {
-        "stars": 5319,
-        "forks": 518
+        "stars": 5366,
+        "forks": 521
       },
       "vtuber-chisa-lin": {
         "stars": 0,
@@ -442,8 +442,8 @@
         "forks": 0
       },
       "workbuddy-auto-signin": {
-        "stars": 947,
-        "forks": 84
+        "stars": 993,
+        "forks": 90
       },
       "working-with-ai": {
         "stars": 0,
@@ -454,6 +454,10 @@
         "forks": 0
       },
       "xianyu-auto-reply": {
+        "stars": 0,
+        "forks": 0
+      },
+      "xianyu-ecommerce-pack": {
         "stars": 0,
         "forks": 0
       },
@@ -539,7 +543,7 @@
     "latest": [
       {
         "title": "全网VIP视频免费看教程：短剧电视剧白嫖指南",
-        "date": "2026-09-30",
+        "date": "2026-10-03",
         "href": "https://blog.88lin.eu.org/article/46"
       },
       {
