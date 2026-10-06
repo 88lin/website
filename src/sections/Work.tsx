@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Section } from '../components/Section'
 import { hub, projects, worksIntro } from '../content/site'
 import { isCoarse, prefersReducedMotion } from '../lib/caps'
-import { useReveal } from '../lib/motion'
+import { useMediaQuery, useReveal } from '../lib/motion'
 
 const STATE: Record<string, string> = {
   live: '在线',
@@ -13,6 +13,8 @@ const STATE: Record<string, string> = {
 }
 
 export function Work() {
+  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
+  const coarsePointer = useMediaQuery('(pointer: coarse)')
   const rail = useRef<HTMLDivElement | null>(null)
   const dragged = useRef(false)
   /** 手动输入调它：暂停自动滚，2.5s 后自动接着走。由下面那个 effect 填实现。 */
@@ -43,7 +45,7 @@ export function Work() {
     pause.current()
     const card = el.querySelector<HTMLElement>('.wcard')
     const step = card ? card.getBoundingClientRect().width + 20 : el.clientWidth * 0.8
-    el.scrollBy({ left: step * dir, behavior: 'smooth' })
+    el.scrollBy({ left: step * dir, behavior: prefersReducedMotion() ? 'instant' : 'smooth' })
   }, [])
 
   useEffect(() => {
@@ -59,9 +61,10 @@ export function Work() {
      * 滚轮转横移。两处细节决定它是「顺手」还是「烦人」：
      *  · 横向 delta 更大时直接放手 —— 那是触控板横滑，浏览器原生处理得更好
      *  · 推到任一头就不再 preventDefault，滚动权交回页面，不把整页钉住
-     * stopPropagation 是给 lenis 的：它挂在 window 上，不拦住会两边一起滚。
+     * preventDefault 会让页面滚动控制器取消旧惯性；事件继续冒泡以完成接管。
      */
     const onWheel = (e: WheelEvent) => {
+      if (e.defaultPrevented || !e.cancelable || !e.deltaY || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return
       const max = el.scrollWidth - el.clientWidth
       if (max <= 0) return
       if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return
@@ -69,7 +72,6 @@ export function Work() {
       const step = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaMode === 2 ? e.deltaY * el.clientWidth : e.deltaY
       if ((step > 0 && el.scrollLeft >= max - 1) || (step < 0 && el.scrollLeft <= 1)) return
       e.preventDefault()
-      e.stopPropagation()
       pause.current()
       el.scrollLeft = Math.max(0, Math.min(max, el.scrollLeft + step))
     }
@@ -165,8 +167,8 @@ export function Work() {
     let dir: 1 | -1 = 1
     let dwellUntil = 0
     let pausedUntil = 0
-    let hovering = false
-    let focused = false
+    let hovering = el.matches(':hover')
+    let focused = el.contains(document.activeElement)
     let inView = false
     let raf = 0
     let last = 0
@@ -243,7 +245,7 @@ export function Work() {
       el.removeEventListener('focusout', blur)
       pause.current = () => {}
     }
-  }, [])
+  }, [reducedMotion, coarsePointer])
 
   /** 刚拖完的那一次 click 不算点击，否则一拖就跳走。 */
   const swallowClick = (e: React.MouseEvent) => {

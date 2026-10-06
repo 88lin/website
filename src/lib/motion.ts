@@ -6,42 +6,7 @@ import { prefersReducedMotion } from './caps'
 
 /* ------------------------------------------------------------ 平滑滚动 */
 
-export async function bootScroll(signal?: AbortSignal) {
-  if (typeof window === 'undefined' || prefersReducedMotion() || signal?.aborted) return () => {}
-  // 所有依赖就绪、当前 effect 仍有效时再创建实例。StrictMode 的首次 effect
-  // 会在 import 完成前清理，不能留下第二套滚轮监听和 RAF。
-  const [{ default: Lenis }, { ScrollTrigger }] = await Promise.all([
-    import('lenis'),
-    import('gsap/ScrollTrigger'),
-  ])
-  if (signal?.aborted) return () => {}
-  const lenis = new Lenis({
-    duration: 1.05,
-    // 指数缓出：起步快、收尾慢，手感接近真的在拉一条有阻尼的绳子
-    easing: (t: number) => 1 - Math.pow(1 - t, 3.2),
-    wheelMultiplier: 0.92,
-    touchMultiplier: 1.4,
-  })
-
-  let raf = 0
-  const loop = (t: number) => {
-    lenis.raf(t)
-    raf = requestAnimationFrame(loop)
-  }
-  raf = requestAnimationFrame(loop)
-
-  // lenis 接管之后，ScrollTrigger 必须被告知「滚动位置由谁说了算」，
-  // 否则 pin 与 scrub 会比页面慢半拍。
-  lenis.on('scroll', () => ScrollTrigger.update())
-
-  const dispose = () => {
-    cancelAnimationFrame(raf)
-    lenis.destroy()
-    signal?.removeEventListener('abort', dispose)
-  }
-  signal?.addEventListener('abort', dispose, { once: true })
-  return dispose
-}
+export { bootScroll } from './scroll'
 
 /* ------------------------------------------------------------ 指针 */
 
