@@ -1,12 +1,12 @@
 {
-  "asOf": "2026-10-06",
+  "asOf": "2026-10-13",
   "github": {
-    "stars": 6862,
-    "forks": 682,
-    "originals": 31,
-    "publicRepos": 118,
-    "forkedRepos": 87,
-    "followers": 193,
+    "stars": 7176,
+    "forks": 709,
+    "originals": 36,
+    "publicRepos": 126,
+    "forkedRepos": 90,
+    "followers": 202,
     "following": 7,
     "repositories": {
       "301": {
@@ -22,7 +22,7 @@
         "forks": 0
       },
       "agentrouter-auto-signin": {
-        "stars": 45,
+        "stars": 47,
         "forks": 4
       },
       "ai-answer-assistant": {
@@ -31,6 +31,10 @@
       },
       "ai-website-cloner-template": {
         "stars": 1,
+        "forks": 0
+      },
+      "aihot": {
+        "stars": 0,
         "forks": 0
       },
       "aiwechat-vercel": {
@@ -105,9 +109,13 @@
         "stars": 0,
         "forks": 0
       },
+      "component-vault": {
+        "stars": 0,
+        "forks": 0
+      },
       "computer-repair-skill": {
-        "stars": 348,
-        "forks": 34
+        "stars": 362,
+        "forks": 35
       },
       "cookhero": {
         "stars": 0,
@@ -149,6 +157,10 @@
         "stars": 0,
         "forks": 0
       },
+      "easyread": {
+        "stars": 0,
+        "forks": 0
+      },
       "ex-skill": {
         "stars": 0,
         "forks": 0
@@ -160,6 +172,10 @@
       "facetmark": {
         "stars": 0,
         "forks": 1
+      },
+      "fuyue": {
+        "stars": 0,
+        "forks": 0
       },
       "geo-book-skill": {
         "stars": 1,
@@ -174,8 +190,8 @@
         "forks": 0
       },
       "gpt-image-studio": {
-        "stars": 54,
-        "forks": 8
+        "stars": 55,
+        "forks": 9
       },
       "gpt-wordbook": {
         "stars": 1,
@@ -225,6 +241,10 @@
         "stars": 1,
         "forks": 0
       },
+      "knowledge-commons": {
+        "stars": 1,
+        "forks": 0
+      },
       "lessai": {
         "stars": 0,
         "forks": 0
@@ -234,8 +254,12 @@
         "forks": 0
       },
       "lofi-radio-web": {
-        "stars": 93,
-        "forks": 22
+        "stars": 94,
+        "forks": 23
+      },
+      "meowscope": {
+        "stars": 1,
+        "forks": 0
       },
       "metapi": {
         "stars": 1,
@@ -325,16 +349,12 @@
         "stars": 0,
         "forks": 0
       },
-      "qzonearchive": {
-        "stars": 0,
-        "forks": 0
-      },
       "rag": {
         "stars": 0,
         "forks": 0
       },
       "react-ai-orb": {
-        "stars": 7,
+        "stars": 8,
         "forks": 1
       },
       "rent-ops": {
@@ -366,6 +386,10 @@
         "forks": 0
       },
       "social-publisher": {
+        "stars": 0,
+        "forks": 0
+      },
+      "socialcoach": {
         "stars": 0,
         "forks": 0
       },
@@ -422,8 +446,8 @@
         "forks": 0
       },
       "video_vip": {
-        "stars": 5366,
-        "forks": 521
+        "stars": 5469,
+        "forks": 530
       },
       "vtuber-chisa-lin": {
         "stars": 0,
@@ -442,8 +466,16 @@
         "forks": 0
       },
       "workbuddy-auto-signin": {
-        "stars": 993,
-        "forks": 90
+        "stars": 1183,
+        "forks": 106
+      },
+      "workbuddy-cloud-signin": {
+        "stars": 0,
+        "forks": 0
+      },
+      "workbuddy-proxy-skill": {
+        "stars": 0,
+        "forks": 0
       },
       "working-with-ai": {
         "stars": 0,
@@ -458,7 +490,7 @@
         "forks": 0
       },
       "xianyu-ecommerce-pack": {
-        "stars": 0,
+        "stars": 1,
         "forks": 0
       },
       "xianyu-super-butler": {
@@ -474,7 +506,7 @@
         "forks": 0
       },
       "zheng-qinan-skill": {
-        "stars": 1,
+        "stars": 2,
         "forks": 0
       },
       "zperiod": {
@@ -542,6 +574,16 @@
     ],
     "latest": [
       {
+        "title": "学术论文电子书资源大全：科研文献免费下载工具",
+        "date": "2026-10-09",
+        "href": "https://blog.88lin.eu.org/article/literature"
+      },
+      {
+        "title": "35个实用省钱技巧：餐饮购物全攻略",
+        "date": "2026-10-09",
+        "href": "https://blog.88lin.eu.org/article/37"
+      },
+      {
         "title": "全网VIP视频免费看教程：短剧电视剧白嫖指南",
         "date": "2026-10-03",
         "href": "https://blog.88lin.eu.org/article/46"
@@ -560,16 +602,6 @@
         "title": "小白 AI 创业实战笔记",
         "date": "2026-09-04",
         "href": "https://blog.88lin.eu.org/article/chuangye"
-      },
-      {
-        "title": "Windows实用教程：常见问题解决与系统优化指南",
-        "date": "2026-09-02",
-        "href": "https://blog.88lin.eu.org/article/14"
-      },
-      {
-        "title": "李笑来作品集：6 本书浓缩成一份可执行的人生操作系统",
-        "date": "2026-08-15",
-        "href": "https://blog.88lin.eu.org/article/20"
       }
     ]
   }
