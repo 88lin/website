@@ -369,7 +369,7 @@ export type Project = {
 
 export const worksIntro = {
   headline: '做过的东西',
-  body: '十个还在维护的仓库，横着滑。每张卡写清它解决什么、用什么做的、现在什么状态，点卡里的按钮可以直接打开或看源码。star 与 fork 来自 GitHub API，更新日期见页脚。',
+  body: '持续更新的开源作品，横着滑。每张卡写清它解决什么、用什么做的、现在什么状态，点卡里的按钮可以直接打开或看源码。star 与 fork 来自 GitHub API，更新日期见页脚。',
 }
 
 /* 首屏叠卡的门槛：star 少于这个数的不进叠卡。 */
@@ -500,18 +500,72 @@ const projectContent: Omit<Project, 'stars' | 'forks'>[] = [
     tint: 'blue',
   },
   {
-    slug: 'gzh-design-skill',
-    name: 'gzh-design-skill',
+    slug: 'gzh-skill-kit',
+    name: 'gzh-skill-kit',
     cn: '公众号排版技能',
     year: '2026',
     kind: 'Agent 工程',
     blurb:
-      '把 Markdown 一键排成能直接粘进公众号编辑器的 HTML。6 套精选主题加一个主题生成器，样式全内联不掉格式，两道脚本关卡校验。',
-    stack: ['Agent Skill', 'HTML', 'Python Lint'],
+      '把文章交给 AI，排成可直接复制到公众号编辑器的 HTML。14 套精选主题加一个主题生成器，支持图片、GIF 与代码块，自动整理章节和重点，带排版检查与复制预览。',
+    stack: ['Agent Skill', 'HTML', 'Python', 'AGPL-3.0'],
     state: 'live',
-    live: 'https://88lin.github.io/gzh-design-skill/docs/gallery/index.html',
-    repo: 'https://github.com/88lin/gzh-design-skill',
+    live: 'https://go.88lin.eu.org/gzh-skill-kit/docs/gallery/',
+    repo: 'https://github.com/88lin/gzh-skill-kit',
     tint: 'rose',
+  },
+  {
+    slug: 'meowscope',
+    name: 'MeowScope',
+    cn: '喵语通 · 猫叫情境分类',
+    year: '2026',
+    kind: '浏览器 AI',
+    blurb:
+      '录音或上传猫叫，在浏览器里判断被刷毛、等饭、被隔离三种情境。音频留在本地，结果带波形、频谱与概率分享卡；公开按猫划分的评测成绩，说明模型能判断到哪一步。',
+    stack: ['JavaScript', '音频分析', '本地推理', 'MIT'],
+    state: 'live',
+    live: 'https://88lin.github.io/meowscope/',
+    repo: 'https://github.com/88lin/meowscope',
+    tint: 'peach',
+  },
+  {
+    slug: 'component-vault',
+    name: 'Component Vault',
+    cn: '精选 React 组件武器库',
+    year: '2026',
+    kind: '开发者工具',
+    blurb:
+      '把 21st.dev、Aceternity UI、Magic UI 等来源的前端组件整理成可检索的导航。按场景筛选、悬停看动效、收藏候选项，再复制安装命令，把选组件这一步缩短。',
+    stack: ['HTML', 'JavaScript', 'Python', '组件导航'],
+    state: 'live',
+    live: 'https://88lin.github.io/component-vault/',
+    repo: 'https://github.com/88lin/component-vault',
+    tint: 'aqua',
+  },
+  {
+    slug: 'workbuddy-cloud-signin',
+    name: 'workbuddy-cloud-signin',
+    cn: 'WorkBuddy 云端签到助手',
+    year: '2026',
+    kind: '自动化工具',
+    blurb:
+      '给 WorkBuddy 手机 App、小程序背后的云端沙箱补齐登录与定时配置。配合主签到脚本，完成一次授权后建立每日签到和轮询补签任务，让没有桌面电脑的场景也能自动领积分。',
+    stack: ['Python', '云端沙箱', '定时任务', 'MIT'],
+    state: 'maintained',
+    repo: 'https://github.com/88lin/workbuddy-cloud-signin',
+    tint: 'blue',
+  },
+  {
+    slug: 'weibo-checkin',
+    name: 'weibo-checkin',
+    cn: '微博超话签到与评论',
+    year: '2026',
+    kind: '自动化工具',
+    blurb:
+      '用一个零依赖 Python 脚本完成多个超话的每日签到与可选评论。带 Cookie 体检、失效通知、单项失败隔离和 dry-run 演练，提供 Windows / macOS / Linux 定时任务配置。',
+    stack: ['Python', '零依赖', 'Webhook', 'MIT'],
+    state: 'maintained',
+    repo: 'https://github.com/88lin/weibo-checkin',
+    tint: 'lav',
   },
 ]
 

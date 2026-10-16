@@ -1,12 +1,12 @@
 {
-  "asOf": "2026-10-13",
+  "asOf": "2026-10-16",
   "github": {
-    "stars": 7176,
-    "forks": 709,
-    "originals": 36,
-    "publicRepos": 126,
-    "forkedRepos": 90,
-    "followers": 202,
+    "stars": 7334,
+    "forks": 725,
+    "originals": 38,
+    "publicRepos": 127,
+    "forkedRepos": 89,
+    "followers": 205,
     "following": 7,
     "repositories": {
       "301": {
@@ -22,7 +22,7 @@
         "forks": 0
       },
       "agentrouter-auto-signin": {
-        "stars": 47,
+        "stars": 50,
         "forks": 4
       },
       "ai-answer-assistant": {
@@ -114,8 +114,8 @@
         "forks": 0
       },
       "computer-repair-skill": {
-        "stars": 362,
-        "forks": 35
+        "stars": 370,
+        "forks": 36
       },
       "cookhero": {
         "stars": 0,
@@ -201,7 +201,7 @@
         "stars": 0,
         "forks": 0
       },
-      "gzh-design-skill": {
+      "gzh-skill-kit": {
         "stars": 0,
         "forks": 0
       },
@@ -210,6 +210,10 @@
         "forks": 3
       },
       "home-location-endpoint": {
+        "stars": 0,
+        "forks": 0
+      },
+      "howtolivebetter": {
         "stars": 0,
         "forks": 0
       },
@@ -290,7 +294,7 @@
         "forks": 0
       },
       "nihaixia": {
-        "stars": 1,
+        "stars": 2,
         "forks": 1
       },
       "non-tech-guide": {
@@ -346,10 +350,6 @@
         "forks": 0
       },
       "quartz": {
-        "stars": 0,
-        "forks": 0
-      },
-      "rag": {
         "stars": 0,
         "forks": 0
       },
@@ -446,8 +446,8 @@
         "forks": 0
       },
       "video_vip": {
-        "stars": 5469,
-        "forks": 530
+        "stars": 5491,
+        "forks": 533
       },
       "vtuber-chisa-lin": {
         "stars": 0,
@@ -457,17 +457,21 @@
         "stars": 0,
         "forks": 1
       },
+      "weibo-checkin": {
+        "stars": 0,
+        "forks": 0
+      },
       "wesum-wechat-monitor": {
         "stars": 2,
-        "forks": 7
+        "forks": 8
       },
       "wloc": {
         "stars": 0,
         "forks": 0
       },
       "workbuddy-auto-signin": {
-        "stars": 1183,
-        "forks": 106
+        "stars": 1308,
+        "forks": 117
       },
       "workbuddy-cloud-signin": {
         "stars": 0,
