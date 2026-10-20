@@ -1,12 +1,12 @@
 {
-  "asOf": "2026-10-16",
+  "asOf": "2026-10-20",
   "github": {
-    "stars": 7334,
-    "forks": 725,
-    "originals": 38,
-    "publicRepos": 127,
+    "stars": 7561,
+    "forks": 752,
+    "originals": 39,
+    "publicRepos": 128,
     "forkedRepos": 89,
-    "followers": 205,
+    "followers": 207,
     "following": 7,
     "repositories": {
       "301": {
@@ -23,7 +23,7 @@
       },
       "agentrouter-auto-signin": {
         "stars": 50,
-        "forks": 4
+        "forks": 5
       },
       "ai-answer-assistant": {
         "stars": 0,
@@ -114,8 +114,8 @@
         "forks": 0
       },
       "computer-repair-skill": {
-        "stars": 370,
-        "forks": 36
+        "stars": 397,
+        "forks": 40
       },
       "cookhero": {
         "stars": 0,
@@ -258,7 +258,7 @@
         "forks": 0
       },
       "lofi-radio-web": {
-        "stars": 94,
+        "stars": 95,
         "forks": 23
       },
       "meowscope": {
@@ -397,6 +397,10 @@
         "stars": 1,
         "forks": 0
       },
+      "starlightmusic": {
+        "stars": 0,
+        "forks": 0
+      },
       "storageui": {
         "stars": 0,
         "forks": 0
@@ -446,8 +450,8 @@
         "forks": 0
       },
       "video_vip": {
-        "stars": 5491,
-        "forks": 533
+        "stars": 5552,
+        "forks": 539
       },
       "vtuber-chisa-lin": {
         "stars": 0,
@@ -470,11 +474,11 @@
         "forks": 0
       },
       "workbuddy-auto-signin": {
-        "stars": 1308,
-        "forks": 117
+        "stars": 1445,
+        "forks": 133
       },
       "workbuddy-cloud-signin": {
-        "stars": 0,
+        "stars": 1,
         "forks": 0
       },
       "workbuddy-proxy-skill": {
@@ -578,6 +582,11 @@
     ],
     "latest": [
       {
+        "title": "全网VIP视频免费看教程：短剧电视剧白嫖指南",
+        "date": "2026-10-17",
+        "href": "https://blog.88lin.eu.org/article/46"
+      },
+      {
         "title": "学术论文电子书资源大全：科研文献免费下载工具",
         "date": "2026-10-09",
         "href": "https://blog.88lin.eu.org/article/literature"
@@ -586,11 +595,6 @@
         "title": "35个实用省钱技巧：餐饮购物全攻略",
         "date": "2026-10-09",
         "href": "https://blog.88lin.eu.org/article/37"
-      },
-      {
-        "title": "全网VIP视频免费看教程：短剧电视剧白嫖指南",
-        "date": "2026-10-03",
-        "href": "https://blog.88lin.eu.org/article/46"
       },
       {
         "title": "一篇关于亲密关系中信任与判断的深度笔记",
