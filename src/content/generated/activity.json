@@ -1,12 +1,12 @@
 {
-  "asOf": "2026-11-03",
+  "asOf": "2026-11-10",
   "github": {
-    "stars": 8792,
-    "forks": 904,
+    "stars": 9590,
+    "forks": 974,
     "originals": 39,
     "publicRepos": 129,
     "forkedRepos": 90,
-    "followers": 245,
+    "followers": 267,
     "following": 8,
     "repositories": {
       "301": {
@@ -22,8 +22,8 @@
         "forks": 0
       },
       "agentrouter-auto-signin": {
-        "stars": 54,
-        "forks": 6
+        "stars": 60,
+        "forks": 5
       },
       "ai-answer-assistant": {
         "stars": 0,
@@ -114,8 +114,8 @@
         "forks": 0
       },
       "computer-repair-skill": {
-        "stars": 497,
-        "forks": 53
+        "stars": 600,
+        "forks": 60
       },
       "cookhero": {
         "stars": 0,
@@ -190,8 +190,8 @@
         "forks": 0
       },
       "gpt-image-studio": {
-        "stars": 59,
-        "forks": 9
+        "stars": 61,
+        "forks": 10
       },
       "gpt-wordbook": {
         "stars": 1,
@@ -202,8 +202,8 @@
         "forks": 0
       },
       "gzh-skill-kit": {
-        "stars": 1,
-        "forks": 1
+        "stars": 3,
+        "forks": 0
       },
       "heolume": {
         "stars": 0,
@@ -246,7 +246,7 @@
         "forks": 0
       },
       "knowledge-commons": {
-        "stars": 1,
+        "stars": 2,
         "forks": 0
       },
       "lessai": {
@@ -258,8 +258,8 @@
         "forks": 0
       },
       "lofi-radio-web": {
-        "stars": 94,
-        "forks": 24
+        "stars": 96,
+        "forks": 25
       },
       "meowscope": {
         "stars": 1,
@@ -354,7 +354,7 @@
         "forks": 0
       },
       "react-ai-orb": {
-        "stars": 8,
+        "stars": 9,
         "forks": 1
       },
       "rent-ops": {
@@ -450,8 +450,8 @@
         "forks": 0
       },
       "video_vip": {
-        "stars": 6217,
-        "forks": 628
+        "stars": 6555,
+        "forks": 668
       },
       "vtuber-chisa-lin": {
         "stars": 0,
@@ -466,7 +466,7 @@
         "forks": 0
       },
       "wesum-wechat-monitor": {
-        "stars": 2,
+        "stars": 3,
         "forks": 8
       },
       "wloc": {
@@ -474,8 +474,8 @@
         "forks": 0
       },
       "workbuddy-auto-signin": {
-        "stars": 1904,
-        "forks": 180
+        "stars": 2248,
+        "forks": 204
       },
       "workbuddy-cloud-signin": {
         "stars": 2,
@@ -498,7 +498,7 @@
         "forks": 0
       },
       "xianyu-ecommerce-pack": {
-        "stars": 2,
+        "stars": 3,
         "forks": 0
       },
       "xianyu-super-butler": {
