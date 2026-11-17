@@ -1,12 +1,12 @@
 {
-  "asOf": "2026-11-10",
+  "asOf": "2026-11-17",
   "github": {
-    "stars": 9590,
-    "forks": 974,
+    "stars": 10062,
+    "forks": 1012,
     "originals": 39,
-    "publicRepos": 129,
-    "forkedRepos": 90,
-    "followers": 267,
+    "publicRepos": 127,
+    "forkedRepos": 88,
+    "followers": 276,
     "following": 8,
     "repositories": {
       "301": {
@@ -22,7 +22,7 @@
         "forks": 0
       },
       "agentrouter-auto-signin": {
-        "stars": 60,
+        "stars": 62,
         "forks": 5
       },
       "ai-answer-assistant": {
@@ -114,8 +114,8 @@
         "forks": 0
       },
       "computer-repair-skill": {
-        "stars": 600,
-        "forks": 60
+        "stars": 631,
+        "forks": 63
       },
       "cookhero": {
         "stars": 0,
@@ -170,7 +170,7 @@
         "forks": 0
       },
       "facetmark": {
-        "stars": 0,
+        "stars": 1,
         "forks": 1
       },
       "fuyue": {
@@ -190,7 +190,7 @@
         "forks": 0
       },
       "gpt-image-studio": {
-        "stars": 61,
+        "stars": 62,
         "forks": 10
       },
       "gpt-wordbook": {
@@ -245,10 +245,6 @@
         "stars": 1,
         "forks": 0
       },
-      "knowledge-commons": {
-        "stars": 2,
-        "forks": 0
-      },
       "lessai": {
         "stars": 0,
         "forks": 0
@@ -258,7 +254,7 @@
         "forks": 0
       },
       "lofi-radio-web": {
-        "stars": 96,
+        "stars": 100,
         "forks": 25
       },
       "meowscope": {
@@ -413,10 +409,6 @@
         "stars": 0,
         "forks": 0
       },
-      "teamai-cli": {
-        "stars": 0,
-        "forks": 0
-      },
       "teardown-lab": {
         "stars": 0,
         "forks": 0
@@ -450,8 +442,8 @@
         "forks": 0
       },
       "video_vip": {
-        "stars": 6555,
-        "forks": 668
+        "stars": 6755,
+        "forks": 690
       },
       "vtuber-chisa-lin": {
         "stars": 0,
@@ -474,8 +466,8 @@
         "forks": 0
       },
       "workbuddy-auto-signin": {
-        "stars": 2248,
-        "forks": 204
+        "stars": 2482,
+        "forks": 217
       },
       "workbuddy-cloud-signin": {
         "stars": 2,
@@ -587,7 +579,7 @@
     "latest": [
       {
         "title": "全网VIP视频免费看教程：短剧电视剧白嫖指南",
-        "date": "2026-10-17",
+        "date": "2026-11-09",
         "href": "https://blog.88lin.eu.org/article/46"
       },
       {
