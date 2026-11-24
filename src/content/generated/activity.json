@@ -1,12 +1,12 @@
 {
-  "asOf": "2026-11-17",
+  "asOf": "2026-11-24",
   "github": {
-    "stars": 10062,
-    "forks": 1012,
-    "originals": 39,
-    "publicRepos": 127,
-    "forkedRepos": 88,
-    "followers": 276,
+    "stars": 10418,
+    "forks": 1039,
+    "originals": 40,
+    "publicRepos": 129,
+    "forkedRepos": 89,
+    "followers": 288,
     "following": 8,
     "repositories": {
       "301": {
@@ -22,7 +22,7 @@
         "forks": 0
       },
       "agentrouter-auto-signin": {
-        "stars": 62,
+        "stars": 67,
         "forks": 5
       },
       "ai-answer-assistant": {
@@ -114,8 +114,8 @@
         "forks": 0
       },
       "computer-repair-skill": {
-        "stars": 631,
-        "forks": 63
+        "stars": 677,
+        "forks": 70
       },
       "cookhero": {
         "stars": 0,
@@ -190,7 +190,7 @@
         "forks": 0
       },
       "gpt-image-studio": {
-        "stars": 62,
+        "stars": 64,
         "forks": 10
       },
       "gpt-wordbook": {
@@ -254,7 +254,7 @@
         "forks": 0
       },
       "lofi-radio-web": {
-        "stars": 100,
+        "stars": 101,
         "forks": 25
       },
       "meowscope": {
@@ -263,7 +263,7 @@
       },
       "metapi": {
         "stars": 1,
-        "forks": 0
+        "forks": 1
       },
       "movecar": {
         "stars": 0,
@@ -350,7 +350,7 @@
         "forks": 0
       },
       "react-ai-orb": {
-        "stars": 9,
+        "stars": 10,
         "forks": 1
       },
       "rent-ops": {
@@ -358,6 +358,10 @@
         "forks": 0
       },
       "roam-control": {
+        "stars": 0,
+        "forks": 0
+      },
+      "sakura-biyori": {
         "stars": 0,
         "forks": 0
       },
@@ -441,9 +445,13 @@
         "stars": 1,
         "forks": 0
       },
+      "ung220z-tool": {
+        "stars": 0,
+        "forks": 0
+      },
       "video_vip": {
-        "stars": 6755,
-        "forks": 690
+        "stars": 6887,
+        "forks": 696
       },
       "vtuber-chisa-lin": {
         "stars": 0,
@@ -466,8 +474,8 @@
         "forks": 0
       },
       "workbuddy-auto-signin": {
-        "stars": 2482,
-        "forks": 217
+        "stars": 2653,
+        "forks": 231
       },
       "workbuddy-cloud-signin": {
         "stars": 2,
@@ -578,8 +586,13 @@
     ],
     "latest": [
       {
+        "title": "眼镜是妥协的艺术：挑框、验光、网配蔡司的避坑指南",
+        "date": "2026-11-23",
+        "href": "https://blog.88lin.eu.org/article/43"
+      },
+      {
         "title": "全网VIP视频免费看教程：短剧电视剧白嫖指南",
-        "date": "2026-11-09",
+        "date": "2026-11-20",
         "href": "https://blog.88lin.eu.org/article/46"
       },
       {
@@ -601,11 +614,6 @@
         "title": "面向新型创业者的短课 · Anything You Want",
         "date": "2026-09-04",
         "href": "https://blog.88lin.eu.org/article/34"
-      },
-      {
-        "title": "小白 AI 创业实战笔记",
-        "date": "2026-09-04",
-        "href": "https://blog.88lin.eu.org/article/chuangye"
       }
     ]
   }
